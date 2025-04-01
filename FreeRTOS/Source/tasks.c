@@ -560,7 +560,7 @@ static const volatile UBaseType_t uxTopUsedPriority = configMAX_PRIORITIES - 1U;
  * from either an ISR or a task. */
 PRIVILEGED_DATA static volatile UBaseType_t uxSchedulerSuspended = ( UBaseType_t ) 0U;
 
-#define USE_RUNTIME_COUNTER_ARRAY  (0) /* << EST, see https://github.com/mcu-debug/rtos-views/pull/57 */
+#define USE_RUNTIME_COUNTER_ARRAY  (configNUMBER_OF_CORES>1) /* << EST, see https://github.com/mcu-debug/rtos-views/pull/57. If set to 0, it avoids the issue that in VS Code the runtime counters are not shown. */
 
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
 
