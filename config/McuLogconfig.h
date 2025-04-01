@@ -43,7 +43,7 @@
 
 #ifndef McuLog_CONFIG_USE_FILE_MACRO
   #define McuLog_CONFIG_USE_FILE_MACRO         __FILE__
-    /*!< Which macro to be used for files, default __FILE__ */
+    /*!< Which macro to be used for files, default __FILE__. To obfusificat the file name, use something link "???" */
 #endif
 
 #ifndef McuLog_CONFIG_NOF_CONSOLE_LOGGER
@@ -59,6 +59,16 @@
 #ifndef McuLog_CONFIG_LOG_TIMESTAMP_TIME
   #define McuLog_CONFIG_LOG_TIMESTAMP_TIME    (1)
     /*!< 1: add time to time stamp, 0: do not time for time stamp */
+#endif
+
+#ifndef McuLog_CONFIG_LOG_FILENAME
+  #define McuLog_CONFIG_LOG_FILENAME          (1) 
+    /*!< if file names are used for the log */
+#endif
+
+#if McuLog_CONFIG_LOG_LINE_NUMBER
+  #define McuLog_CONFIG_LOG_LINE_NUMBER       (0) 
+    /*!< if line numbers are used for the log */
 #endif
 
 #ifndef McuLog_CONFIG_LOG_STRIP_FILENAME_PATH

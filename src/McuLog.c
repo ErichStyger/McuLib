@@ -239,7 +239,8 @@ static void LogHeader(DATEREC *date, TIMEREC *time, McuLog_Levels_e level, bool 
 #endif
   OutString(buf, outchar, param);
 
-#if McuLog_CONFIG_LOG_STRIP_FILENAME_PATH
+#if McuLog_CONFIG_LOG_FILENAME
+  #if McuLog_CONFIG_LOG_STRIP_FILENAME_PATH
   /* file name */
   const unsigned char *p;
 
@@ -260,16 +261,19 @@ static void LogHeader(DATEREC *date, TIMEREC *time, McuLog_Levels_e level, bool 
     p = (const unsigned char*)&file[pos];
   }
   OutString(p, outchar, param);
-#else
+  #else
   OutString((unsigned char*)file, outchar, param);
-#endif
+  #endif
+#endif /* McuLog_CONFIG_LOG_FILENAME */
 
+#if McuLog_CONFIG_LOG_LINE_NUMBER
   /* line number */
   buf[0] = '\0';
   McuUtility_chcat(buf, sizeof(buf), ':');
   McuUtility_strcatNum32u(buf,  sizeof(buf), line);
-  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)": ");
+  McuUtility_chcat(buf, sizeof(buf), ' ');
   OutString(buf, outchar, param);
+#endif
 }
 
 #if McuLog_CONFIG_USE_PRINTF_STYLE
