@@ -398,7 +398,7 @@ uint8_t McuArmTools_UIDGet(McuArmTools_UID *uid)
   for(i=0;i<sizeof(McuArmTools_UID);i++) {
     uid->id[i] = 0;
   }
-#if 0 /* should work for LPC55x59, but fails? */
+
   status_t status;
   flash_config_t flashConfig;
 
@@ -412,8 +412,7 @@ uint8_t McuArmTools_UIDGet(McuArmTools_UID *uid)
   if (status!=kStatus_Success) {
     return ERR_FAILED;
   }
-#endif
-  return ERR_FAILED; /* not implemented yet */
+  return ERR_OK; /* not implemented yet */
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_RPI_PICO
   memset(uid, 0, sizeof(McuArmTools_UID));
   /* We do *not* use flash_get_unique_id() of the flash API, because this requires interrupts disabled for *both* cores.
