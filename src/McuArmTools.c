@@ -637,6 +637,8 @@ McuArmTools_ConstCharPtr McuArmTools_GetKinetisFamilyString(void)
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_RPI_PICO
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_RP2040
     return (McuArmTools_ConstCharPtr)"Raspberry Pi Pico, RP2040";
+  #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_RP2350
+    return (McuArmTools_ConstCharPtr)"Raspberry Pi Pico, RP2350";
   #else
     return (McuArmTools_ConstCharPtr)"Raspberry Pi Pico";
   #endif
