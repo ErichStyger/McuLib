@@ -95,13 +95,12 @@
   #define MCUSPI_CONFIG_HW_SPI_SSEL            1
   #define MCUSPI_CONFIG_HW_SPI_SPOL            kSPI_SpolActiveAllLow
 
-  #define MCUSPI_CONFIG_HW_SPI_INIT() \
-    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM8); /* attach 12 MHz clock to SPI8 */ \
-    RESET_PeripheralReset(kFC8_RST_SHIFT_RSTn); /* reset FLEXCOMM for SPI */
+  #define MCUSPI_CONFIG_HW_SPI_INIT() /* nothing */
 
+  /* PIO0_20 */
   #define MCUSPI_CONFIG_HW_CS_GPIO   GPIO
   #define MCUSPI_CONFIG_HW_CS_PORT   0
-  #define MCUSPI_CONFIG_HW_CS_PIN    4
+  #define MCUSPI_CONFIG_HW_CS_PIN    20
 
   #ifndef MCUSPI_CONFIG_HW_CS_INIT
     #define MCUSPI_CONFIG_HW_CS_INIT()  /* nothing */

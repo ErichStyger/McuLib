@@ -45,7 +45,7 @@ int McuSPI_SendReceiveBlock(const uint8_t *txDataBuf, uint8_t *rxDataBuf, size_t
     return 0; /* ok */
   }
   return -1; /* error */
-#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_LPC55S16_FC3
+#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_LPC55S16_FC3 || MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_LPC55S59_FC8
   status_t status;
   spi_transfer_t xfer;
 
@@ -193,7 +193,7 @@ void McuSPI_Init(void) {
 
   srcClock_Hz = MCUSPI_CONFIG_HW_SPI_MASTER_CLK_FREQ;
   DSPI_MasterInit(MCUSPI_CONFIG_HW_SPI_MASTER, &masterConfig, srcClock_Hz);
-#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_LPC55S16_FC3
+#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_LPC55S16_FC3 || MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_LPC55S59_FC8
   spi_master_config_t userConfig = {0};
   uint32_t srcFreq               = 0;
   status_t status;
