@@ -1631,7 +1631,7 @@ uint8_t McuShell_ReadLineBinaryCRLF(uint8_t *buf, size_t bufSize, size_t *pLen, 
   }
   len = *pLen;
   /* read character(s) */
-  if (io->keyPressed()) {
+  while (io->keyPressed()) {
     uint8_t ch = '\0';
     
     io->stdIn(&ch);  /* read character */
@@ -1646,7 +1646,7 @@ uint8_t McuShell_ReadLineBinaryCRLF(uint8_t *buf, size_t bufSize, size_t *pLen, 
     } else {
       return ERR_BUSY; /* continue reading */
     }
-  } /* if key pressed */
+  } /* while key pressed */
   return ERR_BUSY; /* continue reading */
 }
 
