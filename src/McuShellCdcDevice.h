@@ -25,7 +25,13 @@ McuShell_ConstStdIOTypePtr McuShellCdcDevice_GetStdio(void);
 
 void McuShellCdcDevice_Flush(void);
 void McuShellCdcDevice_WriteAndFlush(const char *buf, size_t count);
-void McuShellCdcDevice_WriteStr(const char *str);
+
+/*!
+ * \brief Writes a string to the USB CDC channel
+ * \param str Zero terminated string to write
+ * \return Number of characters written
+ */
+uint32_t McuShellCdcDevice_WriteStr(const char *str);
 
 void McuShellCdcDevice_WriteChar(char ch);
 void McuShellCdcDevice_ReadChar(char *ch);

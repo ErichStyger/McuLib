@@ -147,8 +147,8 @@ void McuShellCdcDevice_WriteAndFlush(const char *buf, size_t count) {
   (void)tud_cdc_write_flush();
 }
 
-void McuShellCdcDevice_WriteStr(const char *str) {
-  tud_cdc_write_str(str);
+uint32_t McuShellCdcDevice_WriteStr(const char *str) {
+  return tud_cdc_write_str(str);
 }
 
 bool McuShellCdcDevice_IsConnected(void) {
