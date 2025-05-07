@@ -904,6 +904,16 @@ int McuShell_ProcessConsoleInput(char *buf, size_t bufSize);
  */
 uint8_t McuShell_ReadLineCRLF(uint8_t *buf, size_t bufSize, McuShell_ConstStdIOType *io);
 
+/*!
+  \brief Continue reading in characters into buffer from stdin I/O, until \r\n
+  \param buf Pointer to buffer
+  \param bufSize Size of the buffer in bytes
+  \param [in/out] pLen Pointer to length of buffer, will be set to the number of bytes read in the buffer.
+        Must be set to zero prior first calling this function
+  \param io Standard I/O handle
+ */
+uint8_t McuShell_ReadLineBinaryCRLF(uint8_t *buf, size_t bufSize, size_t *pLen, McuShell_ConstStdIOType *io);
+
 /* END McuShell. */
 
 #ifdef __cplusplus

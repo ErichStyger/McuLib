@@ -266,14 +266,14 @@ static void LogHeader(DATEREC *date, TIMEREC *time, McuLog_Levels_e level, bool 
   #endif
 #endif /* McuLog_CONFIG_LOG_FILENAME */
 
-#if McuLog_CONFIG_LOG_LINE_NUMBER
-  /* line number */
   buf[0] = '\0';
   McuUtility_chcat(buf, sizeof(buf), ':');
+#if McuLog_CONFIG_LOG_LINE_NUMBER
+  /* line number */
   McuUtility_strcatNum32u(buf,  sizeof(buf), line);
+#endif
   McuUtility_chcat(buf, sizeof(buf), ' ');
   OutString(buf, outchar, param);
-#endif
 }
 
 #if McuLog_CONFIG_USE_PRINTF_STYLE
