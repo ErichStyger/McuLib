@@ -21,6 +21,11 @@
     /*!< if using the Modbus protocol */
 #endif
 
+#ifndef McuUart485_CONFIG_USE_RAW
+  #define McuUart485_CONFIG_USE_RAW  (0)
+    /*!< if using the raw protocol with forwarding characters */
+#endif
+
 #ifndef McuUart485_CONFIG_USE_LOGGER
   #define McuUart485_CONFIG_USE_LOGGER  (0)
     /*!< if using a logger in the interrupt RX routine. 0: disabled; 1: enabled */

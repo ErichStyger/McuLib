@@ -27,14 +27,14 @@ extern McuShell_ConstStdIOType McuUart485_stdio;
  * \brief Sending a string to the bus
  * \param data string to be sent
  */
-void McuUart485_SendString(unsigned char *data);
+void McuUart485_SendString(const unsigned char *data);
 
 /*!
  * \brief Send a binary data block to the bus
  * \param data Data to be sent
  * \param dataSize Size of data in bytes
  */
-void McuUart485_SendBlock(unsigned char *data, size_t dataSize);
+void McuUart485_SendBlock(const unsigned char *data, size_t dataSize);
 
 /*!
  * \brief Clear the response queue.

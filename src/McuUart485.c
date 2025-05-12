@@ -62,7 +62,7 @@ static void McuUart485_GPIO_Init(void) {
 #endif /* McuUart485_CONFIG_USE_HW_OE_RTS */
 /* -------------------------------------------------------------------------------------- */
 static QueueHandle_t RS485UartRxQueue; /* queue of the received bytes */
-#if !McuUart485_CONFIG_USE_MODBUS /* shell response queue only used in non-Modbus mode */
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW /* shell response queue only used in non-Modbus mode */
   static QueueHandle_t RS485UartResponseQueue; /* queue for the OK or NOK response */
 #endif
 #if McuUart485_CONFIG_USE_LOGGER
@@ -73,7 +73,7 @@ void McuUart485_ClearRxQueue(void) {
   xQueueReset(RS485UartRxQueue);
 }
 
-#if !McuUart485_CONFIG_USE_MODBUS
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
 void McuUart485_ClearResponseQueue(void) {
   xQueueReset(RS485UartResponseQueue);
 }
@@ -98,7 +98,7 @@ uint8_t McuUart485_GetRxQueueChar(void) {
   return ch;
 }
 
-#if !McuUart485_CONFIG_USE_MODBUS
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
 uint8_t McuUart485_GetResponseQueueChar(void) {
   uint8_t ch;
 
@@ -131,8 +131,10 @@ void RS485_SendChar(char ch) {
 /* On the ESP32 we are using a task. On other architectures this would be handled by an interrupt */
 static void rs485uart_task(void *arg) {
   static unsigned char data[RS485_ESP_BUF_SIZE]; /* Rx buffer for UART */
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
   unsigned char prevChar = '\n';
   bool responseLine = false;
+#endif
   BaseType_t res;
 
   McuLog_trace("UART start receive loop.\r\n");
@@ -147,6 +149,7 @@ static void rs485uart_task(void *arg) {
     #endif
     /* send to Rx Queue */
     for(int i=0; i<len; i++) { /* handle received bytes */
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
       if (prevChar=='\n' && data[i]=='@') { /* do we have potentially a response for us on the bus? */
         responseLine = true;
       }
@@ -160,6 +163,7 @@ static void rs485uart_task(void *arg) {
       if (responseLine && data[i]=='\n') { /* end of line while on response line */
         responseLine = false;
       }
+#endif
       res = xQueueSend(RS485UartRxQueue, &data[i], pdMS_TO_TICKS(20));
       if (res!=pdPASS) {
         McuLog_error("failed sending data to rx queue");
@@ -173,7 +177,7 @@ static void rs485uart_task(void *arg) {
 /*********************************************************************************************************/
 /* Shell interface */
 /*********************************************************************************************************/
-void McuUart485_SendBlock(unsigned char *data, size_t dataSize) {
+void McuUart485_SendBlock(const unsigned char *data, size_t dataSize) {
 #if McuLib_CONFIG_CPU_IS_ESP32
   uart_write_bytes(McuUart485_CONFIG_UART_DEVICE, data, dataSize);
 #else
@@ -190,7 +194,7 @@ void McuUart485_SendBlock(unsigned char *data, size_t dataSize) {
 #endif
 }
 
-void McuUart485_SendString(unsigned char *str) {
+void McuUart485_SendString(const unsigned char *str) {
   McuUart485_SendBlock(str, strlen((char*)str));
 }
 
@@ -240,7 +244,7 @@ void McuUart485_CONFIG_UART_IRQ_HANDLER(void) {
   uint32_t flags;
 #endif
   BaseType_t xHigherPriorityTaskWoken1 = false, xHigherPriorityTaskWoken2 = false;
-#if !McuUart485_CONFIG_USE_MODBUS
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
   static unsigned char prevChar = '\n';
   static bool responseLine = false;
 #endif
@@ -268,10 +272,10 @@ void McuUart485_CONFIG_UART_IRQ_HANDLER(void) {
 #endif
     while(count!=0) {
       data = McuUart485_CONFIG_UART_READ_BYTE(McuUart485_CONFIG_UART_DEVICE);
-    #if !McuUart485_CONFIG_USE_MODBUS
+    #if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
       if (data!=0) { /* data==0 could happen especially after power-up, ignore it if we are in shell/non-Modbus mode */
     #endif
-    #if !McuUart485_CONFIG_USE_MODBUS
+      #if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
         /* only store into RS485UartResponseQueue if we have a line starting with '@' */
         if (prevChar=='\n' && data=='@') {
           responseLine = true;
@@ -300,7 +304,7 @@ void McuUart485_CONFIG_UART_IRQ_HANDLER(void) {
           (void)McuUart485_CONFIG_LOGGER_CALLBACK_NAME((unsigned char)'\n');
         }
       #endif
-    #if !McuUart485_CONFIG_USE_MODBUS
+    #if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
       } /* if data != 0 */
     #endif
       count--;
@@ -639,7 +643,7 @@ uint8_t McuUart485_ParseCommand(const unsigned char *cmd, bool *handled, const M
 void McuUart485_Deinit(void) {
   vQueueDelete(RS485UartRxQueue);
   RS485UartRxQueue = NULL;
-#if !McuUart485_CONFIG_USE_MODBUS
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
   vQueueDelete(RS485UartResponseQueue);
   RS485UartResponseQueue = NULL;
 #endif
@@ -656,7 +660,7 @@ void McuUart485_Init(void) {
     for(;;){} /* out of memory? */
   }
   vQueueAddToRegistry(RS485UartRxQueue, "RS485UartRxQueue");
-#if !McuUart485_CONFIG_USE_MODBUS
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
   RS485UartResponseQueue = xQueueCreate(McuUart485_CONFIG_UART_RESPONSE_QUEUE_LENGTH, sizeof(uint8_t));
   if (RS485UartResponseQueue==NULL) {
     McuLog_fatal("failed creating RS-485 response queue");
