@@ -128,7 +128,9 @@ void McuGenericI2C_RequestBus(void)
 #endif
   /*lint -restore */
 #if McuGenericI2C_CONFIG_USE_MUTEX
-  (void)xSemaphoreTakeRecursive(McuGenericI2C_busSem, portMAX_DELAY);
+   if (xSemaphoreTakeRecursive(McuGenericI2C_busSem, portMAX_DELAY)!=pdTRUE) {
+     for(;;) {} /* error: could not get bus semaphore */
+   }
 #endif
 }
 
@@ -145,7 +147,9 @@ void McuGenericI2C_RequestBus(void)
 void McuGenericI2C_ReleaseBus(void)
 {
 #if McuGenericI2C_CONFIG_USE_MUTEX
-  (void)xSemaphoreGiveRecursive(McuGenericI2C_busSem);
+  if (xSemaphoreGiveRecursive(McuGenericI2C_busSem)!=pdTRUE) {
+    for(;;) {} /* error: could not release bus semaphore */
+  }
 #endif
   /*lint -save -e522 function lacks side effect  */
 #if McuGenericI2C_CONFIG_USE_ON_RELEASE_BUS_EVENT
