@@ -66,7 +66,7 @@
     /*!< if file names are used for the log */
 #endif
 
-#if McuLog_CONFIG_LOG_LINE_NUMBER
+#ifndef McuLog_CONFIG_LOG_LINE_NUMBER
   #define McuLog_CONFIG_LOG_LINE_NUMBER       (1) 
     /*!< if line numbers are used for the log */
 #endif
