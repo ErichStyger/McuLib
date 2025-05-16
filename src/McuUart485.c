@@ -579,8 +579,10 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
 
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"Rx: ");
   McuUtility_strcatNum32u(buf, sizeof(buf), McuUart485_CONFIG_UART_RX_QUEUE_LENGTH);
+#if !McuUart485_CONFIG_USE_MODBUS && !McuUart485_CONFIG_USE_RAW
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)", Response: ");
   McuUtility_strcatNum32u(buf, sizeof(buf), McuUart485_CONFIG_UART_RESPONSE_QUEUE_LENGTH);
+#endif
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  queues", buf, io->stdOut);
   return ERR_OK;
