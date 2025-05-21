@@ -126,8 +126,8 @@ static void McuWatchdog_CheckHealth(void) {
   ReportTime();
 #endif
   for(int i=0; i<McuWatchdog_REPORT_ID_NOF; i++) {
-    min = (McuWatchdog_CONFIG_HEALT_CHECK_TIME_SEC*reports[i].reportMsPerSec)*reports[i].minPercent/100;
-    max = (McuWatchdog_CONFIG_HEALT_CHECK_TIME_SEC*reports[i].reportMsPerSec)*reports[i].maxPercent/100;
+    min = (McuWatchdog_CONFIG_HEALTH_CHECK_TIME_SEC*reports[i].reportMsPerSec)*reports[i].minPercent/100;
+    max = (McuWatchdog_CONFIG_HEALTH_CHECK_TIME_SEC*reports[i].reportMsPerSec)*reports[i].maxPercent/100;
     taskENTER_CRITICAL();
     if (McuWatchdog_Recordings[i].ms>=min && McuWatchdog_Recordings[i].ms<=max) {
       McuWatchdog_Recordings[i].ms = 0;  /* within boundaries, reset counter */
@@ -206,7 +206,7 @@ static void WatchdogTask(void *pv) {
     vTaskDelay(pdMS_TO_TICKS(McuWatchdog_CONFIG_TIMEOUT_MS/4)); /* give back some CPU time. We are doing this here at a higher rate then the HW watchdog timer timeout */
     ms += McuWatchdog_CONFIG_TIMEOUT_MS/4;
     McuWatchdog_StateB();
-    if (ms>=McuWatchdog_CONFIG_HEALT_CHECK_TIME_SEC*1000) {
+    if (ms>=McuWatchdog_CONFIG_HEALTH_CHECK_TIME_SEC*1000) {
       McuWatchdog_CheckHealth(); /* if not healthy, we will block here */
       ms = 0;
     }

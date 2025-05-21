@@ -14,8 +14,8 @@
     /*!< if using the McuWatchdog module */
 #endif
 
-#ifndef McuWatchdog_CONFIG_HEALT_CHECK_TIME_SEC
-  #define McuWatchdog_CONFIG_HEALT_CHECK_TIME_SEC (5)  /*!< interval for checking health */
+#ifndef McuWatchdog_CONFIG_HEALTH_CHECK_TIME_SEC
+  #define McuWatchdog_CONFIG_HEALTH_CHECK_TIME_SEC (5)  /*!< interval for checking health */
 #endif
 
 #ifndef McuWatchdog_CONFIG_TIMEOUT_MS
