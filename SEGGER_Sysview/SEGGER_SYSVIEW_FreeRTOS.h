@@ -72,7 +72,7 @@ Notes:
 #endif
 
 #ifndef USE_LEGACY_TRACE_API
-  #define USE_LEGACY_TRACE_API          (1) /* << EST sill using legacy API */
+  #define USE_LEGACY_TRACE_API          (1) /* << EST still using legacy API */
 #endif
 
 #if 0 /* << EST */
