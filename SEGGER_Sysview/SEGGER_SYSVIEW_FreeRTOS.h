@@ -538,18 +538,26 @@ Notes:
 
 #if 1 /* << EST */
   #if McuSystemView_CONFIG_GENERATE_TASK_READY_EVENTS
-    #define traceMOVED_TASK_TO_READY_STATE(pxTCB)
+    #define traceMOVED_TASK_TO_READY_STATE(pxTCB)       
     #define tracePOST_MOVED_TASK_TO_READY_STATE(pxTCB)  SEGGER_SYSVIEW_OnTaskStartReady((U32)pxTCB)
+  #else
+    #define traceMOVED_TASK_TO_READY_STATE(pxTCB)       
+    #define tracePOST_MOVED_TASK_TO_READY_STATE(pxTCB)
   #endif
 #else
   #define traceMOVED_TASK_TO_READY_STATE(pxTCB)       SEGGER_SYSVIEW_OnTaskStartReady((U32)pxTCB)
 #endif
 #define traceREADDED_TASK_TO_READY_STATE(pxTCB)
 
-#define traceMOVED_TASK_TO_DELAYED_LIST()           SEGGER_SYSVIEW_OnTaskStopReady((U32)pxCurrentTCB,  (1u << 2))
-#define traceMOVED_TASK_TO_OVERFLOW_DELAYED_LIST()  SEGGER_SYSVIEW_OnTaskStopReady((U32)pxCurrentTCB,  (1u << 2))
-#define traceMOVED_TASK_TO_SUSPENDED_LIST(pxTCB)    SEGGER_SYSVIEW_OnTaskStopReady((U32)pxTCB,         ((3u << 3) | 3))
-
+#if McuSystemView_CONFIG_GENERATE_TASK_READY_EVENTS /* << EST */
+  #define traceMOVED_TASK_TO_DELAYED_LIST()           SEGGER_SYSVIEW_OnTaskStopReady((U32)pxCurrentTCB,  (1u << 2))
+  #define traceMOVED_TASK_TO_OVERFLOW_DELAYED_LIST()  SEGGER_SYSVIEW_OnTaskStopReady((U32)pxCurrentTCB,  (1u << 2))
+  #define traceMOVED_TASK_TO_SUSPENDED_LIST(pxTCB)    SEGGER_SYSVIEW_OnTaskStopReady((U32)pxTCB,         ((3u << 3) | 3))
+#else
+  #define traceMOVED_TASK_TO_DELAYED_LIST()
+  #define traceMOVED_TASK_TO_OVERFLOW_DELAYED_LIST()
+  #define traceMOVED_TASK_TO_SUSPENDED_LIST(pxTCB)
+#endif
 
 #if McuSystemView_CONFIG_GENERATE_ISR_EVENTS /* << EST */
   #define traceISR_EXIT_TO_SCHEDULER()                SEGGER_SYSVIEW_RecordExitISRToScheduler()
