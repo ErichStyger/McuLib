@@ -550,9 +550,9 @@ Notes:
 
 
 #if McuSystemView_CONFIG_GENERATE_ISR_EVENTS /* << EST */
-#define traceISR_EXIT_TO_SCHEDULER()                SEGGER_SYSVIEW_RecordExitISRToScheduler()
-#define traceISR_EXIT()                             SEGGER_SYSVIEW_RecordExitISR()
-#define traceISR_ENTER()                            SEGGER_SYSVIEW_RecordEnterISR()
+  #define traceISR_EXIT_TO_SCHEDULER()                SEGGER_SYSVIEW_RecordExitISRToScheduler()
+  #define traceISR_EXIT()                             SEGGER_SYSVIEW_RecordExitISR()
+  #define traceISR_ENTER()                            SEGGER_SYSVIEW_RecordEnterISR()
 #endif /* #if McuSystemView_CONFIG_GENERATE_QUEUE_EVENTS */
 
 #endif /* configUSE_SEGGER_SYSTEM_VIEWER_HOOKS */ /* << EST */
