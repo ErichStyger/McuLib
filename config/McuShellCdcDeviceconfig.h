@@ -21,6 +21,25 @@
     /*!< default receiving buffer size */
 #endif
 
+#ifndef McuShellCdcDevice_CONFIG_BLOCKING_SEND
+  #define McuShellCdcDevice_CONFIG_BLOCKING_SEND              (0) 
+    /*!< 0: do not block if buffer full. For tinyUSB, instead using blocking, consider using the following values in tusb_config.h:
+      #define CFG_TUD_CDC_RX_BUFSIZE   (4*256)
+      #define CFG_TUD_CDC_TX_BUFSIZE   (4*256)
+      #define CFG_TUD_CDC_EP_BUFSIZE   (16*64)
+    */
+#endif
+
+#ifndef McuShellCdcDevice_CONFIG_BLOCKING_SEND_TIMEOUT_MS
+  #define McuShellCdcDevice_CONFIG_BLOCKING_SEND_TIMEOUT_MS   (5)
+    /*! maximum timout value */
+#endif
+
+#ifndef McuShellCdcDevice_CONFIG_BLOCKING_SEND_WAIT_MS
+  #define McuShellCdcDevice_CONFIG_BLOCKING_SEND_WAIT_MS      (1) 
+    /*!< waiting time in timeout loop */
+#endif
+
 #ifndef McuShellCdcDevice_CONFIG_USE_FREERTOS
   #define McuShellCdcDevice_CONFIG_USE_FREERTOS  (McuLib_CONFIG_SDK_USE_FREERTOS)
     /*!< If FreeRTOS (Queues) shall be used or not */
