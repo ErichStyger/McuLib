@@ -41,15 +41,21 @@ void McuShellCdcDevice_SetBufferRxCharCallback(void (*buffer_rx_char_cb)(char ch
 /*********************************************************************************************************/
 static void McuShellCdcDevice_SendChar(unsigned char ch) {
   if (McuShellCdcDevice_IsReady()) {
-    for(int i=0; i<10; i++) { /* timeout of 10 ms */
+    #if McuShellCdcDevice_CONFIG_BLOCKING_SEND
+    for(int i=0; i<McuShellCdcDevice_CONFIG_BLOCKING_SEND_TIMEOUT_MS; i++) { /* timeout of McuShellCdcDevice_CONFIG_BLOCKING_SEND_TIMEOUT_MS ms */
       if (tud_cdc_n_write_available(0)>=1) {
         (void)tud_cdc_write_char(ch);
-        break;
+        break; /* was able to write it */
       } else {
-        McuWait_WaitOSms(1);
+        McuWait_WaitOSms(McuShellCdcDevice_CONFIG_BLOCKING_SEND_WAIT_MS);
       }
     } /* for */
-    McuShellCdcDevice_Flush();
+    #else /* just send: might loose data */
+      (void)tud_cdc_write_char(ch);
+    #endif
+    if (ch=='\n') { /* only flush for new line ending */
+      McuShellCdcDevice_Flush();
+    }
   } /* if */
 }
 
