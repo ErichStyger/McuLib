@@ -537,10 +537,12 @@ Notes:
 #endif
 
 #if 1 /* << EST */
-#define traceMOVED_TASK_TO_READY_STATE(pxTCB)       
-#define tracePOST_MOVED_TASK_TO_READY_STATE(pxTCB)  SEGGER_SYSVIEW_OnTaskStartReady((U32)pxTCB)
+  #if McuSystemView_CONFIG_GENERATE_TASK_READY_EVENTS
+    #define traceMOVED_TASK_TO_READY_STATE(pxTCB)
+    #define tracePOST_MOVED_TASK_TO_READY_STATE(pxTCB)  SEGGER_SYSVIEW_OnTaskStartReady((U32)pxTCB)
+  #endif
 #else
-#define traceMOVED_TASK_TO_READY_STATE(pxTCB)       SEGGER_SYSVIEW_OnTaskStartReady((U32)pxTCB)
+  #define traceMOVED_TASK_TO_READY_STATE(pxTCB)       SEGGER_SYSVIEW_OnTaskStartReady((U32)pxTCB)
 #endif
 #define traceREADDED_TASK_TO_READY_STATE(pxTCB)
 
