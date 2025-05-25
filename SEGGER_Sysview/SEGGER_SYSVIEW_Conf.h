@@ -191,7 +191,7 @@ Additional information:
 
 #ifndef   SEGGER_SYSVIEW_ID_SHIFT
   //#define SEGGER_SYSVIEW_ID_SHIFT               2                               // Number of bits to shift the Id to save bandwidth. (i.e. 2 when Ids are 4 byte aligned)
-  #define SEGGER_SYSVIEW_ID_SHIFT                 (2)               // << EST: Number of bits to shift the Id to save bandwidth. (i.e. 2 when Ids are 4 byte aligned)
+  #define SEGGER_SYSVIEW_ID_SHIFT                 (0)               // << EST: Number of bits to shift the Id to save bandwidth. (i.e. 2 when Ids are 4 byte aligned)
 #endif
 /*********************************************************************
 *
