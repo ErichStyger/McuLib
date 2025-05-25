@@ -122,8 +122,9 @@ char * sbrk(int incr) {
 #if configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && configUSE_SEGGER_SYSTEM_VIEWER_HEAP_EVENTS /* << EST */
     if (currentHeapEnd == &configLINKER_HEAP_BASE_SYMBOL && incr!=0) {
       /* first call */
-      SEGGER_SYSVIEW_HeapDefine(&configLINKER_HEAP_BASE_SYMBOL, &configLINKER_HEAP_BASE_SYMBOL, (int)&configLINKER_HEAP_SIZE_SYMBOL, 0);
-      SEGGER_SYSVIEW_NameResource(&configLINKER_HEAP_BASE_SYMBOL, "heapNewLib");
+      #define _Meta_Data_Size (8) /* \todo just a guess */
+      SEGGER_SYSVIEW_HeapDefine(&configLINKER_HEAP_BASE_SYMBOL, &configLINKER_HEAP_BASE_SYMBOL, (int)&configLINKER_HEAP_SIZE_SYMBOL, _Meta_Data_Size);
+      SEGGER_SYSVIEW_NameResource((uint32_t)&configLINKER_HEAP_BASE_SYMBOL, "heapNewLib");
     }
 #endif
     char *previousHeapEnd = currentHeapEnd;
@@ -225,10 +226,7 @@ void vPortInitialiseBlocks( void ) PRIVILEGED_FUNCTION {};
 /*-----------------------------------------------------------*/
 #if 1 /* << EST */
 void vPortInitializeHeap(void) {
-#if configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && configUSE_SEGGER_SYSTEM_VIEWER_HEAP_EVENTS /* << EST */
-  SEGGER_SYSVIEW_HeapDefine(&configLINKER_HEAP_BASE_SYMBOL, &configLINKER_HEAP_BASE_SYMBOL, sizeof(ucHeap), sizeof(BlockLink_t));
-  SEGGER_SYSVIEW_NameResource(&configLINKER_HEAP_BASE_SYMBOL, "heapNewLib");
-#endif
+  /* nothing needed */
 }
 #endif
 
