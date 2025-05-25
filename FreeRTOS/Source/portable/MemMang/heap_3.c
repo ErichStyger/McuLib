@@ -3,6 +3,8 @@
 #include "FreeRTOSConfig.h"
 #if !defined(configUSE_HEAP_SCHEME) || (configUSE_HEAP_SCHEME==3 && configSUPPORT_DYNAMIC_ALLOCATION==1)
 
+#error "Do *not* use configUSE_HEAP_SCHEME 3, because this implementation from FreeRTOS is not reeantrant. Use configUSE_HEAP_SCHEME 6 instead!"
+
 /*
  * FreeRTOS Kernel V11.0.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
