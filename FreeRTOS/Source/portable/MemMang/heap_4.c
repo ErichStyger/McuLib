@@ -342,9 +342,9 @@ void *pvPortMallocExt(size_t xWantedSize, unsigned int heapTag) /* << EST */
         }
 #if configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && configUSE_SEGGER_SYSTEM_VIEWER_HEAP_EVENTS /* << EST */
         if (heapTag!=(unsigned)-1) {
-            SEGGER_SYSVIEW_HeapAllocEx(&xStart, pvReturn, xWantedSize, heapTag);
+            SEGGER_SYSVIEW_HeapAllocEx(ucHeap, pvReturn, xWantedSize, heapTag);
         } else {
-            SEGGER_SYSVIEW_HeapAlloc(&xStart, pvReturn, xWantedSize);
+            SEGGER_SYSVIEW_HeapAlloc(ucHeap, pvReturn, xWantedSize);
         }
 #else
         traceMALLOC( pvReturn, xWantedSize );
@@ -421,7 +421,7 @@ void vPortFree( void * pv )
                     /* Add this block to the list of free blocks. */
                     xFreeBytesRemaining += pxLink->xBlockSize;
 #if configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && configUSE_SEGGER_SYSTEM_VIEWER_HEAP_EVENTS /* << EST */
-                    SEGGER_SYSVIEW_HeapFree(&xStart, pv);
+                    SEGGER_SYSVIEW_HeapFree(ucHeap, pv);
 #else
                     traceFREE( pv, pxLink->xBlockSize );
 #endif
