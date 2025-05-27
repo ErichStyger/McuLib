@@ -32,8 +32,12 @@
 #include "McuLib.h" /* SDK and API used */
 #include "McuRTOSconfig.h" /* extra configuration settings not part of the original FreeRTOS ports */
 
-#define configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H           1 /* 1: include additional header file at the end of task.c to help with debugging in GDB in combination with configUSE_TRACE_FACILITY; 0: no extra file included. */
-#define configENABLE_BACKWARD_COMPATIBILITY                 0 /* 1: enable backward compatibility mode, using old names in kernel. 0: use new kernel structure names (recommended) */
+#ifndef configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H
+  #define configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H           1 /* 1: include additional header file at the end of task.c to help with debugging in GDB in combination with configUSE_TRACE_FACILITY; 0: no extra file included. */
+#endif
+#ifndef configENABLE_BACKWARD_COMPATIBILITY
+  #define configENABLE_BACKWARD_COMPATIBILITY                 0 /* 1: enable backward compatibility mode, using old names in kernel. 0: use new kernel structure names (recommended) */
+#endif
 /*-----------------------------------------------------------
  * Application specific definitions.
  *
