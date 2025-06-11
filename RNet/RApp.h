@@ -70,6 +70,15 @@ uint8_t RAPP_SetThisNodeAddr(RAPP_ShortAddrType addr);
 uint8_t RAPP_SendPayloadDataBlock(uint8_t *appPayload, uint8_t appPayloadSize, uint8_t msgType, RAPP_ShortAddrType dstAddr, RAPP_FlagsType flags);
 
 /*!
+ * \brief Send a key-value-pair message
+ * \param msgType The key or message type, either RAPP_MSG_TYPE_NOTIFY_VALUE, RAPP_MSG_TYPE_QUERY_VALUE or RAPP_MSG_TYPE_QUERY_VALUE_RESPONSE
+ * \param value The value of the message, not used for RAPP_MSG_TYPE_QUERY_VALUE
+ * \param addr Address of destination node
+ * \param flags Sending flags
+ */
+uint8_t RAPP_SendIdValuePairMessage(uint8_t msgType, uint16_t id, uint32_t value, RAPP_ShortAddrType addr, RAPP_FlagsType flags);
+
+/*!
  * \brief Sniffs and dumps a packet.
  * \param packet Data packet.
  * \param isTx If either Tx or Rx packet.

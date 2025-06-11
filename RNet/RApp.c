@@ -37,6 +37,19 @@ uint8_t RAPP_SendPayloadDataBlock(uint8_t *appPayload, uint8_t appPayloadSize, u
   return RAPP_PutPayload(buf, sizeof(buf), appPayloadSize, (RAPP_MSG_Type)msgType, dstAddr, flags);
 }
 
+uint8_t RAPP_SendIdValuePairMessage(uint8_t msgType, uint16_t id, uint32_t value, RAPP_ShortAddrType addr, RAPP_FlagsType flags) {
+  uint8_t dataBuf[6]; /* 2 byte ID followed by 4 byte data */
+
+  if (msgType==RAPP_MSG_TYPE_QUERY_VALUE) { /* only sending query with the ID, no value needed */
+    McuUtility_SetValue16LE(id, &dataBuf[0]);
+    return RAPP_SendPayloadDataBlock(dataBuf, sizeof(id), msgType, addr, flags);
+  } else {
+    McuUtility_SetValue16LE(id, &dataBuf[0]);
+    McuUtility_SetValue32LE(value, &dataBuf[2]);
+    return RAPP_SendPayloadDataBlock(dataBuf, sizeof(dataBuf), msgType, addr, flags);
+  }
+}
+
 static uint8_t IterateTable(RAPP_MSG_Type type, uint8_t size, uint8_t *data, RAPP_ShortAddrType srcAddr, bool *handled, RAPP_PacketDesc *packet, const RAPP_MsgHandler *table) {
   uint8_t res = ERR_OK;
 
