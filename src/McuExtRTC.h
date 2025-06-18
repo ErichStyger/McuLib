@@ -503,6 +503,9 @@ uint8_t McuExtRTC_SetDate(uint16_t Year, uint8_t Month, uint8_t Day);
 ** ===================================================================
 */
 
+uint8_t McuExtRTC_GetTimeDate(TIMEREC *time, DATEREC *date);
+uint8_t McuExtRTC_SetTimeDate(TIMEREC *time, DATEREC *date);
+
 uint8_t McuExtRTC_GetTemperature(float *temperature);
 /*
 ** ===================================================================

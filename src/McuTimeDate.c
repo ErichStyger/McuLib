@@ -55,7 +55,7 @@
 **         SyncSWtimeToInternalRTCsec  - uint8_t McuTimeDate_SyncSWtimeToInternalRTCsec(void);
 **         SetExternalRTCTimeDate      - uint8_t McuTimeDate_SetExternalRTCTimeDate(TIMEREC *time, DATEREC *date);
 **         GetExternalRTCTimeDate      - uint8_t McuTimeDate_GetExternalRTCTimeDate(TIMEREC *time, DATEREC *date);
-**         SyncWithExternalRTC         - uint8_t McuTimeDate_SyncWithExternalRTC(void);
+**         SyncWithExternalRTC         - uint8_t McuTimeDate_SyncFromExternalRTC(void);
 **         UnixSecondsToTimeDateCustom - void McuTimeDate_UnixSecondsToTimeDateCustom(int32_t seconds, int8_t...
 **         UnixSecondsToTimeDate       - void McuTimeDate_UnixSecondsToTimeDate(int32_t seconds, int8_t offset_hours,...
 **         TimeDateToUnixSecondsCustom - int32_t McuTimeDate_TimeDateToUnixSecondsCustom(TIMEREC *time, DATEREC *date,...
@@ -107,6 +107,7 @@
 /* MODULE McuTimeDate. */
 
 #include "McuTimeDate.h"
+#include "McuWait.h"
 #include <stdlib.h> /* for NULL */
 #if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
   #include McuTimeDate_CONFIG_EXT_RTC_HEADER_FILE_NAME /* header file for the external RTC */
@@ -716,7 +717,7 @@ uint8_t McuTimeDate_Init(void)
 #elif McuTimeDate_CONFIG_INIT_SOFTWARE_RTC_METHOD==McuTimeDate_INIT_SOFTWARE_RTC_FROM_INTERNAL_RTC
   return McuTimeDate_SyncWithInternalRTC();
 #elif McuTimeDate_CONFIG_INIT_SOFTWARE_RTC_METHOD==McuTimeDate_INIT_SOFTWARE_RTC_FROM_EXTERNAL_RTC
-  return McuTimeDate_SyncWithExternalRTC();
+  return McuTimeDate_SyncFromExternalRTC();
 #else
   return ERR_FAILED; /* wrong or no init specified? */
 #endif
@@ -756,8 +757,19 @@ uint8_t McuTimeDate_ParseCommand(const unsigned char *cmd, bool *handled, const 
     McuShell_SendHelpStr((unsigned char*)"  date [dd.mm.yyyy]", (const unsigned char*)"Set the current date. Prints the current date if no argument\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  dateToSec <datetime>", (const unsigned char*)"Convert date/time int UNIX timestamp (seconds after 1970)\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  secToDate <secs>", (const unsigned char*)"Convert UNIX timestamp to date/time\r\n", io->stdOut);
+#if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
+    McuShell_SendHelpStr((unsigned char*)"  sync from|to extRTC", (const unsigned char*)"Read time/date from external RTC or write to it\r\n", io->stdOut);
+#endif
     *handled = TRUE;
     return ERR_OK;
+#if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
+  } else if (McuUtility_strcmp((char*)cmd, "McuTimeDate sync from extRTC")==0) {
+    *handled = TRUE;
+    return McuTimeDate_SyncFromExternalRTC();
+  } else if (McuUtility_strcmp((char*)cmd, "McuTimeDate sync to extRTC")==0) {
+    *handled = TRUE;
+    return McuTimeDate_SyncToExternalRTC();
+#endif /* McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC */
   } else if ((McuUtility_strcmp((char*)cmd, McuShell_CMD_STATUS)==0) || (McuUtility_strcmp((char*)cmd, "McuTimeDate status")==0)) {
     *handled = TRUE;
     return PrintStatus(io);
@@ -1184,7 +1196,7 @@ uint8_t McuTimeDate_SyncWithInternalRTC(void)
 
 /*
 ** ===================================================================
-**     Method      :  SyncWithExternalRTC (component GenericTimeDate)
+**     Method      :  SyncFromExternalRTC (component GenericTimeDate)
 **
 **     Description :
 **         Synchronizes the software RTC with date and time from the
@@ -1196,31 +1208,64 @@ uint8_t McuTimeDate_SyncWithInternalRTC(void)
 **         ---             - Error code
 ** ===================================================================
 */
-uint8_t McuTimeDate_SyncWithExternalRTC(void)
-{
 #if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
+uint8_t McuTimeDate_SyncFromExternalRTC(void)
+{
   TIMEREC time;
   DATEREC date;
-  uint8_t res;
+  uint8_t res, oldSec;
+  int32_t timeout_ms = 1200;
 
-  res = McuTimeDate_GetExternalRTCTimeDate(&time, &date);
+  /* read external RTC date/time at the time of the second counter change */
+  res = McuTimeDate_GetExternalRTCTimeDate(&time, NULL);
   if (res!=ERR_OK) {
     return res;
   }
+  oldSec = time.Sec;
+  do {
+    res = McuTimeDate_GetExternalRTCTimeDate(&time, &date);
+    if (res!=ERR_OK) {
+      return res;
+    }
+    McuWait_WaitOSms(20);
+    timeout_ms -= 20;
+    if (timeout_ms<0) { /* should not happen if RTC is running? */
+      return ERR_BUSY;
+    }
+  } while(time.Sec==oldSec);
   /* update software time from hardware information */
-#if McuTimeDate_HAS_SEC100_IN_TIMEREC
-  res = McuTimeDate_SetTime(time.Hour, time.Min, time.Sec, time.Sec100);
-#else
-  res = McuTimeDate_SetTime(time.Hour, time.Min, time.Sec, 0);
+  return McuTimeDate_SetSWTimeDate(&time, &date);
+}
 #endif
+
+#if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
+uint8_t McuTimeDate_SyncToExternalRTC(void)
+{
+  TIMEREC time;
+  DATEREC date;
+  uint8_t res, secs;
+  int32_t timeout_ms = 1200;
+
+  res = McuTimeDate_GetSWTimeDate(&time, &date);
   if (res!=ERR_OK) {
     return res;
   }
-  return McuTimeDate_SetDate(date.Year, date.Month, date.Day);
-#else
-  return ERR_FAILED; /* no external RTC available */
-#endif
+  secs = time.Sec;
+  do {
+    res = McuTimeDate_GetSWTimeDate(&time, &date);
+    if (res!=ERR_OK) {
+      return res;
+    }
+    McuWait_WaitOSms(20);
+    timeout_ms -= 20;
+    if (timeout_ms<0) { /* should not happen if RTC is running? */
+      return ERR_BUSY;
+    }
+  } while (secs==time.Sec); /* wait until next second jump, as RTC only counts seconds */
+  /* update RTC time from software time information */
+  return McuTimeDate_SetExternalRTCTimeDate(&time, &date);
 }
+#endif
 
 /*
 ** ===================================================================
@@ -1294,16 +1339,23 @@ uint8_t McuTimeDate_GetExternalRTCTimeDate(TIMEREC *time, DATEREC *date)
 #if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
   uint8_t res;
 
-  if (time!=NULL) {
-    res = McuTimeDate_CONFIG_EXT_RTC_GET_TIME_FCT(time);
+  if (time!=NULL && date!=NULL) {
+    res = McuTimeDate_CONFIG_EXT_RTC_GET_TIME_DATE_FCT(time, date);
     if (res!=ERR_OK) {
       return res;
     }
-  }
-  if (date!=NULL) {
-    res = McuTimeDate_CONFIG_EXT_RTC_GET_DATE_FCT(date);
-    if (res!=ERR_OK) {
-      return res;
+  } else {
+    if (time!=NULL) {
+      res = McuTimeDate_CONFIG_EXT_RTC_GET_TIME_FCT(time);
+      if (res!=ERR_OK) {
+        return res;
+      }
+    }
+    if (date!=NULL) {
+      res = McuTimeDate_CONFIG_EXT_RTC_GET_DATE_FCT(date);
+      if (res!=ERR_OK) {
+        return res;
+      }
     }
   }
   return ERR_OK;

@@ -124,6 +124,16 @@
   #define McuTimeDate_CONFIG_EXT_RTC_HEADER_FILE_NAME        "McuExtRTC.h"
 #endif
 
+#ifndef McuTimeDate_CONFIG_EXT_RTC_GET_TIME_DATE_FCT
+  #define McuTimeDate_CONFIG_EXT_RTC_GET_TIME_DATE_FCT       McuExtRTC_GetTimeDate
+    /*!< function to get the external RTC time and date */
+#endif
+
+#ifndef McuTimeDate_CONFIG_EXT_RTC_SET_TIME_DATE_FCT
+  #define McuTimeDate_CONFIG_EXT_RTC_SET_TIME_DATE_FCT       McuExtRTC_SetTimeDate
+    /*!< function to set the external RTC time and date */
+#endif
+
 #ifndef McuTimeDate_CONFIG_EXT_RTC_GET_TIME_FCT
   #define McuTimeDate_CONFIG_EXT_RTC_GET_TIME_FCT            McuExtRTC_GetTime
     /*!< function to get the external RTC time */

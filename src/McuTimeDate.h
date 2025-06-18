@@ -55,7 +55,8 @@
 **         SyncSWtimeToInternalRTCsec  - uint8_t McuTimeDate_SyncSWtimeToInternalRTCsec(void);
 **         SetExternalRTCTimeDate      - uint8_t McuTimeDate_SetExternalRTCTimeDate(TIMEREC *time, DATEREC *date);
 **         GetExternalRTCTimeDate      - uint8_t McuTimeDate_GetExternalRTCTimeDate(TIMEREC *time, DATEREC *date);
-**         SyncWithExternalRTC         - uint8_t McuTimeDate_SyncWithExternalRTC(void);
+**         SyncFromExternalRTC         - uint8_t McuTimeDate_SyncFromExternalRTC(void);
+**         SyncToExternalRTC            - uint8_t McuTimeDate_SyncToExternalRTC(void);
 **         UnixSecondsToTimeDateCustom - void McuTimeDate_UnixSecondsToTimeDateCustom(int32_t seconds, int8_t...
 **         UnixSecondsToTimeDate       - void McuTimeDate_UnixSecondsToTimeDate(int32_t seconds, int8_t offset_hours,...
 **         TimeDateToUnixSecondsCustom - int32_t McuTimeDate_TimeDateToUnixSecondsCustom(TIMEREC *time, DATEREC *date,...
@@ -437,7 +438,7 @@ uint8_t McuTimeDate_GetSWTimeDate(TIMEREC *time, DATEREC *date);
 ** ===================================================================
 */
 
-uint8_t McuTimeDate_SyncWithInternalRTC(void);
+uint8_t McuTimeDate_SyncWithInternalRTCsec(void);
 /*
 ** ===================================================================
 **     Method      :  SyncWithInternalRTC (component GenericTimeDate)
@@ -451,10 +452,26 @@ uint8_t McuTimeDate_SyncWithInternalRTC(void);
 ** ===================================================================
 */
 
-uint8_t McuTimeDate_SyncWithExternalRTC(void);
+uint8_t McuTimeDate_SyncToExternalRTC(void);
 /*
 ** ===================================================================
-**     Method      :  SyncWithExternalRTC (component GenericTimeDate)
+**     Method      :  SyncToExternalRTC (component GenericTimeDate)
+**
+**     Description :
+**         Writes the software RTC with date and time to the
+**         hardware RTC. Note that if that RTC interface requires
+**         interrupts, this function should be called only when
+**         interrupts are enabled.
+**     Parameters  : None
+**     Returns     :
+**         ---             - Error code
+** ===================================================================
+*/
+
+uint8_t McuTimeDate_SyncFromExternalRTC(void);
+/*
+** ===================================================================
+**     Method      :  SyncFromExternalRTC (component GenericTimeDate)
 **
 **     Description :
 **         Synchronizes the software RTC with date and time from the

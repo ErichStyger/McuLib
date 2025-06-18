@@ -729,6 +729,44 @@ uint8_t McuExtRTC_ParseCommand(const unsigned char *cmd, bool *handled, const Mc
   return ERR_OK;
 }
 
+uint8_t McuExtRTC_GetTimeDate(TIMEREC *time, DATEREC *date)
+{
+  McuExtRTC_TTIME ttime;
+  McuExtRTC_TDATE tdate;
+
+  if (McuExtRTC_GetRTCTimeDate(&ttime, &tdate)!=ERR_OK) {
+    return ERR_FAILED;
+  }
+  time->Hour = ttime.hour;
+  time->Min = ttime.min;
+  time->Sec = ttime.sec;
+  time->Sec100 = 0;
+  date->Day = tdate.day;
+  date->Month = tdate.month;
+  date->Year = (uint16_t)(tdate.year+2000);
+  return ERR_OK;
+}
+
+uint8_t McuExtRTC_SetTimeDate(TIMEREC *time, DATEREC *date)
+{
+  McuExtRTC_TTIME ttime;
+  McuExtRTC_TDATE tdate;
+
+  ttime.hour = time->Hour;
+  ttime.min = time->Min;
+  ttime.sec = time->Sec;
+  ttime.mode = McuExtRTC_TTIME_MODE_24H;
+  ttime.am_pm = McuExtRTC_TTIME_AMPM_AM;
+  tdate.day = date->Day;
+  tdate.month = date->Month;
+  tdate.year = (uint8_t)(date->Year-2000);
+  if (McuExtRTC_SetRTCTimeDate(&ttime, &tdate)!=ERR_OK) {
+    return ERR_FAILED;
+  }
+
+  return ERR_OK;
+}
+
 /*
 ** ===================================================================
 **     Method      :  GetTime (component RTC_Maxim)
