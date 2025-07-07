@@ -98,7 +98,7 @@ void McuUnity_Exit_JRun_RTT(bool success) {
 }
 
 void McuUnity_Exit_LinkServer_Log(bool success) {
-    /* report failed or passed */
+  /* report failed or passed */
   if (success) {
     McuLog_info("*** PASSED ***");
   } else {
