@@ -594,7 +594,9 @@ static uint8_t PrintHelp(const McuShell_StdIOType *io) {
 #if McuLib_CONFIG_CPU_IS_KINETIS || McuLib_CONFIG_CPU_IS_LPC
   McuShell_SendHelpStr((unsigned char*)"  clear <flags>", (unsigned char*)"Clear UART ISR flags\r\n", io->stdOut);
 #endif
+#if McuUart485_CONFIG_USE_LOGGER
   McuShell_SendHelpStr((unsigned char*)"  log on|off", (unsigned char*)"Turn logging on or off\r\n", io->stdOut);
+#endif
   return ERR_OK;
 }
 
