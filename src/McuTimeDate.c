@@ -816,10 +816,16 @@ uint8_t McuTimeDate_ParseCommand(const unsigned char *cmd, bool *handled, const 
     }
   } else if (McuUtility_strncmp((char*)cmd, "McuTimeDate date", sizeof("McuTimeDate date")-1)==0) {
     *handled = TRUE;
-    return DateCmd(cmd, io);
+    if (DateCmd(cmd, io)!=ERR_OK) {
+      return ERR_FAILED;
+    }
+    return McuTimeDate_SyncToExternalRTC();
   } else if (McuUtility_strncmp((char*)cmd, "McuTimeDate time", sizeof("McuTimeDate time")-1)==0) {
     *handled = TRUE;
-    return TimeCmd(cmd, io);
+    if (TimeCmd(cmd, io)!=ERR_OK) {
+      return ERR_FAILED;
+    }
+    return McuTimeDate_SyncToExternalRTC();
   }
   return ERR_OK;
 }
