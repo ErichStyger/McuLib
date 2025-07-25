@@ -42,12 +42,22 @@ extern uint8_t McuUart485_CONFIG_LOGGER_CALLBACK_NAME(uint8_t ch); /* prototype 
 #if McuLib_CONFIG_CPU_IS_LPC && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC845
   #include "fsl_usart.h"
 
+#ifndef McuUart485_CONFIG_USE_UART_DEVICE
+  #define McuUart485_CONFIG_USE_UART_DEVICE     (1) /* 0: USART0, 1: USART0 */
+#endif
+
+#if McuUart485_CONFIG_USE_UART_DEVICE==0
+  #define McuUart485_CONFIG_UART_DEVICE                   USART0
+#elif McuUart485_CONFIG_USE_UART_DEVICE==1
+  #define McuUart485_CONFIG_UART_DEVICE                   USART1
+#else
+  #error "unsupported UART device"
+#endif
+
   #ifndef McuUart485_CONFIG_UART_PARITY
     #define McuUart485_CONFIG_UART_PARITY                 kUSART_ParityDisabled /* or kUSART_ParityEven or kUSART_ParityOdd */
   #endif
 
-  #define McuUart485_CONFIG_UART_DEVICE                   USART1
-  #define McuUart485_CONFIG_UART_SET_UART_CLOCK()         CLOCK_Select(kUART1_Clk_From_MainClk) /* Select the main clock as source clock of USART0. */
   #define McuUart485_CONFIG_UART_WRITE_BLOCKING           USART_WriteBlocking
   #define McuUart485_CONFIG_UART_GET_FLAGS                USART_GetStatusFlags
   #define McuUart485_CONFIG_UART_HW_RX_READY_FLAGS        (kUSART_RxReady|kUSART_HardwareOverrunFlag)
@@ -56,10 +66,17 @@ extern uint8_t McuUart485_CONFIG_LOGGER_CALLBACK_NAME(uint8_t ch); /* prototype 
   #define McuUart485_CONFIG_UART_GET_DEFAULT_CONFIG       USART_GetDefaultConfig
   #define McuUart485_CONFIG_UART_ENABLE_INTERRUPTS        USART_EnableInterrupts
   #define McuUart485_CONFIG_UART_ENABLE_INTERRUPT_FLAGS   (kUSART_RxReadyInterruptEnable | kUSART_HardwareOverRunInterruptEnable)
+#if McuUart485_CONFIG_USE_UART_DEVICE==0
+  #define McuUart485_CONFIG_UART_SET_UART_CLOCK()         CLOCK_Select(kUART0_Clk_From_MainClk) /* Select the main clock as source clock of USART0. */
+  #define McuUart485_CONFIG_UART_IRQ_NUMBER               USART0_IRQn
+  #define McuUart485_CONFIG_UART_IRQ_HANDLER              USART0_IRQHandler
+#elif McuUart485_CONFIG_USE_UART_DEVICE==1
+  #define McuUart485_CONFIG_UART_SET_UART_CLOCK()         CLOCK_Select(kUART1_Clk_From_MainClk) /* Select the main clock as source clock of USART1. */
   #define McuUart485_CONFIG_UART_IRQ_NUMBER               USART1_IRQn
+  #define McuUart485_CONFIG_UART_IRQ_HANDLER              USART1_IRQHandler
+#endif
   #define McuUart485_CONFIG_UART_INIT                     USART_Init
   #define McuUart485_CONFIG_UART_GET_CLOCK_FREQ_SELECT    kCLOCK_MainClk
-  #define McuUart485_CONFIG_UART_IRQ_HANDLER              USART1_IRQHandler
   #define McuUart485_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
 
 #elif McuLib_CONFIG_CPU_IS_LPC && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC55S69
