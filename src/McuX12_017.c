@@ -134,6 +134,14 @@ McuX12_017_Handle_t McuX12_017_InitDevice(McuX12_017_Config_t *config) {
   return handle;
 }
 
+McuGPIO_Handle_t McuX12_017_GetResetGPIOHandle(McuX12_017_Handle_t device) {
+  McuX12_Device_t *dev = (McuX12_Device_t*)device;
+  if (dev!=NULL && dev->hasReset) {
+    return dev->reset;
+  }
+  return NULL; /* no reset line */
+}
+
 void McuX12_017_ResetDriver(McuX12_017_Handle_t device) {
   /* RESET line shall be low during power-on (e.g. with pull-down resistor), then can be released after 1ms after power-on */
   McuX12_Device_t *dev = (McuX12_Device_t*)device;

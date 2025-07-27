@@ -47,6 +47,7 @@ void McuX12_017_GetDefaultConfig(McuX12_017_Config_t *config);
 McuX12_017_Handle_t McuX12_017_InitDevice(McuX12_017_Config_t *config);
 McuX12_017_Handle_t McuX12_017_DeinitDevice(McuX12_017_Handle_t device);
 
+McuGPIO_Handle_t McuX12_017_GetResetGPIOHandle(McuX12_017_Handle_t device);
 void McuX12_017_ResetDriver(McuX12_017_Handle_t device);
 void McuX12_017_SetResetLine(McuX12_017_Handle_t device, bool setHigh);
 
