@@ -357,15 +357,13 @@ static void InitUart(void) {
   #elif McuLib_CONFIG_CPU_IS_LPC /* LPC845 or LPC55S69 */
     McuUart485_CONFIG_UART_DEVICE->CFG |= USART_CFG_OESEL(1); /* if enabled, use RTS signal for RS-485 transceiver */
     McuUart485_CONFIG_UART_DEVICE->CFG |= USART_CFG_OEPOL(1); /* 1: the output enable signal is high active */
-    McuUart485_CONFIG_UART_DEVICE->CFG |= USART_CFG_OETA(1); /* output enable turnaround time: if set, the output enable signal remains asserted for 1 char time after the end of the last bit */
+    McuUart485_CONFIG_UART_DEVICE->CFG |= USART_CFG_OETA(1);  /* output enable turnaround time: if set, the output enable signal remains asserted for 1 char time after the end of the last bit */
   #endif
 #endif
 #if McuUart485_CONFIG_HAS_FIFO
   UART_EnableRxFIFO(McuUart485_CONFIG_UART_DEVICE, true); /* enable UART Rx FIFO */
 #endif
-  McuUart485_CONFIG_UART_ENABLE_INTERRUPTS(McuUart485_CONFIG_UART_DEVICE,
-		  McuUart485_CONFIG_UART_ENABLE_INTERRUPT_FLAGS
-		  );
+  McuUart485_CONFIG_UART_ENABLE_INTERRUPTS(McuUart485_CONFIG_UART_DEVICE, McuUart485_CONFIG_UART_ENABLE_INTERRUPT_FLAGS);
   NVIC_SetPriority(McuUart485_CONFIG_UART_IRQ_NUMBER, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY); /* required as we are using FreeRTOS API calls */
   EnableIRQ(McuUart485_CONFIG_UART_IRQ_NUMBER);
 #elif McuLib_CONFIG_CPU_IS_ESP32
