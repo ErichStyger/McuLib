@@ -105,7 +105,9 @@ void McuShellUart_CONFIG_UART_IRQ_HANDLER(void) {
     while(count!=0) {
       data = McuShellUart_CONFIG_UART_READ_BYTE(McuShellUart_CONFIG_UART_DEVICE);
   #if McuShellUart_CONFIG_USE_FREERTOS
-      (void)xQueueSendFromISR(uartRxQueue, &data, &xHigherPriorityTaskWoken);
+      if (uartRxQueue!=NULL) {
+        (void)xQueueSendFromISR(uartRxQueue, &data, &xHigherPriorityTaskWoken);
+      }
   #else
       McuRB_Put(rxRingBuffer, &data);
   #endif
