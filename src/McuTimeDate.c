@@ -819,13 +819,21 @@ uint8_t McuTimeDate_ParseCommand(const unsigned char *cmd, bool *handled, const 
     if (DateCmd(cmd, io)!=ERR_OK) {
       return ERR_FAILED;
     }
+#if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
     return McuTimeDate_SyncToExternalRTC();
+#else
+    return ERR_OK;
+#endif
   } else if (McuUtility_strncmp((char*)cmd, "McuTimeDate time", sizeof("McuTimeDate time")-1)==0) {
     *handled = TRUE;
     if (TimeCmd(cmd, io)!=ERR_OK) {
       return ERR_FAILED;
     }
+#if McuTimeDate_CONFIG_USE_EXTERNAL_HW_RTC
     return McuTimeDate_SyncToExternalRTC();
+#else
+    return ERR_OK;
+#endif
   }
   return ERR_OK;
 }
