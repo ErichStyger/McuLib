@@ -222,7 +222,7 @@
 */
 
 #define McuMinINI_ini_puts(Section, Key, Value, Filename) \
-   ini_puts(Section, Key, Value, Filename);
+   ini_puts(Section, Key, Value, Filename)
 /*
 ** ===================================================================
 **     Method      :  ini_puts (component minIni)
