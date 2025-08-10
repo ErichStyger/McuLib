@@ -198,8 +198,9 @@ static void McuShellCdcDevice_GetLineCodingStr(unsigned char *buf, size_t bufSiz
 void tud_cdc_rx_cb(uint8_t itf) {
   (void)itf; /*not uesed */
   static bool prevNewline = true;
-  char buf[64];
+  char buf[McuShellCdcDevice_CONFIG_RX_BUFFER_SIZE];
   uint32_t count = tud_cdc_read(buf, sizeof(buf));
+  
   if (count>0) {
     if (McuShellCdcDevice_callbacks.buffer_rx_char!=NULL) {
   #if McuShellCdcDevice_CONFIG_USE_FREERTOS
