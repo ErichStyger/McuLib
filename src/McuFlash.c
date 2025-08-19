@@ -7,8 +7,7 @@
 #include "McuFlash.h"
 #if McuFlash_CONFIG_IS_ENABLED
 #include "McuLib.h"
-#if McuLib_CONFIG_CPU_IS_LPC || McuLib_CONFIG_CPU_IS_KINETIS  || McuLib_CONFIG_CPU_IS_RPxxxx /* currently limited support, only for these CPUs */
-
+#if McuLib_CONFIG_CPU_IS_LPC || McuLib_CONFIG_CPU_IS_KINETIS  || McuLib_CONFIG_CPU_IS_RPxxxx || McuLib_CONFIG_CPU_IS_ESP32 /* currently limited support, only for these CPUs */
 #include "McuLog.h"
 #include "McuUtility.h"
 #include "McuCriticalSection.h"
@@ -22,6 +21,12 @@
 #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_RP2040
   #include "hardware/flash.h"
   #include "hardware/sync.h"
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  #include "esp_log.h"
+  #include "esp_partition.h"
+  #include "spi_flash_mmap.h"
+#else
+  #error "device not yet supported"
 #endif
 
 typedef struct {
@@ -40,6 +45,9 @@ static McuFlash_Memory McuFlash_RegisteredMemory; /* used in shell status, for i
   static flash_config_t s_flashDriver;
 #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_RP2040
   /* nothing  needed */
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  #define STORAGE_NAMESPACE "storage"
+  static const esp_partition_t *partition = NULL;
 #else
   #error "device not yet supported"
 #endif
@@ -250,6 +258,9 @@ static uint8_t McuFlash_ProgramPage(void *addr, const void *data, size_t dataSiz
   flash_range_program(base, (const uint8_t *)data, size);
   McuCriticalSection_ExitCritical();
   return ERR_OK;
+#elif McuLib_CONFIG_CPU_IS_ESP32
+//  ESP_ERROR_CHECK(esp_partition_write(partition, addr-partition->address, data, data_size));
+  return ERR_OK;
 #else
   #error "target not supported yet!"
   return ERR_FAILED;
@@ -451,6 +462,9 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
   McuCriticalSection_ExitCritical();
 
   return ERR_OK;
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  /* \todo */
+  return ERR_FAILED;
 #else
   #error "target not supported yet!"
 #endif
@@ -583,6 +597,22 @@ uint8_t McuFlash_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
 void McuFlash_Deinit(void) {
 }
 
+#if McuLib_CONFIG_CPU_IS_ESP32
+uint32_t McuFlash_GetEsp32PartitionSize(void) {
+  if (partition != NULL) {
+    return partition->size;
+  }
+  return 0; /* partition not initialized */
+}
+
+uint32_t McuFlash_GetEsp32PartitionAddress(void) {
+  if (partition != NULL) {
+    return partition->address;
+  }
+  return 0; /* partition not initialized */
+}
+#endif
+
 void McuFlash_Init(void) {
 #if McuLib_CONFIG_CPU_IS_KINETIS || McuLib_CONFIG_CPU_IS_LPC55xx
   status_t result;    /* Return code from each flash driver function */
@@ -590,20 +620,50 @@ void McuFlash_Init(void) {
   memset(&s_flashDriver, 0, sizeof(flash_config_t));
   /* Setup flash driver structure for device and initialize variables. */
   result = FLASH_Init(&s_flashDriver);
-#if McuLib_CONFIG_CPU_IS_KINETIS
-  if (result!=kStatus_FTFx_Success) {
-    McuLog_fatal("McuFlash_Init() failed!");
-    for(;;) { /* error */ }
-  }
-#elif McuLib_CONFIG_CPU_IS_LPC55xx
-  if (result!=kStatus_Success) {
-    McuLog_fatal("McuFlash_Init() failed!");
-    for(;;) { /* error */ }
-  }
-#endif
+  #if McuLib_CONFIG_CPU_IS_KINETIS
+    if (result!=kStatus_FTFx_Success) {
+      McuLog_fatal("McuFlash_Init() failed!");
+      for(;;) { /* error */ }
+    }
+  #elif McuLib_CONFIG_CPU_IS_LPC55xx
+    if (result!=kStatus_Success) {
+      McuLog_fatal("McuFlash_Init() failed!");
+      for(;;) { /* error */ }
+    }
+  #endif
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  static const char *TAG = "example";
+
+  partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
+  assert(partition != NULL);
+
+  //static char store_data[] = "ESP-IDF Partition Operations Example (Read, Erase, Write)";
+  //static char read_data[sizeof(store_data)];
+
+  // Erase entire partition
+  //memset(read_data, 0xFF, sizeof(read_data));
+ // ESP_ERROR_CHECK(esp_partition_erase_range(partition, 0, partition->size));
+
+  // Write the data, starting from the beginning of the partition
+  //ESP_ERROR_CHECK(esp_partition_write(partition, 0, store_data, sizeof(store_data)));
+  //ESP_LOGI(TAG, "Written data: %s", store_data);
+
+  // Read back the data, checking that read data and written data match
+  //ESP_ERROR_CHECK(esp_partition_read(partition, 0, read_data, sizeof(read_data)));
+  //assert(memcmp(store_data, read_data, sizeof(read_data)) == 0);
+  //ESP_LOGI(TAG, "Read data: %s", read_data);
+
+  // Erase the area where the data was written. Erase size should be a multiple of SPI_FLASH_SEC_SIZE
+  // and also be SPI_FLASH_SEC_SIZE aligned
+  ESP_ERROR_CHECK(esp_partition_erase_range(partition, 0, partition->erase_size));
+
+  // Read back the data (should all now be 0xFF's)
+  //memset(store_data, 0xFF, sizeof(read_data));
+  //ESP_ERROR_CHECK(esp_partition_read(partition, 0, read_data, sizeof(read_data)));
+  //assert(memcmp(store_data, read_data, sizeof(read_data)) == 0);
 #endif
 }
 
-#endif
+#endif /* currently limited support, only for these CPUs */
 
 #endif /* McuFlash_CONFIG_IS_ENABLED */

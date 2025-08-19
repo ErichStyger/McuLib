@@ -52,6 +52,7 @@ else ()
               "src/McuDebounce.c"
               "src/McuFXOS8700.c"
               "src/McuFontDisplay.c"
+              "src/McuFlash.c"
               "src/McuGenericI2C.c"
               "src/McuGDisplaySSD1306.c"
               "src/McuGPIO.c"
@@ -83,8 +84,9 @@ else ()
               "./config/fonts"
           REQUIRES
               driver
+              esp_partition
+              spi_flash
          )
-   
 endif ()
 
 

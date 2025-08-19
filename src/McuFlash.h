@@ -17,6 +17,12 @@
 extern "C" {
 #endif
 
+#if McuLib_CONFIG_CPU_IS_ESP32
+uint32_t McuFlash_GetEsp32PartitionSize(void);
+
+uint32_t McuFlash_GetEsp32PartitionAddress(void);
+#endif
+
 /*!
  * \brief Decides if memory is accessible. On some architectures it needs to be prepared first.
  * \param addr Memory area to check
