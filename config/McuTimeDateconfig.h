@@ -154,4 +154,9 @@
     /*!< function to get the external RTC date */
 #endif
 
+#ifndef McuTimeDate_CONFIG_DST_EU
+  #define McuTimeDate_CONFIG_DST_EU                         (1)
+    /*!< 1: use daylight time saving for Europe. Otherwise assume US. */
+#endif
+
 #endif /* __McuTimeDate_CONFIG_H */

@@ -161,8 +161,9 @@ static uint8_t AddTimeToBuf(uint8_t *buf, uint16_t bufSize, TIMEREC *ttime) {
 
 static uint8_t AddDate(uint8_t *buf, uint16_t bufSize, uint8_t (*GetTimeDateFn)(TIMEREC*, DATEREC*)) {
   DATEREC tdate;
+  TIMEREC ttime;
 
-  if (GetTimeDateFn(NULL, &tdate)!=ERR_OK) {
+  if (GetTimeDateFn(&ttime, &tdate)!=ERR_OK) {
     return ERR_FAILED;
   }
   return AddDateToBuf(buf, bufSize, &tdate);
@@ -170,8 +171,9 @@ static uint8_t AddDate(uint8_t *buf, uint16_t bufSize, uint8_t (*GetTimeDateFn)(
 
 static uint8_t AddTime(uint8_t *buf, uint16_t bufSize, uint8_t (*GetTimeDateFn)(TIMEREC*, DATEREC*)) {
   TIMEREC ttime;
+  DATEREC tdate;
 
-  if (GetTimeDateFn(&ttime, NULL)!=ERR_OK) {
+  if (GetTimeDateFn(&ttime, &tdate)!=ERR_OK) {
     return ERR_FAILED;
   }
   return AddTimeToBuf(buf, bufSize, &ttime);
@@ -267,6 +269,22 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuShell_SendStr(buf, io->stdOut);
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)", ");
   if (AddTime(buf, sizeof(buf), McuTimeDate_GetSWTimeDate)!=ERR_OK) {
+    McuShell_SendStr((unsigned char*)"***Failed to get time!\r\n", io->stdErr);
+    return ERR_FAILED;
+  } else {
+    McuShell_SendStr(buf, io->stdOut);
+  }
+  McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
+
+  McuShell_SendStatusStr((unsigned char*)"  DST RTC", (const unsigned char*)"", io->stdOut);
+  buf[0] = '\0';
+  if (AddDate(buf, sizeof(buf), McuTimeDate_GetTimeDateAdjustDST)!=ERR_OK) {
+    McuShell_SendStr((unsigned char*)"***Failed to get date!\r\n", io->stdErr);
+    return ERR_FAILED;
+  }
+  McuShell_SendStr(buf, io->stdOut);
+  McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)", ");
+  if (AddTime(buf, sizeof(buf), McuTimeDate_GetTimeDateAdjustDST)!=ERR_OK) {
     McuShell_SendStr((unsigned char*)"***Failed to get time!\r\n", io->stdErr);
     return ERR_FAILED;
   } else {
@@ -1471,8 +1489,8 @@ uint8_t McuTimeDate_GetTimeDate(TIMEREC *time, DATEREC *date)
 **         NAME            - DESCRIPTION
 **         seconds         - Unix time stamp in seconds after
 **                           the given base year and base month
-**         offset_hours    - Optional time zone
-**                           offset, use 0 for no offset
+**         offset_hours    - Optional time zone (GMT)
+**                           offset, use 0 for no offset, positive values means minus time!
 **       * time            - Pointer to TIMEREC struct where the
 **                           result is stored. Can be NULL.
 **       * date            - Pointer to DATEREC struct where the
@@ -1494,8 +1512,8 @@ void McuTimeDate_UnixSecondsToTimeDateCustom(int32_t seconds, int8_t offset_hour
   uint8_t hours;
   uint8_t minutes;
 
-  /* adjust seconds to localtime */
-  seconds -= (int32_t)offset_hours*3600;
+  /* adjust time with offset */
+  seconds += (int32_t)offset_hours*3600;
   /* year */
   year = baseYear;
   if (McuUtility_IsLeapYear(year)) {
@@ -1725,6 +1743,129 @@ uint8_t McuTimeDate_AddTimeString(uint8_t *buf, size_t bufSize, TIMEREC *time, u
 #endif
   return ERR_OK;
 }
+
+
+/*
+ * The following DST functions are adapted from https://github.com/andydoro/DST_RTC/tree/master
+ * MIT License
+ * Copyright (c) 2021 Andrew Doro
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+bool McuTimeDate_checkDST_US(TIMEREC *time, DATEREC *date) {
+  // Get the day of the week. 0 = Sunday, 6 = Saturday
+  int dayOfWeek = McuTimeDate_CalculateDayOfWeek(date->Year, date->Month, date->Day);
+  int previousSunday = date->Day - dayOfWeek;
+
+  bool dst = false; //Assume we're not in DST
+  // Serial.print("test of rulesDST: ");
+  // Serial.println(rulesDST);
+  if (date->Month > 3 && date->Month < 11) {
+    dst = true; //DST is happening in America!
+  }
+  //In the USA in March we are DST if the previous Sunday was on or after the 8th (and on or before the 14th).
+  if (date->Month == 3) {
+    if (dayOfWeek == 0) {  // if today is Sunday
+      if (previousSunday >= 8    // on or after 8th
+          && previousSunday <= 14     // but on or before 14th
+          && time->Hour >= 2)  // and at or after 2:00 AM
+      {
+        dst = true;
+      } else if (previousSunday >= 15) { // it is a Sunday after the second Sunday
+        dst = true;
+      }
+    } else if (previousSunday >= 8) { // it is not Sunday and we are after the change to DST
+      dst = true;
+    }
+  }
+  //In November we must be before the first Sunday to be dst for USA.
+  //In this case we are changing time at 2:00 AM so since the change to the previous Sunday
+  //happens at midnight the previous Sunday is actually this Sunday at 2:00 AM
+  //That means the previous Sunday must be on or before the 7th.
+  if (date->Month == 11) {  // November for the USA
+    if (dayOfWeek == 0) {  // if today is Sunday
+      if (previousSunday <= 7  // and it is also the first Sunday
+          && time->Hour <= 1)  // less than 2:00 AM
+      {
+        dst = true;
+      }
+    } else if (previousSunday <= 0) {  // it is not yet the first Sunday and the previous Sunday was before Nov 1
+      dst = true;
+    }
+  }
+  return dst;
+}
+
+bool McuTimeDate_checkDST_EU(TIMEREC *time, DATEREC *date) {
+  // Get the day of the week. 0 = Sunday, 6 = Saturday
+  int dayOfWeek = McuTimeDate_CalculateDayOfWeek(date->Year, date->Month, date->Day);
+  int previousSunday = date->Day - dayOfWeek;
+
+  bool dst = false; //Assume we're not in DST
+  // Serial.print("test of rulesDST: ");
+  // Serial.println(rulesDST);
+  if (date->Month > 3 && date->Month < 10) {
+    dst = true; //DST is happening in Europe!
+  }
+  //In Europe in March, we are DST if the previous Sunday was on or after the 25th.
+  if (date->Month == 3) {
+    if (dayOfWeek == 0) { // Today is Sunday
+      if (previousSunday >= 25  // and it is a Sunday on or after 25th (there can't be a Sunday in March after this)
+          && time->Hour >= 2)  // 2:00 AM for Europe
+      {
+        dst = true;
+      }
+    } else if (previousSunday >= 25) { // if not Sunday and the last Sunday has passed
+      dst = true;
+    }
+  }
+  //In October we must be before the last Sunday to be in DST for Europe.
+  //In this case we are changing time at 2:00 AM so since the change to the previous Sunday
+  //happens at midnight the previous Sunday is actually this Sunday at 2:00 AM
+  //That means the previous Sunday must be on or before the 31st but after the 25th.
+  if (date->Month == 10) { // October for Europe
+    if (dayOfWeek == 0) {  // if today is Sunday
+      if (previousSunday >= 25  // and it is also on or after 25th
+          && time->Hour <= 1)  // less than 2:00 AM for Europe
+      {
+        dst = true;
+      } else if (previousSunday < 25) {  // it is not yet the last Sunday
+        dst = true;
+      }
+    } else if (previousSunday < 25) { // it is not Sunday
+      dst = true;
+    }
+  }
+  return dst;
+}
+
+bool McuTimeDate_checkDST(TIMEREC *time, DATEREC *date) {
+  if (date==NULL || time==NULL) {
+    return false;
+  }
+#if McuTimeDate_CONFIG_DST_EU
+  return McuTimeDate_checkDST_EU(time, date);
+#else
+  return (McuTimeDate_checkDST_US(time, date);
+#endif
+}
+
+uint8_t McuTimeDate_GetTimeDateAdjustDST(TIMEREC *time, DATEREC *date) {
+  if (date==NULL || time==NULL) {
+    return ERR_FAILED;
+  }
+  if (McuTimeDate_GetTimeDate(time, date)!=ERR_OK) {
+    return ERR_FAILED;
+  }
+  if (McuTimeDate_checkDST(time, date)) {
+    uint32_t sec = McuTimeDate_TimeDateToUnixSeconds(time, date, 0);
+    McuTimeDate_UnixSecondsToTimeDate(sec, 1, time, date); /* add 1 hour to the time */
+  }
+  return ERR_OK;
+}
+
 
 /* END McuTimeDate. */
 

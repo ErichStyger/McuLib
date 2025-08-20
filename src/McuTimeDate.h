@@ -165,7 +165,37 @@
 #define McuTimeDate_TICK_TIME_MS  McuTimeDate_CONFIG_TICK_TIME_MS /* period of AddTick() */
 
 
+/*!
+ * \brief Check if we are in daylight saving time range
+ * \param date Date information
+ * \param time Time information
+ * \return true if we are in DST for the US
+ */
+bool McuTimeDate_checkDST_US(TIMEREC *time, DATEREC *date);
 
+/*!
+ * \brief Check if we are in daylight saving time range
+ * \param date Date information
+ * \param time Time information
+ * \return true if we are in DST for the EU
+ */
+bool McuTimeDate_checkDST_EU(TIMEREC *time, DATEREC *date);
+
+/*!
+ * \brief Check if we are in daylight saving time range
+ * \param date Date information
+ * \param time Time information
+ * \return true if we are in DST (depending on McuTimeDate_CONFIG_DST_EU)
+ */
+bool McuTimeDate_checkDST(TIMEREC *time, DATEREC *date);
+
+/*!
+ * \brief Adjusts the time for daylight saving. For EU if McuTimeDate_CONFIG_DST_EU is set, otherwise for the US.
+ * \param time Time information
+ * \param date Date information
+ * \return ERR_OK, error otherwise
+ */
+uint8_t McuTimeDate_GetTimeDateAdjustDST(TIMEREC *time, DATEREC *date);
 
 
 uint8_t McuTimeDate_SetTime(uint8_t Hour, uint8_t Min, uint8_t Sec, uint8_t Sec100);
