@@ -207,7 +207,7 @@ static void OutString(const unsigned char *str, void (*outchar)(void *,char), vo
   }
 }
 
-static void LogHeader(DATEREC *date, TIMEREC *time, McuLog_Levels_e level, bool supportColor, const char *file, int line, void (*outchar)(void *,char), void *param) {
+static void LogHeader(TIMEREC *time, DATEREC *date, McuLog_Levels_e level, bool supportColor, const char *file, int line, void (*outchar)(void *,char), void *param) {
   unsigned char buf[32];
 
 #if McuLog_CONFIG_LOG_TIMESTAMP_DATE || McuLog_CONFIG_LOG_TIMESTAMP_TIME
@@ -278,18 +278,8 @@ static void LogHeader(DATEREC *date, TIMEREC *time, McuLog_Levels_e level, bool 
 
 #if McuLog_CONFIG_USE_PRINTF_STYLE
 void McuLog_ChannelLog(uint8_t channel, McuLog_Levels_e level, const char *file, int line, const char *fmt, ...) {
-#if McuLog_CONFIG_LOG_TIMESTAMP_DATE
   DATEREC date;
-  #define DATE_PTR  &date
-#else
-  #define DATE_PTR  NULL
-#endif
-#if McuLog_CONFIG_LOG_TIMESTAMP_TIME
   TIMEREC time;
-  #define TIME_PTR  &time
-#else
-  #define TIME_PTR  NULL
-#endif
   va_list list;
 
   if (level < McuLog_ConfigData.level) {
@@ -301,12 +291,10 @@ void McuLog_ChannelLog(uint8_t channel, McuLog_Levels_e level, const char *file,
 #if McuLog_CONFIG_USE_MUTEX
   lock(); /* Acquire lock */
 #endif
-#if McuLog_CONFIG_LOG_TIMESTAMP_DATE || McuLog_CONFIG_LOG_TIMESTAMP_TIME
-  (void)McuTimeDate_GetTimeDate(TIME_PTR, DATE_PTR); /* Get current date and time */
-#endif
+  (void)McuTimeDate_GetTimeDateAdjustDST(&time, &date); /* Get current date and time */
   if (!McuLog_ConfigData.quiet) {
     if(McuLog_ConfigData.consoleIo[channel]!=NULL) { /* log to console */
-      LogHeader(DATE_PTR, TIME_PTR, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[channel]->stdErr);
+      LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[channel]->stdErr);
       /* open argument list */
       va_start(list, fmt);
       McuXFormat_xvformat(OutputCharFctConsole, McuLog_ConfigData.consoleIo[channel]->stdErr, fmt, list);
@@ -322,18 +310,8 @@ void McuLog_ChannelLog(uint8_t channel, McuLog_Levels_e level, const char *file,
 
 #if McuLog_CONFIG_USE_PRINTF_STYLE
 void McuLog_log(McuLog_Levels_e level, const char *file, int line, const char *fmt, ...) {
-#if McuLog_CONFIG_LOG_TIMESTAMP_DATE
   DATEREC date;
-  #define DATE_PTR  &date
-#else
-  #define DATE_PTR  NULL
-#endif
-#if McuLog_CONFIG_LOG_TIMESTAMP_TIME
   TIMEREC time;
-  #define TIME_PTR  &time
-#else
-  #define TIME_PTR  NULL
-#endif
   va_list list;
 
   if (level < McuLog_ConfigData.level) {
@@ -342,13 +320,11 @@ void McuLog_log(McuLog_Levels_e level, const char *file, int line, const char *f
 #if McuLog_CONFIG_USE_MUTEX
   lock(); /* Acquire lock */
 #endif
-#if McuLog_CONFIG_LOG_TIMESTAMP_DATE || McuLog_CONFIG_LOG_TIMESTAMP_TIME
-  (void)McuTimeDate_GetTimeDate(TIME_PTR, DATE_PTR); /* Get current date and time */
-#endif
+  (void)McuTimeDate_GetTimeDateAdjustDST(&time, &date); /* Get current date and time */
   if (!McuLog_ConfigData.quiet) {
     for(int i=0; i<McuLog_CONFIG_NOF_CONSOLE_LOGGER; i++) {
       if(McuLog_ConfigData.consoleIo[i]!=NULL) { /* log to console */
-        LogHeader(DATE_PTR, TIME_PTR, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
+        LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
         /* open argument list */
         va_start(list, fmt);
         McuXFormat_xvformat(OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr, fmt, list);
@@ -361,7 +337,7 @@ void McuLog_log(McuLog_Levels_e level, const char *file, int line, const char *f
 #if McuLog_CONFIG_USE_RTT_DATA_LOGGER
   /* log to RTT Data Logger */
   if (McuLog_ConfigData.rttDataLogger) {
-    LogHeader(DATE_PTR, TIME_PTR, level, false, file, line, OutputCharRttLoggerFct, NULL);
+    LogHeader(&time, &date, level, false, file, line, OutputCharRttLoggerFct, NULL);
     /* open argument list */
     va_start(list, fmt);
     McuXFormat_xvformat(OutputCharRttLoggerFct, NULL, fmt, list);
@@ -373,7 +349,7 @@ void McuLog_log(McuLog_Levels_e level, const char *file, int line, const char *f
 #if McuLog_CONFIG_USE_FILE
   /* Log to file */
   if (McuLog_ConfigData.fp) {
-    LogHeader(DATE_PTR, &time, level, false, file, line, OutputCharFctFile, McuLog_ConfigData.fp);
+    LogHeader(&time, &date, level, false, file, line, OutputCharFctFile, McuLog_ConfigData.fp);
     /* open argument list */
     va_start(list, fmt);
     McuXFormat_xvformat(OutputCharFctFile, McuLog_ConfigData.fp, fmt, list);
@@ -389,18 +365,8 @@ void McuLog_log(McuLog_Levels_e level, const char *file, int line, const char *f
 #endif
 
 void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const char *str) {
-#if McuLog_CONFIG_LOG_TIMESTAMP_DATE
   DATEREC date;
-  #define DATE_PTR  &date
-#else
-  #define DATE_PTR  NULL
-#endif
-#if McuLog_CONFIG_LOG_TIMESTAMP_TIME
   TIMEREC time;
-  #define TIME_PTR  &time
-#else
-  #define TIME_PTR  NULL
-#endif
 
   if (level < McuLog_ConfigData.level) {
     return;
@@ -408,13 +374,11 @@ void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const c
 #if McuLog_CONFIG_USE_MUTEX
   lock(); /* Acquire lock */
 #endif
-#if McuLog_CONFIG_LOG_TIMESTAMP_DATE || McuLog_CONFIG_LOG_TIMESTAMP_TIME
-  (void)McuTimeDate_GetTimeDate(TIME_PTR, DATE_PTR); /* Get current date and time */
-#endif
+  (void)McuTimeDate_GetTimeDateAdjustDST(&time, &date); /* Get current date and time */
   if (!McuLog_ConfigData.quiet) {
     for(int i=0; i<McuLog_CONFIG_NOF_CONSOLE_LOGGER; i++) {
       if(McuLog_ConfigData.consoleIo[i]!=NULL) { /* log to console */
-        LogHeader(DATE_PTR, TIME_PTR, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
+        LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
         OutString((unsigned char *)str, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
         OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
       }
@@ -424,7 +388,7 @@ void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const c
 #if McuLog_CONFIG_USE_RTT_DATA_LOGGER
   /* log to RTT Data Logger */
   if (McuLog_ConfigData.rttDataLogger) {
-    LogHeader(DATE_PTR, TIME_PTR, level, false, file, line, OutputCharRttLoggerFct, NULL);
+    LogHeader(&time, &date, level, false, file, line, OutputCharRttLoggerFct, NULL);
     OutString((unsigned char *)str, OutputCharRttLoggerFct, NULL);
     OutString((unsigned char *)"\n", OutputCharRttLoggerFct, NULL);
   }
@@ -433,7 +397,7 @@ void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const c
 #if McuLog_CONFIG_USE_FILE
   /* Log to file */
   if (McuLog_ConfigData.fp) {
-    LogHeader(DATE_PTR, &time, level, false, file, line, OutputCharFctFile, McuLog_ConfigData.fp);
+    LogHeader(&time, &date, level, false, file, line, OutputCharFctFile, McuLog_ConfigData.fp);
     OutString((unsigned char *)str, OutputCharFctFile, McuLog_ConfigData.fp);
     OutString((unsigned char *)"\n", OutputCharFctFile, McuLog_ConfigData.fp);
     f_sync(McuLog_ConfigData.fp);
