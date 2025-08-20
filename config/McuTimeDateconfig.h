@@ -159,4 +159,9 @@
     /*!< 1: use daylight time saving for Europe. Otherwise assume US. */
 #endif
 
+#ifndef McuTimeDate_CONFIG_DST_ADJUST
+  #define McuTimeDate_CONFIG_DST_ADJUST                     (1)
+    /*!< 1: Adjust for dayligt saving time in McuTimeDate_GetTimeDateAdjustDST(); 0; do not adjust. */
+#endif
+
 #endif /* __McuTimeDate_CONFIG_H */
