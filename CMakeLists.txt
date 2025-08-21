@@ -34,6 +34,12 @@ else ()
               "fonts/McuFontHelv18Normal.c"
               "fonts/McuFontHelv24Bold.c"
               "fonts/McuFontHelv24Normal.c"
+
+              "minIni/minIni.c"
+              "minIni/McuMinINI.c"
+              "minIni/minGlue-FatFs.c"
+              "minIni/minGlue-Flash.c"
+              "minIni/minGlue-LittleFS.c"
               
               "RNet/McuNRF24L01.c"
               "RNet/McuRNet.c"

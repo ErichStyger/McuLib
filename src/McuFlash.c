@@ -46,7 +46,6 @@ static McuFlash_Memory McuFlash_RegisteredMemory; /* used in shell status, for i
 #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_RP2040
   /* nothing  needed */
 #elif McuLib_CONFIG_CPU_IS_ESP32
-  #define STORAGE_NAMESPACE "storage"
   static const esp_partition_t *partition = NULL;
 #else
   #error "device not yet supported"
@@ -119,11 +118,16 @@ uint8_t McuFlash_Read(const void *addr, void *data, size_t dataSize) {
   if(status != kStatus_Success){
     return ERR_FAULT;
   }
-  return ERR_OK;
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  if (esp_partition_read(partition, (size_t)addr, data, dataSize)!=ESP_OK) {
+    McuLog_error("unable to read data from partition");
+    return ERR_FAILED;
+  }
 #else
   memcpy(data, addr, dataSize);
-  return ERR_OK;
 #endif
+  return ERR_OK;
+
 }
 
 static uint8_t McuFlash_ProgramPage(void *addr, const void *data, size_t dataSize) {
@@ -259,7 +263,14 @@ static uint8_t McuFlash_ProgramPage(void *addr, const void *data, size_t dataSiz
   McuCriticalSection_ExitCritical();
   return ERR_OK;
 #elif McuLib_CONFIG_CPU_IS_ESP32
-//  ESP_ERROR_CHECK(esp_partition_write(partition, addr-partition->address, data, data_size));
+  if (esp_partition_erase_range(partition, (size_t)addr, dataSize)!=ESP_OK) {
+    McuLog_error("unable to erase partition");
+    return ERR_FAILED;
+  }
+  if (esp_partition_write(partition, (size_t)addr, data, dataSize)!=ESP_OK) {
+    McuLog_error("unable to write data to partition");
+    return ERR_FAILED;
+  }
   return ERR_OK;
 #else
   #error "target not supported yet!"
@@ -463,8 +474,12 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
 
   return ERR_OK;
 #elif McuLib_CONFIG_CPU_IS_ESP32
-  /* \todo */
-  return ERR_FAILED;
+  /* note: erasing full partition */
+  if (esp_partition_erase_range(partition, (size_t)addr, partition->size)!=ESP_OK) {
+    McuLog_error("unable to erase range");
+    return ERR_FAILED;
+  }
+  return ERR_OK;
 #else
   #error "target not supported yet!"
 #endif
@@ -501,6 +516,9 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  XIP", buf, io->stdOut);
 #endif
+#if McuLib_CONFIG_CPU_IS_ESP32
+  McuShell_SendStatusStr((unsigned char*)"  namespace", (unsigned char*)"\"" McuFlash_CONFIG_STORAGE_NAMESPACE "\"" ", addr starts witz 0\r\n", io->stdOut);
+#endif
 
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"addr 0x");
   McuUtility_strcatNum32Hex(buf, sizeof(buf), McuFlash_RegisteredMemory.addr);
@@ -517,7 +535,14 @@ static uint8_t ReadData(void *hndl, uint32_t addr, uint8_t *buf, size_t bufSize)
     memset(buf, 0xff, bufSize);
     return ERR_FAILED;
   }
+#if McuLib_CONFIG_CPU_IS_ESP32
+  if (esp_partition_read(partition, addr, buf, bufSize)!=ESP_OK) {
+    McuLog_error("unable to read data from partition");
+    return ERR_FAILED;
+  }
+#else
   memcpy(buf, (void*)addr, bufSize);
+#endif
   return ERR_OK;
 }
 
@@ -632,35 +657,11 @@ void McuFlash_Init(void) {
     }
   #endif
 #elif McuLib_CONFIG_CPU_IS_ESP32
-  static const char *TAG = "example";
-
   partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, "storage");
-  assert(partition != NULL);
-
-  //static char store_data[] = "ESP-IDF Partition Operations Example (Read, Erase, Write)";
-  //static char read_data[sizeof(store_data)];
-
-  // Erase entire partition
-  //memset(read_data, 0xFF, sizeof(read_data));
- // ESP_ERROR_CHECK(esp_partition_erase_range(partition, 0, partition->size));
-
-  // Write the data, starting from the beginning of the partition
-  //ESP_ERROR_CHECK(esp_partition_write(partition, 0, store_data, sizeof(store_data)));
-  //ESP_LOGI(TAG, "Written data: %s", store_data);
-
-  // Read back the data, checking that read data and written data match
-  //ESP_ERROR_CHECK(esp_partition_read(partition, 0, read_data, sizeof(read_data)));
-  //assert(memcmp(store_data, read_data, sizeof(read_data)) == 0);
-  //ESP_LOGI(TAG, "Read data: %s", read_data);
-
-  // Erase the area where the data was written. Erase size should be a multiple of SPI_FLASH_SEC_SIZE
-  // and also be SPI_FLASH_SEC_SIZE aligned
-  ESP_ERROR_CHECK(esp_partition_erase_range(partition, 0, partition->erase_size));
-
-  // Read back the data (should all now be 0xFF's)
-  //memset(store_data, 0xFF, sizeof(read_data));
-  //ESP_ERROR_CHECK(esp_partition_read(partition, 0, read_data, sizeof(read_data)));
-  //assert(memcmp(store_data, read_data, sizeof(read_data)) == 0);
+  if (partition==NULL) {
+    McuLog_fatal("unable to find partition");
+    for(;;) {}
+  }
 #endif
 }
 

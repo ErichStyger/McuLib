@@ -18,6 +18,12 @@
 #include "McuFlash.h"
 #include "McuMinINI.h"
 
+#if McuLib_CONFIG_CPU_IS_ESP32
+  /* for ESP32 using partitions, we cannot direclty read from the FLASH. Instead, we need to load it with the FLASH API into RAM first. */
+  static MinIniFlashFileHeader fileHdr; /* header for the data in FLASH */
+  static unsigned char fileData[McuMinINI_CONFIG_FLASH_NVM_MAX_DATA_SIZE-sizeof(fileHdr)]; /* data for the data in FLASH */
+#endif /* McuLib_CONFIG_CPU_IS_ESP32 */
+
 /* NOTE: we only support one 'file' in FLASH, and only one 'file' in RAM. The one in RAM is for the read-write and temporary one  */
 /* read-only FLASH 'file' is at McuMinINI_CONFIG_FLASH_NVM_ADDR_START */
 #if !McuMinINI_CONFIG_READ_ONLY
@@ -27,14 +33,27 @@
 int ini_openread(const TCHAR *filename, INI_FILETYPE *file) {
   /* open file in read-only mode. This will use directly the data in FLASH */
   McuMinINI_Lock();
-  memset(file, 0, sizeof(INI_FILETYPE));
-  file->header = (MinIniFlashFileHeader*)(McuMinINI_CONFIG_FLASH_NVM_ADDR_START);
-  file->data = (unsigned char*)file->header + sizeof(MinIniFlashFileHeader);
+  memset(file, 0, sizeof(INI_FILETYPE)); /* initialize file descriptor */
+  #if McuLib_CONFIG_CPU_IS_ESP32
+    if (McuFlash_Read((void*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START, &fileHdr, sizeof(fileHdr))!=ERR_OK) {
+      McuMinINI_Unlock();
+      return 0; /* failed */
+    }
+    file->header = &fileHdr; /* use the header we read from FLASH */
+    if (McuFlash_Read((void*)(McuMinINI_CONFIG_FLASH_NVM_ADDR_START+sizeof(fileHdr)), fileData, sizeof(fileData))!=ERR_OK) {
+      McuMinINI_Unlock();
+      return 0; /* failed */
+    }
+    file->data = fileData; /* use the header we read from FLASH */
+  #else
+    file->header = (MinIniFlashFileHeader*)(McuMinINI_CONFIG_FLASH_NVM_ADDR_START);
+    file->data = (unsigned char*)file->header + sizeof(MinIniFlashFileHeader);
+  #endif
   if (file->header->magicNumber != MININI_FLASH_MAGIC_DATA_NUMBER_ID) {
     McuMinINI_Unlock();
     return 0; /* failed, magic number does not match */
   }
-  if (McuUtility_strcmp((char*)file->header->dataName, (char*)filename)!=0) {
+  if (McuUtility_strcmp((char*)file->header->dataName, (char*)filename)!=0) { // \TODO
     McuMinINI_Unlock();
     return 0; /* failed, not the file name of the storage */
   }
@@ -136,10 +155,12 @@ int ini_write(TCHAR *buffer, INI_FILETYPE *file) {
 #if !McuMinINI_CONFIG_READ_ONLY
 int ini_remove(const TCHAR *filename) {
   MinIniFlashFileHeader *hp;
+  uint8_t buf[sizeof(MinIniFlashFileHeader)];
 
   McuMinINI_Lock();
+  McuFlash_Read((void*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START, buf, sizeof(buf)); /* read flash memory */
   /* check first if we are removing the data in FLASH */
-  hp = (MinIniFlashFileHeader*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START;
+  hp = (MinIniFlashFileHeader*)&buf[0];
   if (   hp->magicNumber==MININI_FLASH_MAGIC_DATA_NUMBER_ID /* valid file */
       && McuUtility_strcmp((char*)hp->dataName, filename)==0 /* file name matches */
      )
@@ -278,7 +299,12 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" bytes\r\n");
   McuShell_SendStatusStr((unsigned char*)"  max data", buf, io->stdOut);
 
-  PrintDataStatus(io, (MinIniFlashFileHeader*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START, (const unsigned char*)"  data");
+  MinIniFlashFileHeader hdr;
+  if (McuFlash_Read((void*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START, &hdr, sizeof(hdr))==ERR_OK) { /* need to read it, cannot directly access the memory, e.g. on ESP32 */
+    PrintDataStatus(io, &hdr, (const unsigned char*)"  data");
+  } else {
+    McuShell_SendStatusStr((unsigned char*)"  data", (unsigned char*)"<error reading data>\r\n", io->stdOut);
+  }
 #if !McuMinINI_CONFIG_READ_ONLY
   PrintDataStatus(io, (MinIniFlashFileHeader*)dataBuf, (const unsigned char*)"  ram");
 #endif
@@ -286,20 +312,44 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
 }
 
 static uint8_t DumpData(const McuShell_StdIOType *io) {
-  MinIniFlashFileHeader *hp;
+  MinIniFlashFileHeader hdr;
   const unsigned char *p;
 
   McuMinINI_Lock();
-  hp = (MinIniFlashFileHeader*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START;
-  PrintDataStatus(io, hp, (const unsigned char*)"data");
-  if (hp->magicNumber==MININI_FLASH_MAGIC_DATA_NUMBER_ID) {
-    p = (const unsigned char*)hp + sizeof(MinIniFlashFileHeader);
-    for(unsigned int i=0; i<hp->dataSize; i++) {
-      io->stdOut(*p);
-      p++;
-    }
+  if (McuFlash_Read((void*)McuMinINI_CONFIG_FLASH_NVM_ADDR_START, &hdr, sizeof(hdr))!=ERR_OK) { /* need to read it, cannot directly access the memory, e.g. on ESP32 */
+    McuShell_SendStr((unsigned char*)"<error reading data>\r\n", io->stdOut);
+    McuMinINI_Unlock();
+    return ERR_FAILED; /* error */
   }
-  hp = (MinIniFlashFileHeader*)dataBuf;
+  if (hdr.magicNumber==MININI_FLASH_MAGIC_DATA_NUMBER_ID) {
+    unsigned char buf[32];
+    int32_t size, dataSize = hdr.dataSize;
+    uint32_t addr = McuMinINI_CONFIG_FLASH_NVM_ADDR_START+sizeof(MinIniFlashFileHeader);
+
+    /* dump data in FLASH, need to use the FLASH API */
+    while(dataSize>0) {
+      if (dataSize>sizeof(buf)) {
+        size = sizeof(buf);
+      } else {
+        size = dataSize;
+      }
+      if (McuFlash_Read((void*)addr, buf, size)==ERR_OK) { /* need to read it, cannot directly access the memory, e.g. on ESP32 */
+        PrintDataStatus(io, &hdr, (const unsigned char*)"data");
+      } else {
+        McuShell_SendStr((unsigned char*)"<error reading data>\r\n", io->stdOut);
+        break;
+      }
+      addr += size;
+      dataSize -= size;
+      for(unsigned int i=0; i<size; i++) {
+        io->stdOut(buf[i]);
+      }
+      io->stdOut('\n');
+    } /* while */
+  }
+
+  /* dump the data in RAM, can directly access the memory */
+  MinIniFlashFileHeader *hp = (MinIniFlashFileHeader*)dataBuf;
   PrintDataStatus(io, hp, (const unsigned char*)"ram");
   if (hp->magicNumber==MININI_FLASH_MAGIC_DATA_NUMBER_ID) {
     p = (const unsigned char*)hp + sizeof(MinIniFlashFileHeader);

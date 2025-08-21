@@ -36,7 +36,12 @@
   #else /* default */
     #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (0x400)
   #endif
-    /*!< size of a flash page, FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize) */
+    /*!< size of a flash page, get it for example with FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize) for NXP SDK */
+#endif
+
+#ifndef McuFlash_CONFIG_STORAGE_NAMESPACE
+  #define McuFlash_CONFIG_STORAGE_NAMESPACE         "storage"
+    /*! ESP32 only: name of the storage name space */
 #endif
 
 #endif /* MCUFLASHCONFIG_H_ */
