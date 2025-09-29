@@ -1861,8 +1861,10 @@ uint8_t McuTimeDate_GetTimeDateAdjustDST(TIMEREC *time, DATEREC *date) {
   }
 #if McuTimeDate_CONFIG_DST_ADJUST
   if (McuTimeDate_checkDST(time, date)) {
+    uint8_t sec100 = time->Sec100;
     uint32_t sec = McuTimeDate_TimeDateToUnixSeconds(time, date, 0);
     McuTimeDate_UnixSecondsToTimeDate(sec, 1, time, date); /* add 1 hour to the time */
+    time->Sec100 = sec100; /* add 0.xx sec as above we deal only with seconds */
   }
 #endif
   return ERR_OK;
