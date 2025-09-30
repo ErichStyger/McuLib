@@ -86,10 +86,13 @@
 
 /* default time and date format strings */
 #ifndef McuTimeDate_CONFIG_DEFAULT_TIME_FORMAT_STR
-  #define McuTimeDate_CONFIG_DEFAULT_TIME_FORMAT_STR  "hh:mm:ss,cc"
+  #define McuTimeDate_CONFIG_DEFAULT_TIME_FORMAT_STR    "hh:mm:ss,cc"
+  #define McuTimeDate_CONFIG_HH_MM_TIME_FORMAT_STR      "hh:mm"
+  #define McuTimeDate_CONFIG_HH_MM_SS_TIME_FORMAT_STR   "hh:mm:ss"
 #endif
+
 #ifndef McuTimeDate_CONFIG_DEFAULT_DATE_FORMAT_STR
-  #define McuTimeDate_CONFIG_DEFAULT_DATE_FORMAT_STR  "dd.mm.yyyy"
+  #define McuTimeDate_CONFIG_DEFAULT_DATE_FORMAT_STR    "dd.mm.yyyy"
 #endif
 
 #ifndef McuTimeDate_CONFIG_TICK_TIME_MS

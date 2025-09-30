@@ -1728,19 +1728,23 @@ uint8_t McuTimeDate_AddDateString(uint8_t *buf, size_t bufSize, DATEREC *date, u
 */
 uint8_t McuTimeDate_AddTimeString(uint8_t *buf, size_t bufSize, TIMEREC *time, uint8_t *format)
 {
-  /* currently only the following format is supported: hh:mm:ss,cc" */
-  (void)format; /* not supported yet */
   McuUtility_strcatNum16sFormatted(buf, bufSize, time->Hour, '0', 2);
-  McuUtility_chcat(buf, bufSize, ':');
-  McuUtility_strcatNum16sFormatted(buf, bufSize, time->Min, '0', 2);
-  McuUtility_chcat(buf, bufSize, ':');
-  McuUtility_strcatNum16sFormatted(buf, bufSize, time->Sec, '0', 2);
-  McuUtility_chcat(buf, bufSize, ',');
-#if McuTimeDate_HAS_SEC100_IN_TIMEREC
-  McuUtility_strcatNum16sFormatted(buf, bufSize, time->Sec100, '0', 2);
-#else
-  McuUtility_strcatNum16sFormatted(buf, bufSize, 0, '0', 2);
-#endif
+  if (McuUtility_strFind(format, (uint8_t*)":mm")>=0) {
+    McuUtility_chcat(buf, bufSize, ':');
+    McuUtility_strcatNum16sFormatted(buf, bufSize, time->Min, '0', 2);
+    if (McuUtility_strFind(format, (uint8_t*)":ss")>=0) {
+      McuUtility_chcat(buf, bufSize, ':');
+      McuUtility_strcatNum16sFormatted(buf, bufSize, time->Sec, '0', 2);
+      if (McuUtility_strFind(format, (uint8_t*)",cc")>=0) {
+        McuUtility_chcat(buf, bufSize, ',');
+      #if McuTimeDate_HAS_SEC100_IN_TIMEREC
+        McuUtility_strcatNum16sFormatted(buf, bufSize, time->Sec100, '0', 2);
+      #else
+        McuUtility_strcatNum16sFormatted(buf, bufSize, 0, '0', 2);
+      #endif
+      }
+    }
+  }
   return ERR_OK;
 }
 
