@@ -327,15 +327,14 @@ static uint8_t DumpData(const McuShell_StdIOType *io) {
     uint32_t addr = McuMinINI_CONFIG_FLASH_NVM_ADDR_START+sizeof(MinIniFlashFileHeader);
 
     /* dump data in FLASH, need to use the FLASH API */
+    PrintDataStatus(io, &hdr, (const unsigned char*)"FLASH");
     while(dataSize>0) {
       if (dataSize>sizeof(buf)) {
         size = sizeof(buf);
       } else {
         size = dataSize;
       }
-      if (McuFlash_Read((void*)addr, buf, size)==ERR_OK) { /* need to read it, cannot directly access the memory, e.g. on ESP32 */
-        PrintDataStatus(io, &hdr, (const unsigned char*)"data");
-      } else {
+      if (!McuFlash_Read((void*)addr, buf, size)==ERR_OK) { /* need to read it with Flash API, cannot directly access the memory, e.g. on ESP32 */
         McuShell_SendStr((unsigned char*)"<error reading data>\r\n", io->stdOut);
         break;
       }
@@ -344,13 +343,13 @@ static uint8_t DumpData(const McuShell_StdIOType *io) {
       for(unsigned int i=0; i<size; i++) {
         io->stdOut(buf[i]);
       }
-      io->stdOut('\n');
     } /* while */
+    McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
   }
 
   /* dump the data in RAM, can directly access the memory */
   MinIniFlashFileHeader *hp = (MinIniFlashFileHeader*)dataBuf;
-  PrintDataStatus(io, hp, (const unsigned char*)"ram");
+  PrintDataStatus(io, hp, (const unsigned char*)"RAM");
   if (hp->magicNumber==MININI_FLASH_MAGIC_DATA_NUMBER_ID) {
     p = (const unsigned char*)hp + sizeof(MinIniFlashFileHeader);
     for(unsigned int i=0; i<hp->dataSize; i++) {
