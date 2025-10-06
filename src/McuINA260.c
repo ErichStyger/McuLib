@@ -265,7 +265,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
 }
 
 static uint8_t PrintHelp(const McuShell_StdIOType *io) {
-  McuShell_SendHelpStr((unsigned char*)"INA260", (unsigned char*)"Group of INA260 commands\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"McuINA260", (unsigned char*)"Group of INA260 commands\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Print help or status information\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  reset", (unsigned char*)"Reset the device with the reset bit\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  config <val>", (unsigned char*)"Write a value to the configuration register\r\n", io->stdOut);
@@ -276,25 +276,25 @@ uint8_t McuINA260_ParseCommand(const unsigned char* cmd, bool *handled, const Mc
   uint8_t res = ERR_OK;
 
   if (McuUtility_strcmp((char*)cmd, McuShell_CMD_HELP) == 0
-    || McuUtility_strcmp((char*)cmd, "INA260 help") == 0)
+    || McuUtility_strcmp((char*)cmd, "McuINA260 help") == 0)
   {
     *handled = true;
     return PrintHelp(io);
   } else if (   (McuUtility_strcmp((char*)cmd, McuShell_CMD_STATUS)==0)
-             || (McuUtility_strcmp((char*)cmd, "INA260 status")==0)
+             || (McuUtility_strcmp((char*)cmd, "McuINA260 status")==0)
             )
   {
     *handled = true;
     res = PrintStatus(io);
-  } else if (McuUtility_strcmp((char*)cmd, "INA260 reset")==0) {
+  } else if (McuUtility_strcmp((char*)cmd, "McuINA260 reset")==0) {
     *handled = true;
     return McuINA260_WriteResetBit();
-  } else if (McuUtility_strncmp((char*)cmd, "INA260 config ", sizeof("INA260 config "-1))==0) {
+  } else if (McuUtility_strncmp((char*)cmd, "McuINA260 config ", sizeof("McuINA260 config "-1))==0) {
     const unsigned char *p;
     int32_t val;
 
     *handled = true;
-    p = cmd + sizeof("INA260 config "-1);
+    p = cmd + sizeof("McuINA260 config "-1);
     if (McuUtility_xatoi(&p, &val)==ERR_OK && val>=0) {
       return McuINA260_WriteConfigRegister(val);
     }
