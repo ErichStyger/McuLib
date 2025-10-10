@@ -1476,6 +1476,11 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuGPIO_GetPinStatusString(csnPin, buf, sizeof(buf));
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((const unsigned char*)"  CSN", (const unsigned char*)buf, io->stdOut);
+#if McuNRF24L01_CONFIG_USE_MUTEX
+  McuShell_SendStatusStr((const unsigned char*)"  mutex", (const unsigned char*)"yes (SPI)\r\n", io->stdOut);
+#else
+  McuShell_SendStatusStr((const unsigned char*)"  mutex", (const unsigned char*)"no (SPI)\r\n", io->stdOut);
+#endif
   return ERR_OK;
 }
 
