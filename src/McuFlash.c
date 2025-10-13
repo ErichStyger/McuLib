@@ -517,7 +517,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuShell_SendStatusStr((unsigned char*)"  XIP", buf, io->stdOut);
 #endif
 #if McuLib_CONFIG_CPU_IS_ESP32
-  McuShell_SendStatusStr((unsigned char*)"  namespace", (unsigned char*)"\"" McuFlash_CONFIG_STORAGE_NAMESPACE "\"" ", addr starts witz 0\r\n", io->stdOut);
+  McuShell_SendStatusStr((unsigned char*)"  namespace", (unsigned char*)"\"" McuFlash_CONFIG_STORAGE_NAMESPACE "\"" ", addr starts with 0\r\n", io->stdOut);
 #endif
 
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"addr 0x");
