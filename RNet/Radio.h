@@ -38,6 +38,12 @@ uint8_t RADIO_ParseCommand(const unsigned char *cmd, bool *handled, const McuShe
 uint8_t RADIO_SetChannel(uint8_t channel);
 
 /*!
+ * \brief Return the current channel used.
+ * \return The current channel number.
+ */
+uint8_t RADIO_GetChannel(void);
+
+/*!
  * \brief Determine if the radio transceiver is in a good shape. Radio transceiver could be affected by voltage drop.
  * \return ERR_OK
  */

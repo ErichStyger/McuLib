@@ -441,6 +441,10 @@ static void RADIO_HandleStateMachine(uint32_t notifcationValue) {
   } /* for */
 }
 
+uint8_t RADIO_GetChannel(void) {
+  return RADIO_CurrChannel;
+}
+
 uint8_t RADIO_SetChannel(uint8_t channel) {
   RADIO_CurrChannel = channel;
   return McuNRF24L01_SetChannel(channel);
