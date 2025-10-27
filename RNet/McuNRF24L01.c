@@ -730,6 +730,13 @@ void McuNRF24L01_TxPayload(uint8_t *payload, uint8_t payloadSize)
   McuNRF24L01_CE_LOW();  /* back to normal */
 }
 
+void McuNRF24L01_ToggleActivate(void)
+{
+  /* With specification v2.0, there isn ACTIVATE register */
+  McuNRF24L01_Write(McuNRF24L01_ACTIVATE);
+  McuNRF24L01_Write(0x73); /* write this number to activate/deactivate */
+}
+
 void McuNRF24L01_TxPayloadNoAck(uint8_t *payload, uint8_t payloadSize)
 {
   McuNRF24L01_Write(McuNRF24L01_FLUSH_TX); /* flush old data */
@@ -948,6 +955,22 @@ uint8_t McuNRF24L01_WriteFeature(uint8_t featureMask)
     return ERR_FAULT; /* mismatch of feature mask */
   }
   McuNRF24L01_WriteRegister(McuNRF24L01_FEATURE, featureMask); /* write number of RX payload for pipe */
+  /* rev2 of the silicon needs the ACTIVATE command: check if writing was successful */
+  uint8_t readback;
+  if (McuNRF24L01_ReadFeature(&readback)!=ERR_OK) { /* read failed? */
+    return ERR_FAILED;
+  }
+  if (readback!=featureMask) { /* what we wrote is not what we read back? */
+    McuNRF24L01_ToggleActivate(); /* try to activate it */
+    McuNRF24L01_WriteRegister(McuNRF24L01_FEATURE, featureMask); /* write number of RX payload for pipe */
+    /* read it back again */
+    if (McuNRF24L01_ReadFeature(&readback)!=ERR_OK) { /* read failed? */
+      return ERR_FAILED;
+    }
+    if (readback!=featureMask) {
+      return ERR_FAILED;
+    }
+  }
   return ERR_OK;
 }
 

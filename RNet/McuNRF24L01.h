@@ -257,6 +257,7 @@ void McuNRF24L01_OnDeactivate(void);
 #define McuNRF24L01_FLUSH_TX             0xE1 /* flush TX FIFO command */
 #define McuNRF24L01_FLUSH_RX             0xE2 /* flush RX FIFO command */
 #define McuNRF24L01_REUSE_TX_PL          0xE3 /* reuse last transmitted payload command */
+#define McuNRF24L01_ACTIVATE             0x50 /* Activate */
 #define McuNRF24L01_R_RX_PL_WID          0x60 /* read RX payload width for the top R_RX_PAYLOAD in the RX FIFO */
 #define McuNRF24L01_W_ACK_PAYLOAD        0xA8 /* used in RX mode. Write payload to be transmitted with ACK packet to pipe (1010 1PPP) */
 #define McuNRF24L01_W_TX_PAYLOAD_NO_ACK  0xB0 /* used in TX mode. Disable AUTOACK on this specific packet */
@@ -543,6 +544,18 @@ void McuNRF24L01_TxPayload(uint8_t *payload, uint8_t payloadSize);
 **       * payload         - Pointer to buffer with payload to
 **                           send
 **         payloadSize     - Size of payload buffer
+**     Returns     : Nothing
+** ===================================================================
+*/
+
+void McuNRF24L01_ToggleActivate(void);
+/*
+** ===================================================================
+**     Method      :  ToggleActivate (component nRF24L01)
+**
+**     Description :
+**         Send the ACTIVATE command to the transceiver
+**     Parameters  : Nothing
 **     Returns     : Nothing
 ** ===================================================================
 */
