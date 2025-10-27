@@ -732,7 +732,7 @@ void McuNRF24L01_TxPayload(uint8_t *payload, uint8_t payloadSize)
 
 void McuNRF24L01_ToggleActivate(void)
 {
-  /* With specification v2.0, there isn ACTIVATE register */
+  /* With specification v2.0, there is the ACTIVATE register */
   McuNRF24L01_Write(McuNRF24L01_ACTIVATE);
   McuNRF24L01_Write(0x73); /* write this number to activate/deactivate */
 }
