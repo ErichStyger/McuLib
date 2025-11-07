@@ -89,14 +89,14 @@ void RNWK_SniffPacket(RPHY_PacketDesc *packet, bool isTx) {
 static uint8_t PrintHelp(const McuShell_StdIOType *io) {
   McuShell_SendHelpStr((unsigned char*)"rnwk", (unsigned char*)"Group of rnwk commands\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Shows help or status\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  saddr 0x<val>", (unsigned char*)"Set node address\r\n", io->stdOut);
   return ERR_OK;
 }
 
 static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   uint8_t buf[32];
   
-  McuShell_SendStatusStr((unsigned char*)"rnwk", (unsigned char*)"\r\n", io->stdOut);
-  
+  McuShell_SendStatusStr((unsigned char*)"rnwk", (unsigned char*)"remote network status\r\n", io->stdOut);
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"0x");
 #if RNWK_SHORT_ADDR_SIZE==1
   McuUtility_strcatNum8Hex(buf, sizeof(buf), RNWK_GetThisNodeAddr());
@@ -105,7 +105,6 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
 #endif
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  addr", buf, io->stdOut);
-
   return ERR_OK;
 }
 
@@ -116,6 +115,18 @@ uint8_t RNWK_ParseCommand(const unsigned char *cmd, bool *handled, const McuShel
   } else if (McuUtility_strcmp((char*)cmd, (char*)McuShell_CMD_STATUS)==0 || McuUtility_strcmp((char*)cmd, (char*)"rnwk status")==0) {
     *handled = TRUE;
     return PrintStatus(io);
+  } else if (McuUtility_strncmp((char*)cmd, (char*)"rnwk saddr", sizeof("rnwk saddr")-1)==0) {
+    const unsigned char *p;
+    uint16_t val16;
+
+    p = cmd + sizeof("rnwk saddr")-1;
+    *handled = TRUE;
+    if (McuUtility_ScanHex16uNumber(&p, &val16)==ERR_OK) {
+      return RNWK_SetThisNodeAddr((RNWK_ShortAddrType)val16);
+    } else {
+      McuShell_SendStr((unsigned char*)"ERR: wrong address\r\n", io->stdErr);
+      return ERR_FAILED;
+    }
   }
   return ERR_OK;
 }
