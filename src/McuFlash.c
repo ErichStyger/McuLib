@@ -157,11 +157,19 @@ static uint8_t McuFlash_ProgramPage(void *addr, const void *data, size_t dataSiz
     uint32_t primask = DisableGlobalIRQ(); /* workaround: need to disable interrupts? */
 #endif
   for(;;) { /* breaks, switch back to HSRUN if things fail */
-    status = FLASH_Program(&s_flashDriver, (uint32_t)addr, (uint8_t*)data, dataSize);
-    if (status!=kStatus_FTFx_Success) {
-      res = ERR_FAILED;
+    #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+      status = FLASH_Program(&s_flashDriver, (uint32_t)addr, (uint32_t*)data, dataSize);
+      if (status!=kStatus_FLASH_Success) {
+        res = ERR_FAILED;
       break;
     }
+    #else
+      status = FLASH_Program(&s_flashDriver, (uint32_t)addr, (uint8_t*)data, dataSize);
+      if (status!=kStatus_FTFx_Success) {
+        res = ERR_FAILED;
+        break;
+      }
+    #endif
     break;
   } /* for */
 #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN
@@ -400,10 +408,16 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
   McuWait_Waitms(1); /* give time to switch clock, otherwise flash programming might fail below */
   #endif
   /* erase */
+#if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+  status = FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize);
+  if (status!=kStatus_FLASH_Success) {
+#else
   status = FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize);
   if (status!=kStatus_Success) {
+#endif
     return ERR_FAILED;
   }
+#endif
   if (pflashSectorSize!=McuFlash_CONFIG_FLASH_BLOCK_SIZE) {
     return ERR_FAILED;
   }
@@ -412,8 +426,13 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN
     uint32_t primask = DisableGlobalIRQ(); /* workaround: need to disable interrupts? */
   #endif
+  #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+    status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_ApiEraseKey);
+    if (status!=kStatus_FLASH_Success) {
+  #else
     status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_ApiEraseKey);
     if (status!=kStatus_FTFx_Success) {
+  #endif
       res = ERR_FAILED;
     #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN
       EnableGlobalIRQ(primask); /* workaround: need to disable interrupts? */
@@ -424,8 +443,13 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
     EnableGlobalIRQ(primask); /* workaround: need to disable interrupts? */
   #endif
     /* Verify sector if it's been erased. */
+   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+     status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_MarginValueUser);
+    if (status!=kStatus_FLASH_Success) {
+   #else
     status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_MarginValueUser);
     if (status!=kStatus_FTFx_Success) {
+   #endif
       res = ERR_FAILED;
       break;
     }
@@ -646,7 +670,11 @@ void McuFlash_Init(void) {
   /* Setup flash driver structure for device and initialize variables. */
   result = FLASH_Init(&s_flashDriver);
   #if McuLib_CONFIG_CPU_IS_KINETIS
+    #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+    if (result!=kStatus_FLASH_Success) {
+    #else
     if (result!=kStatus_FTFx_Success) {
+    #endif
       McuLog_fatal("McuFlash_Init() failed!");
       for(;;) { /* error */ }
     }
