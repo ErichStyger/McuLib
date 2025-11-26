@@ -161,8 +161,8 @@ static uint8_t McuFlash_ProgramPage(void *addr, const void *data, size_t dataSiz
       status = FLASH_Program(&s_flashDriver, (uint32_t)addr, (uint32_t*)data, dataSize);
       if (status!=kStatus_FLASH_Success) {
         res = ERR_FAILED;
+      }
       break;
-    }
     #else
       status = FLASH_Program(&s_flashDriver, (uint32_t)addr, (uint8_t*)data, dataSize);
       if (status!=kStatus_FTFx_Success) {
@@ -411,10 +411,11 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
 #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
   status = FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize);
   if (status!=kStatus_FLASH_Success) {
+    return ERR_FAILED;
+  }
 #else
   status = FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize);
   if (status!=kStatus_Success) {
-#endif
     return ERR_FAILED;
   }
 #endif
