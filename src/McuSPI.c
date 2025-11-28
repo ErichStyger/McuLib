@@ -164,6 +164,10 @@ static void McuSPI_InitCS(void) {
 }
 #endif /* MCUSPI_CONFIG_USE_CS */
 
+void McuSPI_Deinit(void) {
+  /* \todo */
+}
+
 void McuSPI_Init(void) {
 #if MCUSPI_CONFIG_USE_CS
   McuSPI_InitCS();
