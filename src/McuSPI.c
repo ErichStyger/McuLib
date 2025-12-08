@@ -219,6 +219,13 @@ void McuSPI_Init(void) {
   spiHandle = spi1;
   #endif
   spi_init(spiHandle, MCUSPI_CONFIG_TRANSFER_BAUDRATE);
+
+  /* configure SPI data format */
+  spi_set_format(spiHandle, 8, 
+    MCUSPI_CONFIG_HW_CPOL==0?SPI_CPOL_0:SPI_CPOL_1, 
+    MCUSPI_CONFIG_HW_CPHA==0?SPI_CPHA_0:SPI_CPHA_1, 
+    SPI_MSB_FIRST);
+
   gpio_set_function(MCUSPI_CONFIG_HW_MISO_PIN, GPIO_FUNC_SPI);
   gpio_set_function(MCUSPI_CONFIG_HW_MOSI_PIN, GPIO_FUNC_SPI);
   gpio_set_function(MCUSPI_CONFIG_HW_SCLK_PIN, GPIO_FUNC_SPI);
