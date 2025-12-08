@@ -44,6 +44,7 @@
 **         strcatNum24Hex          - void McuUtility_strcatNum24Hex(uint8_t *dst, size_t dstSize, uint32_t num);
 **         strcatNum32Hex          - void McuUtility_strcatNum32Hex(uint8_t *dst, size_t dstSize, uint32_t num);
 **         strcatNum32sDotValue100 - void McuUtility_strcatNum32sDotValue100(uint8_t *dst, size_t dstSize, int32_t...
+**         strcatNum32sDotValue1000- void McuUtility_strcatNum32sDotValue1000(uint8_t *dst, size_t dstSize, int32_t...
 **         strcatNumFloat          - void McuUtility_strcatNumFloat(uint8_t *dst, size_t dstSize, float val,...
 **         IsLeapYear              - bool McuUtility_IsLeapYear(uint16_t year);
 **         WeekDay                 - uint8_t McuUtility_WeekDay(uint16_t year, uint8_t month, uint8_t day);
@@ -984,6 +985,25 @@ void McuUtility_strcatNum32sDotValue100(uint8_t *dst, size_t dstSize, int32_t nu
 **         Appends a 32bit signed value to a string buffer. The value
 **         is in 1/100 units.  For example for the value -13456 it will
 **         append the string "-134.56"
+**     Parameters  :
+**         NAME            - DESCRIPTION
+**       * dst             - Pointer to destination string
+**         dstSize         - Size of the destination buffer (in
+**                           bytes).
+**         num             - Value to convert.
+**     Returns     : Nothing
+** ===================================================================
+*/
+
+void McuUtility_strcatNum32sDotValue1000(uint8_t *dst, size_t dstSize, int32_t num);
+/*
+** ===================================================================
+**     Method      :  strcatNum32sDotValue100 (component Utility)
+**
+**     Description :
+**         Appends a 32bit signed value to a string buffer. The value
+**         is in 1/1000 units.  For example for the value -134560 it will
+**         append the string "-134.560"
 **     Parameters  :
 **         NAME            - DESCRIPTION
 **       * dst             - Pointer to destination string
