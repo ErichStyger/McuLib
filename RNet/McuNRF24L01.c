@@ -49,7 +49,9 @@
 **         Deinit                     - void McuNRF24L01_Deinit(void);
 **         Init                       - void McuNRF24L01_Init(void);
 **
-** * Copyright (c) 2013-2018, Erich Styger
+**  * Copyright (c) 2013-2018, 2025, Erich Styger.
+**  * nRF channel scanning: Copyright 2025 Nico Zuber who implemented the channel recommendation. Scanning is from https://github.com/htotoo/NRF24ChannelScanner 
+**
 **  * Web:         https://mcuoneclipse.com
 **  * SourceForge: https://sourceforge.net/projects/mcuoneclipse
 **  * Git:         https://github.com/ErichStyger/McuOnEclipse_PEx
@@ -108,6 +110,10 @@ static McuGPIO_Handle_t csnPin; /* CSN pin, LOW active, used to select device (c
 #define McuNRF24L01_CSN_HIGH()  McuGPIO_SetHigh(csnPin)    /* put CSN HIGH, deactivate bus */
 
 #define McuNRF24L01_USE_SPI_BLOCK_MODE   0                 /* using SPI block read/write */
+
+/* settings for channel scanning */
+#define McuNRF24L01_NUM_CHANNELS          (128)  /* nRF24L01+ supports channels 0-127 (2.400-2.525 GHz) */
+#define McuNRF24L01_CHANNEL_SCAN_SAMPLES  (200)  /* Number of samples per channel - more samples = better accuracy */
 
 #if 0
 static void SM1_Enable(void) {
@@ -1481,9 +1487,560 @@ uint8_t McuNRF24L01_GetRxAddress(uint8_t pipe, uint8_t *address, uint8_t nofAddr
   return ERR_OK;
 }
 
+static uint8_t PerformChannelScan(uint8_t *channelData, uint8_t numChannels, uint32_t timeoutMs) {
+  /* Multi-round adaptive scanning algorithm
+   * Scans all channels repeatedly until:
+   * - At least one channel reaches 100% occupancy, OR
+   * - Timeout is reached
+   * 
+   * Each round:
+   * - Samples each channel 3 times with RPD (Received Power Detector)
+   * - Increments occupancy by 1% per carrier detection (0-3% per round)
+   * - Shows progress every 20 rounds with ETA
+   */
+  
+  uint8_t ch;
+  uint8_t rpd;
+  TickType_t startTime = xTaskGetTickCount();
+  uint16_t round = 0;
+  bool channelFilled = false;
+  
+  /* Clear channel data array */
+  for (ch = 0; ch < numChannels; ch++) {
+    channelData[ch] = 0;
+  }
+  
+  McuLog_info("Scanning RF channels. This might take up to %d seconds...", timeoutMs / 1000);
+  
+  while (!channelFilled) {
+    round++;
+    
+    /* Check timeout */
+    TickType_t elapsed = (xTaskGetTickCount() - startTime) * portTICK_PERIOD_MS;
+    if (elapsed >= timeoutMs) {
+      McuLog_info("Scan timeout after %d rounds", round);
+      break;
+    }
+    
+    /* Scan each channel in this round */
+    for (ch = 0; ch < numChannels; ch++) {
+      uint8_t carrierCount = 0;
+      
+      /* Set channel */
+      McuNRF24L01_WriteRegister(McuNRF24L01_RF_CH, ch);
+      
+      /* Enable RX for this channel */
+      McuNRF24L01_StartRxTx();
+      
+      /* Wait for channel to stabilize */
+      McuWait_Waitus(200);
+      
+      /* Take multiple quick samples (3 samples per round) */
+      for (uint8_t sample = 0; sample < 3; sample++) {
+        /* Read RPD (Received Power Detector) register - bit 0 indicates carrier */
+        rpd = McuNRF24L01_ReadRegister(McuNRF24L01_RPD);
+        if (rpd & 0x01) {  /* Carrier detected */
+          carrierCount++;
+        }
+        
+        /* Short delay between samples */
+        McuWait_Waitus(150);
+      }
+      
+      /* Disable RX for this channel before moving to next */
+      McuNRF24L01_StopRxTx();
+      
+      /* Accumulate carrier detections */
+      /* Increment by 1% per hit for finer granularity */
+      if (carrierCount > 0 && channelData[ch] < 100) {
+        channelData[ch] += carrierCount;  /* 1-3% increase per round (1% per hit) */
+        if (channelData[ch] >= 100) {
+          channelData[ch] = 100;  /* Cap at 100% */
+          channelFilled = true;   /* Stop condition met */
+        }
+      }
+    }
+
+    /* Log progress every 20 rounds with highest bin value and estimated time remaining */
+    if (round % 20 == 0) {
+      /* Find highest filled channel */
+      uint8_t maxOccupancy = 0;
+      for (ch = 0; ch < numChannels; ch++) {
+        if (channelData[ch] > maxOccupancy) {
+          maxOccupancy = channelData[ch];
+        }
+      }
+      
+      /* Calculate estimated time remaining */
+      uint32_t remainingSeconds = 0;
+      if (maxOccupancy > 0) {
+        /* Estimate rounds needed: (100 - current) / (current / round) */
+        uint32_t estimatedTotalRounds = (round * 100) / maxOccupancy;
+        uint32_t remainingRounds = estimatedTotalRounds - round;
+        /* Each round takes ~elapsed/round ms, convert to seconds */
+        remainingSeconds = (remainingRounds * elapsed) / (round * 1000);
+        if (remainingSeconds > (timeoutMs - elapsed) / 1000) {
+          remainingSeconds = (timeoutMs - elapsed) / 1000;  /* Cap at timeout */
+        }
+      } else {
+        /* No signal yet, assume full timeout */
+        remainingSeconds = (timeoutMs - elapsed) / 1000;
+      }
+
+      /* Build progress bar string: [####......] 40% ETA: 12s */
+      unsigned char progressBuf[64];
+      McuUtility_strcpy(progressBuf, sizeof(progressBuf), (unsigned char*)"[");
+      
+      /* Progress bar: 20 characters wide */
+      uint8_t barFilled = (maxOccupancy * 20) / 100;  /* 0-20 filled characters */
+      for (uint8_t i = 0; i < 20; i++) {
+        if (i < barFilled) {
+          McuUtility_strcat(progressBuf, sizeof(progressBuf), (unsigned char*)"#");
+        } else {
+          McuUtility_strcat(progressBuf, sizeof(progressBuf), (unsigned char*)".");
+        }
+      }
+      
+      McuUtility_strcat(progressBuf, sizeof(progressBuf), (unsigned char*)"] ");
+      McuUtility_strcatNum8u(progressBuf, sizeof(progressBuf), maxOccupancy);
+      McuUtility_strcat(progressBuf, sizeof(progressBuf), (unsigned char*)"%% ETA: ~");
+      McuUtility_strcatNum32u(progressBuf, sizeof(progressBuf), remainingSeconds);
+      McuUtility_strcat(progressBuf, sizeof(progressBuf), (unsigned char*)" s");
+      
+      McuLog_info((char*)progressBuf);
+    }
+  }
+  return ERR_OK;
+}
+
+static uint8_t ScanChannels(uint8_t *channelData, uint8_t maxChannels) {
+  uint8_t numChannels = (maxChannels < McuNRF24L01_NUM_CHANNELS) ? maxChannels : McuNRF24L01_NUM_CHANNELS;
+  uint8_t res;
+  
+  if (channelData == NULL) {
+    return ERR_PARAM_ADDRESS;
+  }
+  
+  #if PL_CONFIG_USE_POWER_MANAGER
+    PWR_SetComponentState(PWR_COMPONENT_RADIO, PWR_STATE_ACTIVE, true);
+  #endif
+  
+  McuLog_info("Starting channel scan (0-%d)...", numChannels-1);
+  
+  /* Save current radio state */
+  uint8_t originalChannel = McuNRF24L01_ReadRegister(McuNRF24L01_RF_CH);
+  uint8_t originalConfig = McuNRF24L01_ReadRegister(McuNRF24L01_CONFIG);
+  uint8_t originalRFSetup = McuNRF24L01_ReadRegister(McuNRF24L01_RF_SETUP);
+  
+  /* Stop radio and configure for scanning */
+  McuNRF24L01_StopRxTx();
+  
+  /* Configure for RX mode: Power up, RX mode, CRC enabled */
+  McuNRF24L01_WriteRegister(McuNRF24L01_CONFIG, 
+    McuNRF24L01_CONFIG_EN_CRC |        /* Enable CRC */
+    McuNRF24L01_CONFIG_CRCO |          /* 2 byte CRC */
+    McuNRF24L01_CONFIG_PWR_UP |        /* Power up */
+    McuNRF24L01_CONFIG_PRIM_RX);       /* RX mode */
+  
+  /* Disable auto-acknowledge for scanning */
+  McuNRF24L01_WriteRegister(McuNRF24L01_EN_AA, 0x00);
+  
+  /* Set to highest sensitivity: 
+   * - Maximum TX power (not used in RX, but part of default)
+   * - Enable LNA (Low Noise Amplifier) for maximum receive sensitivity (bit 0 = 1)
+   * - Use configured data rate
+   */
+  McuNRF24L01_WriteRegister(McuNRF24L01_RF_SETUP, 
+    McuNRF24L01_RF_SETUP_RF_PWR_0 | RNET_CONFIG_NRF24_DATA_RATE | 0x01); /* bit 0 = LNA enable */
+  
+  /* Wait for power up */
+  McuWait_Waitms(5);
+  
+  /* Perform the actual scan with 30 second timeout */
+  #define SCAN_TIMEOUT_MS 30000
+  res = PerformChannelScan(channelData, numChannels, SCAN_TIMEOUT_MS);
+  
+  /* Restore original configuration */
+  McuNRF24L01_StopRxTx();
+  McuNRF24L01_WriteRegister(McuNRF24L01_CONFIG, originalConfig);
+  McuNRF24L01_WriteRegister(McuNRF24L01_RF_CH, originalChannel);
+  McuNRF24L01_WriteRegister(McuNRF24L01_RF_SETUP, originalRFSetup);
+  
+  McuLog_info("Channel scan complete");
+  return res;
+}
+
+static uint8_t FindRecommendedChannels(uint8_t numRecommendations, uint8_t *channelData, uint8_t *recommendedChannels) {
+  /* 
+   * Channel Recommendation Algorithm
+   * ============================================
+   * 
+   * This algorithm recommends channels across the entire NRF24l01+'s spectrum
+   * it aims to maximize separation and avoid existing interference.
+   * 
+   * Algorithm Steps:
+   * 
+   * 1. FIND QUIET GAPS:
+   *    - Scan spectrum for continuous regions where occupancy is below a certain threshold
+   *    - Only consider gaps that are wide enough to be useful
+   * 
+   * 2. CALCULATE TOTAL USABLE SPECTRUM:
+   *    - Sum the widths of all quiet gaps found
+   *    - This represents the total "free spectrum" available
+   * 
+   * 3. PROPORTIONAL DISTRIBUTION:
+   *    - Each gap receives channels proportional to its size
+   *    - Large gaps receive more channels, small gaps receive fewer
+   *    - Example: A large gap representing 45% of free spectrum gets ~40% of channels
+   * 
+   * 4. HANDLE ROUNDING:
+   *    - Integer division may leave some channels unassigned
+   *    - Distribute remainder to gaps that have room for more channels
+   *    - Ensures all requested channels are assigned if possible
+   * 
+   * 5. PLACE CHANNELS WITHIN GAPS:
+   *    - Single channel: placed in gap center for best isolation
+   *    - Multiple channels: evenly distributed from start to end
+   *    - Maximizes separation between channels within each gap
+   * 
+   * 6. FALLBACK STRATEGY:
+   *    - If not enough quiet gaps exist, select lowest occupancy channels
+   *    - Maintains minimum spacing between channels to avoid interference
+   *    - Ensures best possible channel selection even in crowded environments
+   */
+
+  /* Configuration constants */
+  #define NUM_CHANNELS 126
+  #define MIN_CHANNEL_SPACING 3  /* Minimum spacing between channels to avoid interference */
+  #define MIN_GAP_WIDTH 5        /* Minimum width of a gap to be considered useful */
+  #define OCCUPANCY_THRESHOLD 10 /* Channels below this occupancy % are considered "quiet" */
+  
+  typedef struct {
+    uint8_t start;
+    uint8_t end;
+    uint8_t width;
+    uint8_t avgOccupancy;
+    uint8_t channelsAssigned;  /* Number of channels assigned to this gap */
+  } Gap_t;
+  
+  /* Step 1: Find all quiet gaps in the spectrum */
+  #define MAX_GAPS 20
+  Gap_t gaps[MAX_GAPS];
+  uint8_t numGaps = 0;
+  
+  bool inGap = false;
+  uint8_t gapStart = 0;
+  uint32_t gapOccupancySum = 0;
+  
+  for (uint8_t ch = 0; ch < NUM_CHANNELS; ch++) {
+    if (channelData[ch] <= OCCUPANCY_THRESHOLD) {
+      if (!inGap) {
+        /* Start of new gap */
+        inGap = true;
+        gapStart = ch;
+        gapOccupancySum = channelData[ch];
+      } else {
+        /* Continuing gap */
+        gapOccupancySum += channelData[ch];
+      }
+    } else {
+      if (inGap) {
+        /* End of gap */
+        uint8_t gapWidth = ch - gapStart;
+        if (gapWidth >= MIN_GAP_WIDTH && numGaps < MAX_GAPS) {
+          gaps[numGaps].start = gapStart;
+          gaps[numGaps].end = ch - 1;
+          gaps[numGaps].width = gapWidth;
+          gaps[numGaps].avgOccupancy = (uint8_t)(gapOccupancySum / gapWidth);
+          gaps[numGaps].channelsAssigned = 0;
+          numGaps++;
+        }
+        inGap = false;
+        gapOccupancySum = 0;
+      }
+    }
+  }
+  
+  /* Handle gap that extends to the end */
+  if (inGap) {
+    uint8_t gapWidth = NUM_CHANNELS - gapStart;
+    if (gapWidth >= MIN_GAP_WIDTH && numGaps < MAX_GAPS) {
+      gaps[numGaps].start = gapStart;
+      gaps[numGaps].end = NUM_CHANNELS - 1;
+      gaps[numGaps].width = gapWidth;
+      gaps[numGaps].avgOccupancy = (uint8_t)(gapOccupancySum / gapWidth);
+      gaps[numGaps].channelsAssigned = 0;
+      numGaps++;
+    }
+  }
+  
+  if (numGaps == 0) {
+    /* No suitable gaps found - fall back to lowest occupancy channels with spacing */
+    return 0;  /* Will be handled by fallback below */
+  }
+  
+  /* Step 2: Calculate total usable spectrum (sum of all gap widths) */
+  uint16_t totalUsableSpectrum = 0;
+  for (uint8_t i = 0; i < numGaps; i++) {
+    totalUsableSpectrum += gaps[i].width;
+  }
+  
+  /* Step 3: Distribute channels across gaps proportionally to their width */
+  uint8_t channelsRemaining = numRecommendations;
+  
+  for (uint8_t i = 0; i < numGaps && channelsRemaining > 0; i++) {
+    /* Calculate proportional share: (gap_width / total_width) * total_channels */
+    uint8_t proportionalShare = (gaps[i].width * numRecommendations) / totalUsableSpectrum;
+
+    /* Ensure at least 1 channel if there's room and channels remaining */
+    if (proportionalShare == 0 && channelsRemaining > 0) {
+      proportionalShare = 1;
+    }
+    
+    /* Don't assign more than what's left */
+    if (proportionalShare > channelsRemaining) {
+      proportionalShare = channelsRemaining;
+    }
+    
+    /* Don't assign more than what fits with spacing */
+    uint8_t maxFit = (gaps[i].width + MIN_CHANNEL_SPACING - 1) / MIN_CHANNEL_SPACING;
+    if (proportionalShare > maxFit) {
+      proportionalShare = maxFit;
+    }
+    
+    gaps[i].channelsAssigned = proportionalShare;
+    channelsRemaining -= proportionalShare;
+  }
+  
+  /* Step 4: Distribute any remaining channels to gaps with room */
+  /* This handles rounding issues from integer division */
+  while (channelsRemaining > 0) {
+    bool assigned = false;
+    
+    /* Try to assign to gaps that have room and fewer channels than they could hold */
+    for (uint8_t i = 0; i < numGaps && channelsRemaining > 0; i++) {
+      uint8_t maxFit = (gaps[i].width + MIN_CHANNEL_SPACING - 1) / MIN_CHANNEL_SPACING;
+      if (gaps[i].channelsAssigned < maxFit) {
+        gaps[i].channelsAssigned++;
+        channelsRemaining--;
+        assigned = true;
+      }
+    }
+    
+    /* If no gap has room, break to avoid infinite loop */
+    if (!assigned) {
+      break;
+    }
+  }
+  
+  /* Step 5: Place channels within each gap, distributed evenly */
+  uint8_t numRecommended = 0;
+
+  for (uint8_t g = 0; g < numGaps && numRecommended < numRecommendations; g++) {
+    uint8_t channelsInGap = gaps[g].channelsAssigned;
+    
+    if (channelsInGap == 0) continue;
+    
+    /* Distribute channels evenly within the gap */
+    for (uint8_t i = 0; i < channelsInGap; i++) {
+      /* Calculate position: spread evenly across gap width */
+      /* Formula: start + (i + 0.5) * width / channelsInGap */
+      uint8_t position = gaps[g].start + ((2 * i + 1) * gaps[g].width) / (2 * channelsInGap);
+      
+      /* Clamp to gap boundaries */
+      if (position < gaps[g].start) position = gaps[g].start;
+      if (position > gaps[g].end) position = gaps[g].end;
+      
+      recommendedChannels[numRecommended] = position;
+      numRecommended++;
+
+      if (numRecommended >= numRecommendations) break;
+    }
+  }
+  
+  /* Step 6: If we didn't find enough channels in gaps, fall back to lowest occupancy */
+  if (numRecommended < numRecommendations) {
+    /* Create a sorted list of channels by occupancy */
+    for (uint8_t ch = 0; ch < NUM_CHANNELS && numRecommended < numRecommendations; ch++) {
+      /* Find the channel with lowest occupancy that's not already recommended */
+      uint8_t bestCh = 255;
+      uint8_t bestOccupancy = 255;
+
+      for (uint8_t candidate = 0; candidate < NUM_CHANNELS; candidate++) {
+        /* Check if already recommended */
+        bool alreadyRecommended = false;
+        for (uint8_t i = 0; i < numRecommended; i++) {
+          if (recommendedChannels[i] == candidate) {
+            alreadyRecommended = true;
+            break;
+          }
+        }
+        
+        if (alreadyRecommended) continue;
+        
+        /* Check spacing from existing recommendations */
+        bool goodSpacing = true;
+        for (uint8_t i = 0; i < numRecommended; i++) {
+          int16_t distance = (int16_t)candidate - (int16_t)recommendedChannels[i];
+          if (distance < 0) distance = -distance;
+          if (distance < MIN_CHANNEL_SPACING) {
+            goodSpacing = false;
+            break;
+          }
+        }
+        
+        if (!goodSpacing) continue;
+        
+        /* Check if this is the best candidate so far */
+        if (channelData[candidate] < bestOccupancy) {
+          bestOccupancy = channelData[candidate];
+          bestCh = candidate;
+        }
+      }
+      
+      /* If we found a valid channel, add it */
+      if (bestCh != 255) {
+        recommendedChannels[numRecommended] = bestCh;
+        numRecommended++;
+      } else {
+        /* No more valid channels available */
+        break;
+      }
+    }
+  }
+  
+  return numRecommended;
+}
+
+static void PrintChannelScanResults(const McuShell_StdIOType *io, uint8_t *channelData, uint8_t numChannels) {
+  unsigned char buf[128];
+  uint8_t bestChannel = 0;
+  uint8_t lowestOccupancy = 255;
+  
+  /* Get channel recommendations first so we can mark them in the graph */
+  #define NUM_RECOMMENDATIONS 5
+  uint8_t recommendedChannels[NUM_RECOMMENDATIONS];
+  uint8_t numRecommended = FindRecommendedChannels(NUM_RECOMMENDATIONS, channelData, recommendedChannels);
+
+  uint8_t recommendedOccupancy[NUM_RECOMMENDATIONS];
+  for (uint8_t i = 0; i < numRecommended; i++) {
+    recommendedOccupancy[i] = channelData[recommendedChannels[i]];
+  }
+  
+  McuShell_SendStr((unsigned char*)"\r\n2.4 GHz Spectrum Analysis\r\n", io->stdOut);
+  McuShell_SendStr((unsigned char*)"Ch  Freq  Use |0%         25%         50%         75%        100%|\r\n", io->stdOut);
+  McuShell_SendStr((unsigned char*)"Nr  MHz   (%) |                                                  |\r\n", io->stdOut);
+  McuShell_SendStr((unsigned char*)"------------------------------------------------------------------\r\n", io->stdOut);
+  
+  for (uint8_t ch = 0; ch < numChannels; ch++) {
+    /* Calculate frequency: 2400 + channel MHz */
+    uint16_t freq = 2400 + ch;
+    
+    /* Channel number (3 chars, right-aligned) */
+    if (ch < 10) {
+      McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"  ");
+    } else if (ch < 100) {
+      McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)" ");
+    } else {
+      McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"");
+    }
+    McuUtility_strcatNum8u(buf, sizeof(buf), ch);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" ");
+    
+    /* Frequency (4 digits) */
+    McuUtility_strcatNum16u(buf, sizeof(buf), freq);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" ");
+    
+    /* Occupancy percentage (3 chars, right-aligned) */
+    if (channelData[ch] < 10) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"   ");
+    } else if (channelData[ch] < 100) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"  ");
+    } else {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" ");
+    }
+    McuUtility_strcatNum8u(buf, sizeof(buf), channelData[ch]);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" |");
+    
+    /* Draw bar graph - scale to 50 characters wide (0-100% = 0-50 chars) */
+    /* Round up: add 99 before dividing so even 1% shows at least one bar */
+    uint8_t barLength;
+    if (channelData[ch] > 0) {
+      barLength = ((channelData[ch] * 50) + 99) / 100;  /* Round up */
+      if (barLength > 50) barLength = 50;  /* Cap at max width */
+    } else {
+      barLength = 0;
+    }
+    
+    for (uint8_t i = 0; i < barLength; i++) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"#");
+    }
+    
+    /* Fill remaining space with spaces to reach right edge */
+    for (uint8_t i = barLength; i < 50; i++) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" ");
+    }
+    
+    /* Add right edge to frame the graph */
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"|");
+    
+    /* Check if this channel is recommended and add arrow marker */
+    bool isRecommended = false;
+    for (uint8_t i = 0; i < numRecommended; i++) {
+      if (recommendedChannels[i] == ch) {
+        isRecommended = true;
+        break;
+      }
+    }
+    
+    if (isRecommended) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" <--");
+    }
+    
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
+    McuShell_SendStr(buf, io->stdOut);
+  }
+  McuShell_SendStr((unsigned char*)"------------------------------------------------------------------\r\n", io->stdOut);
+  
+  /* Show recommendations */
+  McuShell_SendStr((unsigned char*)"\r\nRecommended Channels (distributed across quiet gaps):\r\n", io->stdOut);
+  for (uint8_t i = 0; i < numRecommended; i++) {
+    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"  ");
+    McuUtility_strcatNum8u(buf, sizeof(buf), i + 1);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)". Channel ");
+    McuUtility_strcatNum8u(buf, sizeof(buf), recommendedChannels[i]);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" (");
+    McuUtility_strcatNum16u(buf, sizeof(buf), 2400 + recommendedChannels[i]);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" MHz) - ");
+    McuUtility_strcatNum8u(buf, sizeof(buf), recommendedOccupancy[i]);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"% occupied\r\n");
+    McuShell_SendStr(buf, io->stdOut);
+  }
+  
+  if (numRecommended == 0) {
+    McuShell_SendStr((unsigned char*)"  No suitable channels found (all heavily occupied)\r\n", io->stdOut);
+  }
+}
+
+static uint8_t ScanAndReportChannels(const McuShell_StdIOType *io) {
+  uint8_t channelData[McuNRF24L01_NUM_CHANNELS];
+  uint8_t res;
+
+  McuShell_SendStr((unsigned char*)"Starting channel scan...\r\n", io->stdOut);
+  res = ScanChannels(channelData, McuNRF24L01_NUM_CHANNELS);
+  if (res == ERR_OK) {
+    PrintChannelScanResults(io, channelData, McuNRF24L01_NUM_CHANNELS);
+  } else {
+    McuShell_SendStr((unsigned char*)"Channel scan failed!\r\n", io->stdErr);
+    return res;
+  }
+  return ERR_OK;
+}
+
 static uint8_t PrintHelp(const McuShell_StdIOType *io) {
   McuShell_SendHelpStr((unsigned char*)"McuNRF", (unsigned char*)"Group of nRF24L01+ commands\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Shows help or status\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  scan", (unsigned char*)"Scan all 2.4GHz channels for interference\r\n", io->stdOut);
   return ERR_OK;
 }
 
@@ -1516,6 +2073,9 @@ uint8_t McuNRF24L01_ParseCommand(const unsigned char *cmd, bool *handled, const 
   } else if (McuUtility_strcmp((char*)cmd, (char*)McuShell_CMD_STATUS)==0 || McuUtility_strcmp((char*)cmd, (char*)"McuNRF status")==0) {
     *handled = TRUE;
     return PrintStatus(io);
+  } else if (McuUtility_strcmp((char*)cmd, (char*)"McuNRF scan")==0) {
+    *handled = TRUE;
+    return ScanAndReportChannels(io);
   }
   return res;
 }
