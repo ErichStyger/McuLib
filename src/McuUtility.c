@@ -2205,6 +2205,19 @@ void McuUtility_strcatNum32sDotValue100(uint8_t *dst, size_t dstSize, int32_t nu
   McuUtility_strcatNum16uFormatted(dst, dstSize, (uint16_t)((unsigned)num%100U), '0', 2);
 }
 
+void McuUtility_strcatNum32sDotValue1000(uint8_t *dst, size_t dstSize, int32_t num)
+{
+  if (num<0 && (num/100)==0) { /* e.g. -53 ==> write sign, as strcatNum32() below will not know that it is negative */
+    McuUtility_chcat(dst, dstSize, '-');
+  }
+  McuUtility_strcatNum32s(dst, dstSize, num/1000);
+  McuUtility_chcat(dst, dstSize, '.');
+  if (num<0) {
+    num = -num;
+  }
+  McuUtility_strcatNum16uFormatted(dst, dstSize, (uint16_t)((unsigned)num%1000U), '0', 3);
+}
+
 /*
 ** ===================================================================
 **     Method      :  strFind (component Utility)
