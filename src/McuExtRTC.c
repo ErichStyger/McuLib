@@ -760,6 +760,7 @@ uint8_t McuExtRTC_SetTimeDate(TIMEREC *time, DATEREC *date)
   tdate.day = date->Day;
   tdate.month = date->Month;
   tdate.year = (uint8_t)(date->Year-2000);
+  tdate.dayOfWeek = McuUtility_WeekDay(date->Year, date->Month, date->Day);
   if (McuExtRTC_SetRTCTimeDate(&ttime, &tdate)!=ERR_OK) {
     return ERR_FAILED;
   }
