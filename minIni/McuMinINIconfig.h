@@ -78,7 +78,7 @@
 #endif
 
 #if !defined(McuMinINI_CONFIG_USE_MUTEX)
-  #define McuMinINI_CONFIG_USE_MUTEX  (1)
+  #define McuMinINI_CONFIG_USE_MUTEX  (1 && McuLib_CONFIG_SDK_USE_FREERTOS)
     /*!< 1: use mutex to make it thread safe, 0: otherwise */
 #endif
 
