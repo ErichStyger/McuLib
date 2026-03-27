@@ -131,18 +131,21 @@
   #define McuLib_CONFIG_CORTEX_M      (4)
     /*!< 0: Cortex-M0, 3: M3, 4: M4, 7: M7, 33: M33, -1 otherwise */
 #endif
-#if (1 && !defined(McuLib_CONFIG_FPU_PRESENT) && McuLib_CONFIG_CORTEX_M!=0) || (defined(__FPU_PRESENT) && (__FPU_PRESENT==1)) /* __FPU_PRESENT can be defined in CMSIS-Core */
-  #define McuLib_CONFIG_FPU_PRESENT   (1)
-#else
-  #define McuLib_CONFIG_FPU_PRESENT   (0)
+
+/* need to know if we have FPU or not. Important for example for the FreeRTOS port */
+#if !defined(McuLib_CONFIG_FPU_PRESENT) /* determine if we have a FPU or not*/
+  #if defined(__FPU_PRESENT) && (__FPU_PRESENT==1) /* __FPU_PRESENT can be defined in CMSIS-Core */
+    #define McuLib_CONFIG_FPU_PRESENT   (1)  /*!< 1: floating point unit present, 0: otherwise */
+  #elif defined(__FPU_PRESENT) && (__FPU_PRESENT==0)
+    #define McuLib_CONFIG_FPU_PRESENT   (0)  /*!< 1: floating point unit present, 0: otherwise */
+  #elif McuLib_CONFIG_CORTEX_M==0 /* Cortex-M0 has no FPU */
+    #define McuLib_CONFIG_FPU_PRESENT   (0)  /*!< 1: floating point unit present, 0: otherwise */
+  #elif McuLib_CONFIG_CPU_IS_MCXA  /* MCXA does not have a FPU: somehow with the NXP SDK for it __FPU_PRESENT is not defined (include order?) */
+    #define McuLib_CONFIG_FPU_PRESENT   (0)  /*!< 1: floating point unit present, 0: otherwise */
+  #else /* default, assume we have one */
+    #define McuLib_CONFIG_FPU_PRESENT   (1)  /*!< 1: floating point unit present, 0: otherwise */
+  #endif
 #endif
-    /*!< 1: floating point unit present, 0: otherwise */
-#if (1 && !defined(McuLib_CONFIG_FPU_USED) && McuLib_CONFIG_CORTEX_M!=0) || (defined(__FPU_USED) && (__FPU_USED==1)) /* __FPU_USED can be defined in CMSIS-Core */
-  #define McuLib_CONFIG_FPU_USED      (1)
-#else
-  #define McuLib_CONFIG_FPU_USED      (0)
-#endif
-  /*!< 1: using floating point unit, 0: otherwise */
 
 /* macro for little and big endianess. ARM is little endian */
 #define McuLib_CONFIG_CPU_IS_LITTLE_ENDIAN   (McuLib_CONFIG_CPU_IS_ARM_CORTEX_M)
