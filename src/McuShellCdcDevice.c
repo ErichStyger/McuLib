@@ -17,6 +17,7 @@
 #include "McuUtility.h"
 #include "McuRB.h"
 #include "McuWait.h"
+#include "McuXFormat.h"
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   #include "tusb.h"
 #endif
@@ -155,6 +156,16 @@ void McuShellCdcDevice_WriteAndFlush(const char *buf, size_t count) {
 
 uint32_t McuShellCdcDevice_WriteStr(const char *str) {
   return tud_cdc_write_str(str);
+}
+
+unsigned McuShellCdcDevice_printf(const char *fmt, ...) {
+  va_list args;
+  unsigned int count = 0;
+
+  va_start(args,fmt);
+  count = McuXFormat_xvformat(McuShell_printfPutChar, (void*)McuShellCdcDevice_GetStdio()->stdOut, fmt, args);
+  va_end(args);
+  return count;
 }
 
 bool McuShellCdcDevice_IsConnected(void) {

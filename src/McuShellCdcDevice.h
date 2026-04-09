@@ -39,6 +39,12 @@ bool McuShellCdcDevice_IsDataPresent(void);
 void McuShellCdcDevice_QueueChar(char ch);
 
 /*!
+ * \brief Writing a string to the USB CDC using printf() style.
+ * \return The number of bytes written.
+ */
+unsigned McuShellCdcDevice_printf(const char *fmt, ...);
+
+/*!
  * \brief Return a received byte.
  * \return The byte, or EOF
  */
