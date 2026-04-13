@@ -204,7 +204,7 @@ uint8_t McuI2cLib_SelectSlave(uint8_t Slv) {
 }
 
 #if MCUI2CLIB_CONFIG_I2C_RELEASE_BUS
-static void McuI2cLib_ReleaseBus(void) {
+static void ResetI2CBus(void) {
   McuGPIO_Handle_t sdaPin, sclPin;
   McuGPIO_Config_t config;
   uint8_t i = 0;
@@ -279,6 +279,11 @@ static void McuI2cLib_ConfigureI2cPins(void) {
 #endif
 }
 
+bool I2CLIB_ResetBus(void) {
+  ResetI2CBus(); /* reset I2C bus */
+  return true; /* success */
+}
+
 void McuI2cLib_Deinit(void) {
   /* nothing implemented */
 }
@@ -308,7 +313,7 @@ static esp_err_t esp32_master_init(void) {
 
 void McuI2cLib_Init(void) {
 #if MCUI2CLIB_CONFIG_I2C_RELEASE_BUS
-  McuI2cLib_ReleaseBus();
+  ResetI2CBus();
 #endif
 #if McuLib_CONFIG_CPU_IS_KINETIS \
      || McuLib_CONFIG_CPU_IS_LPC55xx && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC55S16 \
