@@ -279,7 +279,7 @@ static void McuI2cLib_ConfigureI2cPins(void) {
 #endif
 }
 
-bool I2CLIB_ResetBus(void) {
+bool McuI2cLib_ResetBus(void) {
   ResetI2CBus(); /* reset I2C bus */
   return true; /* success */
 }
