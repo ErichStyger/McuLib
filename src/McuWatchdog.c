@@ -135,7 +135,7 @@ static void McuWatchdog_CheckHealth(void) {
       McuLog_warn("%s is suspended", reports[i].name);
       McuWatchdog_Recordings[i].ms = 0;  /* reset counter */
     } else {
-      uint8_t buf[48];
+      uint8_t buf[64];
 
       McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"WDT FAILURE: ");
       McuUtility_strcat(buf, sizeof(buf), reports[i].name);
