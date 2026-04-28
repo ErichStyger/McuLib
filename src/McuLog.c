@@ -48,6 +48,10 @@
   #include "McuRTT.h"
 #endif
 
+typedef struct LoggerChannel_t {
+  McuShell_ConstStdIOType *io; /* I/O for the channel */
+} LoggerChannel_t;
+
 static struct {
   McuLog_Levels_e level; /* 0 (TRACE) to 5 (FATAL) */
 #if McuLog_CONFIG_USE_MUTEX
@@ -57,7 +61,7 @@ static struct {
   log_LockFn lock; /* user mutex for synchronization */
   void *udata;  /* optional data for lock */
 #endif
-  McuShell_ConstStdIOType *consoleIo[McuLog_CONFIG_NOF_CONSOLE_LOGGER]; /* I/O for console logging */
+  LoggerChannel_t channels[McuLog_CONFIG_NOF_CONSOLE_LOGGER]; /* channels for logging */
   bool quiet; /* if console logging is silent/quiet */
 #if McuLog_CONFIG_USE_COLOR
   bool color; /* if using color for terminal */
@@ -104,7 +108,7 @@ static void unlock(void) {
 
 void McuLog_set_console(McuShell_ConstStdIOType *io, uint8_t index) {
   assert(index<McuLog_CONFIG_NOF_CONSOLE_LOGGER);
-  McuLog_ConfigData.consoleIo[index] = io;
+  McuLog_ConfigData.channels[index].io = io;
 }
 
 #if McuLog_CONFIG_USE_MUTEX
@@ -293,13 +297,13 @@ void McuLog_ChannelLog(uint8_t channel, McuLog_Levels_e level, const char *file,
 #endif
   (void)McuTimeDate_GetTimeDateAdjustDST(&time, &date); /* Get current date and time */
   if (!McuLog_ConfigData.quiet) {
-    if(McuLog_ConfigData.consoleIo[channel]!=NULL) { /* log to console */
-      LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[channel]->stdErr);
+    if(McuLog_ConfigData.channels[channel].io!=NULL) { /* log to console */
+      LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.channels[channel].io->stdErr);
       /* open argument list */
       va_start(list, fmt);
-      McuXFormat_xvformat(OutputCharFctConsole, McuLog_ConfigData.consoleIo[channel]->stdErr, fmt, list);
+      McuXFormat_xvformat(OutputCharFctConsole, McuLog_ConfigData.channels[channel].io->stdErr, fmt, list);
       va_end(list);
-      OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.consoleIo[channel]->stdErr);
+      OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.channels[channel].io->stdErr);
     }
   }
 #if McuLog_CONFIG_USE_MUTEX
@@ -323,13 +327,13 @@ void McuLog_log(McuLog_Levels_e level, const char *file, int line, const char *f
   (void)McuTimeDate_GetTimeDateAdjustDST(&time, &date); /* Get current date and time */
   if (!McuLog_ConfigData.quiet) {
     for(int i=0; i<McuLog_CONFIG_NOF_CONSOLE_LOGGER; i++) {
-      if(McuLog_ConfigData.consoleIo[i]!=NULL) { /* log to console */
-        LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
+      if(McuLog_ConfigData.channels[i].io!=NULL) { /* log to console */
+        LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.channels[i].io->stdErr);
         /* open argument list */
         va_start(list, fmt);
-        McuXFormat_xvformat(OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr, fmt, list);
+        McuXFormat_xvformat(OutputCharFctConsole, McuLog_ConfigData.channels[i].io->stdErr, fmt, list);
         va_end(list);
-        OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
+        OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.channels[i].io->stdErr);
       }
     } /* for */
   }
@@ -377,10 +381,10 @@ void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const c
   (void)McuTimeDate_GetTimeDateAdjustDST(&time, &date); /* Get current date and time */
   if (!McuLog_ConfigData.quiet) {
     for(int i=0; i<McuLog_CONFIG_NOF_CONSOLE_LOGGER; i++) {
-      if(McuLog_ConfigData.consoleIo[i]!=NULL) { /* log to console */
-        LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
-        OutString((unsigned char *)str, OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
-        OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.consoleIo[i]->stdErr);
+      if(McuLog_ConfigData.channels[i].io!=NULL) { /* log to console */
+        LogHeader(&time, &date, level, true, file, line, OutputCharFctConsole, McuLog_ConfigData.channels[i].io->stdErr);
+        OutString((unsigned char *)str, OutputCharFctConsole, McuLog_ConfigData.channels[i].io->stdErr);
+        OutString((unsigned char *)"\n", OutputCharFctConsole, McuLog_ConfigData.channels[i].io->stdErr);
       }
     } /* for */
   }
@@ -526,7 +530,7 @@ void McuLog_Init(void) {
 #if McuLog_CONFIG_USE_RTT_DATA_LOGGER
   McuLog_set_rtt_logger(true);
 #endif
-  McuLog_ConfigData.consoleIo[0] = McuShell_GetStdio(); /* default */
+  McuLog_ConfigData.channels[0].io = McuShell_GetStdio(); /* default */
   McuLog_set_level(McuLog_CONFIG_DEFAULT_LEVEL); /* default level */
 #if McuLog_CONFIG_USE_RTT_DATA_LOGGER
   #if McuLib_CONFIG_SDK_USE_FREERTOS && configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && McuSystemView_CONFIG_RTT_CHANNEL==McuLog_RTT_DATA_LOGGER_CHANNEL
