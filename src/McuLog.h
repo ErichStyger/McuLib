@@ -64,7 +64,8 @@ void McuLog_set_level(McuLog_Levels_e level);
 void McuLog_set_quiet(bool enable);
 
 #if McuLog_CONFIG_USE_COLOR
-void McuLog_set_color(bool enable);
+void McuLog_set_color(bool enable); /* enable/disable global color settings */
+void McuLog_set_channel_color(uint8_t channelIdx, bool enable); /* enable/disable color for a channel */
 #endif
 
 #if McuLog_CONFIG_USE_PRINTF_STYLE
@@ -97,14 +98,15 @@ void McuLog_Deinit(void);
   #define McuLog_error(...) do{}while(0)
   #define McuLog_fatal(...) do{}while(0)
 
-  #define McuLog_set_console(io,ch)                 do{}while(0)
-  #define McuLog_set_udata(udata)                   do{}while(0)
-  #define McuLog_set_lock(fn)                       do{}while(0)
-  #define McuLog_set_fp(fp)                         do{}while(0)
-  #define McuLog_set_level(level)                   do{}while(0)
-  #define McuLog_set_quiet(enable)                  do{}while(0)
-  #define McuLog_set_color(enable)                  do{}while(0)
-  #define McuLog_log(level, file, line, fmt, ...)   do{}while(0)
+  #define McuLog_set_console(io,ch)                     do{}while(0)
+  #define McuLog_set_udata(udata)                       o{}while(0)
+  #define McuLog_set_lock(fn)                           do{}while(0)
+  #define McuLog_set_fp(fp)                             do{}while(0)
+  #define McuLog_set_level(level)                       do{}while(0)
+  #define McuLog_set_quiet(enable)                      do{}while(0)
+  #define McuLog_set_color(enable)                      do{}while(0)
+  #define McuLog_set_channel_color(channelIdx, enable)  do{}while(0)
+  #define McuLog_log(level, file, line, fmt, ...)       do{}while(0)
 
   #define McuLog_Init()   do{}while(0)
   #define McuLog_Deinit() do{}while(0)
