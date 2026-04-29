@@ -99,7 +99,7 @@ void McuLog_Deinit(void);
   #define McuLog_fatal(...) do{}while(0)
 
   #define McuLog_set_console(io,ch)                     do{}while(0)
-  #define McuLog_set_udata(udata)                       o{}while(0)
+  #define McuLog_set_udata(udata)                       do{}while(0)
   #define McuLog_set_lock(fn)                           do{}while(0)
   #define McuLog_set_fp(fp)                             do{}while(0)
   #define McuLog_set_level(level)                       do{}while(0)
