@@ -60,6 +60,13 @@ file(GLOB MCULIBFILES
   SEGGER_Sysview/SEGGER_SYSVIEW.c
   SEGGER_Sysview/SEGGER_SYSVIEW_Config_FreeRTOS.c
   SEGGER_Sysview/SEGGER_SYSVIEW_FreeRTOS.c
+
+  # PERCEPIO TraceRecorder
+  TraceRecorder/McuPercepio.c
+  TraceRecorder/trcKernelPort.c
+  TraceRecorder/trcSnapshotRecorder.c
+  TraceRecorder/trcStreamingPort.c
+  TraceRecorder/trcStreamingRecorder.c
   
   src/McuSemihost.c
   src/McuShell.c
@@ -144,6 +151,10 @@ target_include_directories(
   ./config/fonts/
   ./SEGGER_RTT/
   ./SEGGER_Sysview/
+  ./TraceRecorder
+  ./TraceRecorder/include
+  ./TraceRecorder/config
+  ./TraceRecorder/streamports/Jlink_RTT/include
   ./MinIni
   ./LittlevGL
   ./Modbus
