@@ -618,6 +618,17 @@ void McuPercepio_Startup(void)
 #endif /* configUSE_PERCEPIO_TRACE_HOOKS */
 }
 
+void McuPercepio_OnTraceWrap(void)
+{
+#if 1 /* default implementation for gdb below ... */
+  /* Write your code here ... */
+  uint8_t buf[64];
+
+  /* GDB: dump binary memory <file> <hexStartAddr> <hexEndAddr> */
+  McuPercepio_vGetGDBDumpCommand(buf, sizeof(buf), (unsigned char*)"c:\\tmp\\trc.dump");
+#endif
+}
+
 /* END McuPercepio. */
 
 /*!

@@ -35,4 +35,9 @@
   #endif
 #endif
 
+#ifndef McuPercepio_CONFIG_RECORDER_MODE
+  #define McuPercepio_CONFIG_RECORDER_MODE    TRC_RECORDER_MODE_STREAMING
+    /*!< recorder mode, TRC_RECORDER_MODE_STREAMING or TRC_RECORDER_MODE_SNAPSHOT */
+#endif
+
 #endif /* __McuPercepio_CONFIG_H */

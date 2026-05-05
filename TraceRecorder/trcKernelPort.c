@@ -912,6 +912,7 @@ void* prvTraceGetCurrentTaskHandle()
 *
 * Note: See other implementation of vTraceEnable in trcStreamingRecorder.c
 ******************************************************************************/
+#if (TRC_CFG_RECORDER_MODE != TRC_RECORDER_MODE_SNAPSHOT)
 void vTraceEnable(int startOption)
 {
 	prvTraceInitTraceData();
@@ -942,6 +943,7 @@ void vTraceEnable(int startOption)
 
 #endif /* defined(TRC_CFG_ENABLE_STACK_MONITOR) && (TRC_CFG_ENABLE_STACK_MONITOR == 1) && (TRC_CFG_SCHEDULING_ONLY == 0) */
 }
+#endif
 
 /*******************************************************************************
 * TzCtrl
@@ -951,7 +953,7 @@ void vTraceEnable(int startOption)
 * receiving commands from Tracealyzer. Also does some diagnostics.
 ******************************************************************************/
 #if defined(TRC_CFG_ENABLE_STACK_MONITOR) && (TRC_CFG_ENABLE_STACK_MONITOR == 1) && (TRC_CFG_SCHEDULING_ONLY == 0)
-static portTASK_FUNCTION(TzCtrl, pvParameters)
+static void TzCtrl(void *pvParameters)
 {
 	(void)pvParameters;
 

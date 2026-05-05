@@ -122,7 +122,7 @@ extern "C" {
  * TRC_RECORDER_MODE_SNAPSHOT
  * TRC_RECORDER_MODE_STREAMING
  ******************************************************************************/
-#define TRC_CFG_RECORDER_MODE TRC_RECORDER_MODE_STREAMING
+#define TRC_CFG_RECORDER_MODE       McuPercepio_CONFIG_RECORDER_MODE /* << EST */
 
 /******************************************************************************
  * TRC_CFG_FREERTOS_VERSION
@@ -425,9 +425,9 @@ extern "C" {
 
 /* Specific configuration, depending on Streaming/Snapshot mode */
 #if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_SNAPSHOT)
-#include "trcSnapshotConfig.h"
+  #include "trcSnapshotConfig.h"
 #elif (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
-#include "trcStreamingConfig.h"
+  #include "trcStreamingConfig.h"
 #endif
 
 /* << EST: additional configuration item */
