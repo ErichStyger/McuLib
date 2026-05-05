@@ -57,6 +57,7 @@
 /* MODULE McuHardFault. */
 
 #include "McuHardFault.h"
+#include "cmsis_gcc.h" /* needed to check if we have a debugger attached */
 
 #if McuLib_CONFIG_CPU_IS_ARM_CORTEX_M
 
@@ -137,7 +138,15 @@ void McuHardFault_HandlerC(uint32_t *hardfault_args)
   );
 #endif
 #endif
+#if 0 /* do NOT call the debugger like this below. Because on production code, if we end up here, the BKPT without debugger attached will cause again a hardfault (and no reset) */
   __asm("BKPT #0\n") ; /* cause the debugger to stop */
+#else /* better version: check if we have a debugger attached */
+  #if defined(CoreDebug) && defined(CoreDebug_DHCSR_C_DEBUGEN_Msk)
+      if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
+          __BKPT(0);
+      }
+  #endif
+#endif
   /*lint -restore */
 }
 
