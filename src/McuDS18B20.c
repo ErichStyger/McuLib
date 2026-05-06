@@ -35,7 +35,7 @@ This is a component for the Maxim DS18B20 1-Wire temperature sensor.
 **         Init                    - void McuDS18B20_Init(void);
 **         Deinit                  - void McuDS18B20_Deinit(void);
 **
-** * Copyright (c) Original implementation: Omar Isaí Pinales Ayala, 2014, all rights reserved.
+** * Copyright (c) Original implementation: Omar Isaï¿½ Pinales Ayala, 2014, all rights reserved.
 **  * Updated and maintained by Erich Styger, 2014-2020
 **  * Web:         https://mcuoneclipse.com
 **  * SourceForge: https://sourceforge.net/projects/mcuoneclipse
@@ -244,7 +244,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
         res = McuDS18B20_GetTemperatureFloat(i, &temp);
         if (res==ERR_OK) {
           McuUtility_strcatNumFloat(buf, sizeof(buf), temp, 4);
-          McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"°C");
+          McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"ï¿½C");
         } else {
           McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"ERROR (");
           McuUtility_strcatNum8u(buf, sizeof(buf), res);
@@ -389,7 +389,7 @@ uint8_t McuDS18B20_ParseCommand(const unsigned char* cmd, bool *handled, const M
         } else {
           buf[0] = '\0';
           McuUtility_strcatNumFloat(buf, sizeof(buf), temperature, 4);
-          McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"°C\r\n");
+          McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"ï¿½C\r\n");
           McuShell_SendStr(buf, io->stdOut);
           res = ERR_OK;
         }
@@ -682,7 +682,7 @@ uint8_t McuDS18B20_GetTemperatureFloat(uint8_t sensor_index, float *temperature)
 **     Method      :  isBusy (component DS18B20)
 **
 **     Description :
-**         Returns TRUE if there are a operation in progress.
+**         Returns TRUE if there is a operation in progress.
 **     Parameters  : None
 **     Returns     :
 **         ---             - Returns TRUE if the device is busy, and
@@ -821,7 +821,7 @@ void McuDS18B20_Init(void)
   memset(&Sensor[0], 0, sizeof(Sensor[0])); /* initialize all fields with zero */
   Sensor[0].resolution = DS18B20_RESOLUTION_BITS_12; /* default resolution */
 #endif
-  Device.Value = 8500000; /* dummy value or 85°C */
+  Device.Value = 8500000; /* dummy value or 85ï¿½C */
 }
 
 /*

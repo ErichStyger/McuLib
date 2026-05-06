@@ -347,7 +347,7 @@ static const unsigned char formatStates[] =
 
 
 /**
- * Convert an unsigned value in one string
+ * Convert an unsigned value into a string
  *
  * All parameter are in the passed structure
  *
@@ -597,7 +597,7 @@ int xsprintf(char *buf, const char *fmt, va_list args) {
 #endif
 
 /*
- * Lint want declare list as const but list is an obscured pointer so
+ * Lint wants to declare list as const but list is an obscured pointer so
  * the warning is disabled.
  */
 /*lint -save -e818 */

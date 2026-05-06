@@ -234,7 +234,7 @@ bool McuRTT_StdIOKeyPressed(void);
 **         StdIO handler for Shell
 **     Parameters  : None
 **     Returns     :
-**         ---             - True if there are characters in teh input
+**         ---             - True if there are characters in the input
 **                           buffer
 ** ===================================================================
 */

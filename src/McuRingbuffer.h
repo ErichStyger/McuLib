@@ -184,7 +184,7 @@ uint8_t McuRingbuffer_Peek(McuRingbuffer_BufSizeType index, McuRingbuffer_Elemen
 **     Method      :  Peek (component RingBuffer)
 **
 **     Description :
-**         Returns an element of the buffer without removiing it.
+**         Returns an element of the buffer without removing it.
 **     Parameters  :
 **         NAME            - DESCRIPTION
 **         index           - Index of element. 0 peeks the top

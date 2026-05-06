@@ -90,9 +90,9 @@ void McuCRC_Init ( McuCRC_Generator_t *crcGen );
 * Xor'd output use the function \a McuCRC_GetCrcValue() which returns the Xor'd
 * crc value.
 *
-* \param McuCRC_Generator_t *crcGen Pointer to a \a McuCRC_Generator_t structure
-* \param uint8_t *data_pu8 Pointer to the data to be crc'd
-* \param size_t length  Number of bytes in the data array
+* \param crcGen Pointer to a \a McuCRC_Generator_t structure
+* \param data_pu8 Pointer to the data to be crc'd
+* \param length  Number of bytes in the data array
 */
 void McuCRC_CalculateBlock (McuCRC_Generator_t *crcGen, uint8_t *data_pu8, size_t length );
 
@@ -127,7 +127,7 @@ uint32_t McuCRC_GetCrcValue ( McuCRC_Generator_t *crcGen );
 * \brief Calculates a 32 bit crc of a byte array using a LUT
 *
 * The LUT used for this function can be calculated using the function \a McuCRC_GenerateLookUpTable()
-* The pointer the LUT has to be casted to (void*)
+* The pointer the LUT has to be cast to (void*)
 *
 * \param McuCRC_Generator_t *crcGen Pointer to a \a McuCRC_Generator_t structure
 * \return The calculated crc, XOR^d with the crcGen->McuCRC_XorOut parameter
@@ -140,7 +140,7 @@ uint32_t McuCRC_CalculateWithTableCRC32 ( McuCRC_Generator_t *crcGen, uint8_t *d
 * \brief Calculates a 16 bit crc of a byte array using a LUT
 *
 * The LUT used for this function can be calculated using the function \a McuCRC_GenerateLookUpTable()
-* The pointer the LUT has to be casted to (void*)
+* The pointer the LUT has to be cast to (void*)
 *
 * \param McuCRC_Generator_t *crcGen Pointer to a \a McuCRC_Generator_t structure
 * \return The calculated crc, XOR^d with the crcGen->McuCRC_XorOut parameter
@@ -153,7 +153,7 @@ uint16_t McuCRC_CalculateWithTableCRC16 ( McuCRC_Generator_t *crcGen, uint8_t *d
 * \brief Calculates a 8 bit crc of a byte array using a LUT
 *
 * The LUT used for this function can be calculated using the function \a McuCRC_GenerateLookUpTable()
-* The pointer the LUT has to be casted to (void*)
+* The pointer the LUT has to be cast to (void*)
 *
 * \param McuCRC_Generator_t *crcGen Pointer to a \a McuCRC_Generator_t structure
 * \return The calculated crc, XOR^d with the crcGen->McuCRC_XorOut parameter

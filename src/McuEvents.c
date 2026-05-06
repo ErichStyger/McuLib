@@ -124,7 +124,7 @@ void McuEvents_ClearEvent(uint8_t event)
 **     Method      :  GetEvent (component SimpleEvents)
 **
 **     Description :
-**         Allows to check if an event is set or not.
+**         Checking if an event is set or not.
 **     Parameters  :
 **         NAME            - DESCRIPTION
 **         event           - The event number to check. If the

@@ -56,7 +56,7 @@ uint8_t McuW25_ProgramPage(uint32_t address, const uint8_t *data, size_t dataSiz
 
 uint8_t McuW25_GetCapacity(uint32_t *capacity);
 
-/*!* \brief Module de-initialization */
+/*! \brief Module de-initialization */
 void McuW25_Deinit(void);
 
 /*!* \brief Module initialization */

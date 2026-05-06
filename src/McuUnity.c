@@ -15,7 +15,7 @@
 #endif
 #include <stdio.h> /* for EOF */
 
-/* The variable below is not initialized during statup, and set by JRun using a test JLinkScript,
+/* The variable below is not initialized during startup, and set by JRun using a test JLinkScript,
  * writing the variable during HandleAfterFlashProg().
  */
 #if McuLib_CONFIG_CPU_IS_RPxxxx

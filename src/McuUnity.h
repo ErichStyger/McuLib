@@ -65,13 +65,13 @@ int McuUnity_RTT_GetArgs(unsigned char *buffer, size_t bufSize);
 
 /*!
   \brief Report status and exit JRun runner with RTT message
-  \param success If tests are a success or failure
+  \param success Whether the tests succeeded or failed
  */
 void McuUnity_Exit_JRun_RTT(bool success);
 
 /*!
   \brief Report status and exit LinkServer runner with McuLog message
-  \param success If tests are a success or failure
+  \param success Whether the tests succeeded or failed
  */
 void McuUnity_Exit_LinkServer_Log(bool success);
 

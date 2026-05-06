@@ -35,7 +35,7 @@ This is a component for the Maxim DS18B20 1-Wire temperature sensor.
 **         Init                    - void McuDS18B20_Init(void);
 **         Deinit                  - void McuDS18B20_Deinit(void);
 **
-** * Copyright (c) Original implementation: Omar Isaí Pinales Ayala, 2014, all rights reserved.
+** * Copyright (c) Original implementation: Omar Isaï¿½ Pinales Ayala, 2014, all rights reserved.
 **  * Updated and maintained by Erich Styger, 2014-2020
 **  * Web:         https://mcuoneclipse.com
 **  * SourceForge: https://sourceforge.net/projects/mcuoneclipse
@@ -179,7 +179,7 @@ bool McuDS18B20_isBusy(void);
 **     Method      :  isBusy (component DS18B20)
 **
 **     Description :
-**         Returns TRUE if there are a operation in progress.
+**         Returns TRUE if there is a operation in progress.
 **     Parameters  : None
 **     Returns     :
 **         ---             - Returns TRUE if the device is busy, and

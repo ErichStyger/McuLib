@@ -1368,7 +1368,7 @@ int32_t McuUtility_random(int32_t min, int32_t max);
 **     Method      :  random (component Utility)
 **
 **     Description :
-**         Provides a random value. You have to call intialize the
+**         Provides a random value. You have to initialize the
 **         random number generator with randomSetSeed() first!
 **     Parameters  :
 **         NAME            - DESCRIPTION

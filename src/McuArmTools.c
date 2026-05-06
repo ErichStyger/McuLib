@@ -108,7 +108,7 @@
 
 /* On ARM Cortex, the stack grows from 'top' (higher address) to the 'bottom' (lower address).
  * We are declaring the symbols as functions, as they are filled by the linker with an immediate value.
- * If we would use an integer, this might conflict how such a symbol might be used in NXP startup code, e.g. LPC55S16.
+ * If we used an integer, this might conflict how such a symbol might be used in NXP startup code, e.g. LPC55S16.
  */
 extern void McuArmTools_CONFIG_LINKER_SYMBOL_STACK_BASE(void); /*!< base address of stack, this is a numerically lower address than the top */
 extern void McuArmTools_CONFIG_LINKER_SYMBOL_STACK_TOP(void);  /*!< top or end of stack, at the top. Highest address. Stack is growing from base to top */

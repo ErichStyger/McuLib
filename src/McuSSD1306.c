@@ -30,7 +30,7 @@
 **          HW                                             : 
 **            I2C Device Address                           : 0x3C
 **            I2C Transaction Delay (us)                   : 0
-**            Bock Transfer                                : yes
+**            Block Transfer                               : yes
 **            I2C                                          : McuGenericI2C
 **            Reset                                        : Disabled
 **          System                                         : 
