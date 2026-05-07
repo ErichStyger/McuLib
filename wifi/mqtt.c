@@ -1302,6 +1302,9 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   LWIP_ASSERT("mqtt_client_connect: ip_addr != NULL", ip_addr != NULL);
   LWIP_ASSERT("mqtt_client_connect: client_info != NULL", client_info != NULL);
   LWIP_ASSERT("mqtt_client_connect: client_info->client_id != NULL", client_info->client_id != NULL);
+  LWIP_ERROR("mqtt_client_connect: Authentication required: client_user and client_pass must be set",
+               (client_info != NULL && client_info->client_user != NULL && client_info->client_pass != NULL),
+               return ERR_VAL);
 
   if (client->conn_state != TCP_DISCONNECTED) {
     LWIP_DEBUGF(MQTT_DEBUG_WARN, ("mqtt_client_connect: Already connected\n"));
