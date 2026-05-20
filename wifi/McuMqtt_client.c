@@ -13,7 +13,6 @@
 #include "lwip/apps/mqtt.h"
 #include "lwip/dns.h"
 #include "McuMqtt_client_config.h"
-#include MCU_MQTT_CLIENT_CONFIG_HEADER_FILE
 #include "McuMqtt_client.h"
 #include "McuDns_resolver.h"
 #include "McuLog.h"
@@ -38,11 +37,14 @@ typedef struct mqtt_t {
   unsigned char client_id[32];      /* client ID used for connection: each client should have a unique ID */
   unsigned char client_user[32];    /* client user name used for connection */
   unsigned char client_pass[96];    /* client user password */
-  topic_ID_e in_pub_ID;             /* incoming published ID, set in the incoming_publish_cb and used in the incoming_data_cb */
+  int in_pub_ID;             /* incoming published ID, set in the incoming_publish_cb and used in the incoming_data_cb */
   /* configuration settings */
   bool doLogging; /* if it shall write log messages */
   bool doPublishing; /* if publish the topics */
   bool reconnect; /* if after a disconnect it shall try to reconnect */
+  mqtt_connection_cb_t conn_cb;
+  mqtt_incoming_data_cb_t data_cb;
+  mqtt_incoming_publish_cb_t pub_cb;
 } mqtt_t;
 
 static mqtt_t mqtt; /* information used for MQTT connection */
@@ -60,6 +62,16 @@ static const struct mqtt_connect_client_info_t mqtt_client_info = {
   , NULL
 #endif
 };
+
+void McuMqttClientSetCallbacks(
+  void (conn_cb)(void *client, void *arg, int status),
+  void (data_cb) (void *arg, const uint8_t *data, uint16_t len, uint8_t flags),
+  void (pub_cb) (void *arg, const char *topic, uint32_t tot_len)
+) {
+  mqtt.conn_cb = (mqtt_connection_cb_t)conn_cb;
+  mqtt.data_cb = (mqtt_incoming_data_cb_t)data_cb;
+  mqtt.pub_cb = (mqtt_incoming_publish_cb_t)pub_cb;
+}
 
 static void reloadSettings(void) {
 #if PL_CONFIG_USE_MININI
@@ -192,7 +204,7 @@ static void McuMqttClient_connection_cb(mqtt_client_t *client, void *arg, mqtt_c
     McuLog_trace("MQTT connection disconnected");
     McuMqttClient_Disconnect();
   }
-  MCU_MQTT_CLIENT_CONNECTION_CALLBACK(client, arg, status); /* call user callback */
+  mqtt.conn_cb(client, arg, status); /* call user connection callback */
 }
 
 uint8_t McuMqttClient_Connect(void) {
@@ -235,8 +247,8 @@ uint8_t McuMqttClient_Connect(void) {
   /* setup callbacks for incoming data: */
   mqtt_set_inpub_callback(
       mqtt.mqtt_client, /* client handle */
-      MCU_MQTT_CLIENT_INCOMING_PUBLISH_CALLBACK, /* callback for incoming publish messages */
-      MCU_MQTT_CLIENT_INCOMING_DATA_CALLBACK, /* callback for incoming data */
+      mqtt.pub_cb, /* callback for incoming publish messages */
+      mqtt.data_cb, /* callback for incoming data */
       LWIP_CONST_CAST(void*, &mqtt_client_info) /* argument for callbacks */
       );
   /* connect to broker */

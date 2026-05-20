@@ -96,6 +96,18 @@ bool McuMqttClient_CanPublish(void);
 void McuMqttClient_SetDoPublish(bool publish);
 
 /*!
+ * \brief Set the MQTT client callbacks. Exact callback types not published here to avoid include problems
+ * \param conn_cb Callback called on connection, of type mqtt_connection_cb_t
+ * \param data_cb Callback called on incoming data, of type mqtt_incoming_data_cb_t
+ * \param pub_cb Callback called on incoming publish messages, of type mqtt_incoming_publish_cb_t
+ */
+void McuMqttClientSetCallbacks(
+  void (conn_cb)(void *client, void *arg, int status),
+  void (data_cb) (void *arg, const uint8_t *data, uint16_t len, uint8_t flags),
+  void (pub_cb) (void *arg, const char *topic, uint32_t tot_len)
+);
+
+/*!
  * \brief Module de-initialization
  */
 void McuMqttClient_Deinit(void);

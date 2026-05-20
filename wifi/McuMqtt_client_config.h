@@ -53,26 +53,6 @@
     /*!< set to 1 to produce extra log output */
 #endif
 
-#ifndef MCU_MQTT_CLIENT_CONFIG_HEADER_FILE
-  #define MCU_MQTT_CLIENT_CONFIG_HEADER_FILE            "my_header.h"
-    /*!< header file to include for the MQTT client configuration */
-#endif 
-
-#ifndef MCU_MQTT_CLIENT_INCOMING_PUBLISH_CALLBACK
-  #define MCU_MQTT_CLIENT_INCOMING_PUBLISH_CALLBACK     My_incoming_publish_cb
-    /*! callback for incoming MQTT messages */
-#endif
-
-#ifndef MCU_MQTT_CLIENT_INCOMING_DATA_CALLBACK
-  #define MCU_MQTT_CLIENT_INCOMING_DATA_CALLBACK        My_incoming_data_cb
-    /*! callback for each fragment of payload that arrives */
-#endif
-
-#ifndef MCU_MQTT_CLIENT_CONNECTION_CALLBACK
-  #define MCU_MQTT_CLIENT_CONNECTION_CALLBACK           My_connection_cb
-    /*! callback for connection events */
-#endif
-
 #ifndef MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME
   #define MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME       "settings.ini" 
     /*!< 'file' name used */
