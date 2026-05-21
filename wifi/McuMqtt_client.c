@@ -63,7 +63,7 @@ static const struct mqtt_connect_client_info_t mqtt_client_info = {
 #endif
 };
 
-void McuMqttClientSetCallbacks(
+void McuMqttClient_SetCallbacks(
   void (conn_cb)(void *client, void *arg, int status),
   void (data_cb) (void *arg, const uint8_t *data, uint16_t len, uint8_t flags),
   void (pub_cb) (void *arg, const char *topic, uint32_t tot_len)
@@ -71,6 +71,146 @@ void McuMqttClientSetCallbacks(
   mqtt.conn_cb = (mqtt_connection_cb_t)conn_cb;
   mqtt.data_cb = (mqtt_incoming_data_cb_t)data_cb;
   mqtt.pub_cb = (mqtt_incoming_publish_cb_t)pub_cb;
+}
+
+static void McuMqttClient_publish_request_cb(void *arg, err_t err) {
+#if 0 && MQTT_CLIENT_CONFIG_EXTRA_LOGS /* be careful not to delay callback too much */
+  const struct mqtt_connect_client_info_t *client_info = (const struct mqtt_connect_client_info_t*)arg;
+  McuLog_trace("MQTT client \"%s\" publish request cb: err %d", client_info->client_id, (int)err);
+#endif
+}
+
+uint8_t McuMqttClient_PublishText(const char *topic, const char *text) {
+  err_t res;
+  const uint8_t qos = 0; /* quos: 0: fire&forget, 1: at least once */
+  const uint8_t retain = 0; /* 0: do not retain. 1: Store this message as the last known value for this topic. */
+
+  res = mqtt_publish(McuMqttClient_getClient(), topic, text, strlen(text), qos, retain, McuMqttClient_publish_request_cb, NULL);
+  if (res!=ERR_OK) {
+    McuLog_error("Failed topic %s mqtt_publish: %d", topic, res);
+    (void)McuMqttClient_Disconnect(); /* try disconnect and connect again */
+    (void)McuMqttClient_Connect();
+    return ERR_FAILED;
+  }
+  if (McuMqttClient_doLogging()) {
+    McuLog_trace("published %s %s", topic, text);
+  }
+  return ERR_OK;
+}
+
+uint8_t McuMqttClient_PublishSwitch(const char *topic, bool isOn, bool asJSON) {
+  uint8_t buf[64];
+
+  buf[0] = '\0';
+  if (asJSON) {
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"{\"state\":");
+    if (isOn) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\"ON\"");
+    } else {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\"OFF\"");
+    }
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"}");
+  } else {
+    if (isOn) {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"ON");
+    } else {
+      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"OFF");
+    }    
+  }
+  return McuMqttClient_PublishText(topic, buf);
+}
+
+void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(bool)) {
+  unsigned char buf[32];
+
+  McuMqttClient_GetDataString(buf, sizeof(buf), data, len);
+  if (logMsg!=NULL && McuMqttClient_doLogging()) {
+    McuLog_trace("Rx: %s: %s", logMsg, buf);
+  }
+  if (McuUtility_strcmp(buf, "ON")==0) {
+    if (setter!=NULL) {
+      setter(true);
+    }
+  } else if(McuUtility_strcmp(buf, "OFF")==0) {
+    if (setter!=NULL) {
+      setter(false);
+    }
+  }
+}
+
+uint8_t McuMqttClient_PublishTime(const char *topic, uint8_t hours, uint8_t minutes, bool asJSON) {
+  uint8_t buf[64];
+
+  if (asJSON) {
+    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"{\"time\": \"");
+    McuUtility_strcatNum16uFormatted(buf, sizeof(buf), hours, '0', 2);
+    McuUtility_chcat(buf, sizeof(buf), ':');
+    McuUtility_strcatNum16uFormatted(buf, sizeof(buf), minutes, '0', 2);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\"}");
+  } else {
+    /* NYI */
+    return ERR_FAILED;
+  }
+  return McuMqttClient_PublishText(topic, buf);
+}
+
+void McuMqttClient_IncomingTime(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(uint8_t, uint8_t)) {
+  unsigned char buf[32];
+  
+  McuMqttClient_GetDataString(buf, sizeof(buf), data, len);
+  if (logMsg!=NULL && McuMqttClient_doLogging()) {
+    McuLog_trace("Rx: %s: %s", logMsg, buf); /* e.g. "16:15" */
+  }
+  const unsigned char *p = buf;
+  uint8_t hour, minute, second, hsecond;
+  if (McuUtility_ScanTime(&p, &hour, &minute, &second, &hsecond)==ERR_OK) {
+    if (setter!=NULL) {
+      setter(hour, minute);
+    }
+  }
+}
+
+uint8_t McuMqttClient_PublishTemperature(const char *topic, float temperature, bool isJSON) {
+  uint8_t buf[64];
+ 
+  if (isJSON) {
+    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"{\"temperature\": ");
+    McuUtility_strcatNumFloat(buf, sizeof(buf), temperature, 2);
+    McuUtility_strcat(buf, sizeof(buf), (unsigned char*)", \"unit\": \"°C\"}");
+  } else {
+    return ERR_FAILED; /* NYI */
+  }
+  return McuMqttClient_PublishText(topic, buf);
+}
+
+void McuMqttClient_IncomingTemperature(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(float)) {
+  unsigned char buf[32];
+  
+  McuMqttClient_GetDataString(buf, sizeof(buf), data, len);
+  if (logMsg!=NULL && McuMqttClient_doLogging()) {
+    McuLog_trace("Rx: %s: %s", logMsg, buf); /* e.g. "25.5" */
+  }
+
+  int32_t integral;
+  uint32_t fractional;
+  uint8_t nofFractionalZeros;
+  const unsigned char *p = buf;
+
+  if (McuUtility_ScanDecimal32sDotNumber(&p, &integral, &fractional, &nofFractionalZeros)!=ERR_OK) {
+    McuLog_error("failed parsing data '%s'", buf);
+    return;
+  }
+  if (integral<0) { /* only positive falues allowed */
+    McuLog_error("only positive values allowed: '%s'", buf);
+    return;
+  }
+  if (fractional!=0 && nofFractionalZeros>0) { /* do not accept fractional zeros */
+    McuLog_error("only in 0.5 degree steps: '%s'", buf);
+    return;
+  }
+  if (setter!=NULL) {
+    setter((float)integral + (float)fractional*0.1f);
+  }
 }
 
 static void reloadSettings(void) {
@@ -118,6 +258,39 @@ int McuMqttClient_get_in_pub_ID(void) {
   return mqtt.in_pub_ID;
 }
 
+const char *McuMqttClient_GetTopicString(int id, const McuMqttClient_Topic_ID_Map_t map[], size_t nofMapEntries) {
+  for(int i=0; i<nofMapEntries; i++) {
+    if (id==map[i].id) {
+      return map[i].topic;
+    }
+  }
+  McuLog_error("unknown topic id %d", id);
+  return NULL; /* not found */
+}
+
+int McuMqttClient_GetTopicID(const char *topic, const McuMqttClient_Topic_ID_Map_t map[], size_t nofMapEntries) {
+  for(int i=0; i<nofMapEntries; i++) {
+    if (McuUtility_strcmp(topic, map[i].topic)==0) {
+      return map[i].id;
+    }
+  }
+  McuLog_error("unknown topic %s", topic);
+  return MCU_MQTT_CLIENT_TOPIC_ID_NONE; /* not found */
+}
+
+void McuMqttClient_SetIncomingPubID(const char *topic, const McuMqttClient_Topic_ID_Map_t map[], size_t nofMapEntries) {
+  int id;
+
+  id = McuMqttClient_GetTopicID(topic, map, nofMapEntries);
+  if (id==MCU_MQTT_CLIENT_TOPIC_ID_NONE) { /* ID not found */
+    McuLog_trace("Unknown topic %s", topic);
+    McuMqttClient_set_in_pub_ID(MCU_MQTT_CLIENT_TOPIC_ID_NONE); /* set as unknown ID */
+  } else {
+    McuLog_trace("incoming topic '%s'", topic);
+    McuMqttClient_set_in_pub_ID(id);
+  }
+}
+
 static void mqtt_publish_request_cb(void *arg, err_t err) {
 #if 0 && MCU_MQTT_CLIENT_CONFIG_EXTRA_LOGS /* be careful not to delay callback too much */
   const struct mqtt_connect_client_info_t *client_info = (const struct mqtt_connect_client_info_t*)arg;
@@ -140,28 +313,7 @@ void McuMqttClient_SetDoPublish(bool publish) {
   mqtt.doPublishing = publish;
 }
 
-int McuMqttClient_Publish(const unsigned char *topic, const unsigned char *value) {
-  err_t res;
-  const uint8_t qos = 0; /* quos: 0: fire&forget, 1: at least once */
-  const uint8_t retain = 0;
-
-  if (!McuMqttClient_CanPublish()) {
-    return ERR_DISABLED;
-  }
-  if (mqtt.doLogging) {
-    McuLog_trace("publish topic: \"%s\" value: \"%s\"", topic, value);
-  }
-  res = mqtt_publish(mqtt.mqtt_client, (char*)topic, value, strlen((char*)value), qos, retain, mqtt_publish_request_cb, NULL);
-  if (res!=ERR_OK) {
-    McuLog_error("Failed mqtt_publish: %d", res);
-    (void)McuMqttClient_Disconnect(); /* try disconnect and connect again */
-    (void)McuMqttClient_Connect();
-    return res;
-  }
-  return ERR_OK;
-}
-
-void McuMqttClient_GetDataString(unsigned char *buf, size_t bufSize, const uint8_t *data, uint16_t len) {
+void McuMqttClient_GetDataString(char *buf, size_t bufSize, const uint8_t *data, uint16_t len) {
   buf[0] = '\0';
   for(int i=0; i<len; i++){
     McuUtility_chcat(buf, bufSize, data[i]);
@@ -430,7 +582,7 @@ uint8_t McuMqttClient_ParseCommand(const unsigned char *cmd, bool *handled, cons
     if (McuUtility_ScanDoubleQuotedString(&p, text, sizeof(text))!=ERR_OK) {
       return ERR_FAILED;
     }
-    return McuMqttClient_Publish(topic, text);
+    return McuMqttClient_PublishText(topic, text);
   }
   return ERR_OK;
 }
