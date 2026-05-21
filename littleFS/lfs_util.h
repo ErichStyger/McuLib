@@ -229,9 +229,13 @@ uint32_t lfs_crc(uint32_t crc, const void *buffer, size_t size);
 // byte-level buffers.
 static inline void *lfs_malloc(size_t size) {
 #if defined(LFS_MALLOC)
-    return LFS_MALLOC(size);
+    void *p = LFS_MALLOC(size);
+    LFS_ASSERT(p != NULL);
+    return p;
 #elif !defined(LFS_NO_MALLOC)
-    return malloc(size);
+    void *p = malloc(size);
+    LFS_ASSERT(p != NULL);
+    return p;
 #else
     (void)size;
     return NULL;
