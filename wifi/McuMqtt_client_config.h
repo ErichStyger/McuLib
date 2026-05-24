@@ -39,7 +39,7 @@
 #endif
 
 #ifndef MCU_MQTT_CLIENT_CONFIG_PUBLISH
-  #define MCU_MQTT_CLIENT_CONFIG_PUBLISH  (1)
+  #define MCU_MQTT_CLIENT_CONFIG_PUBLISH  (0)
     /*!< if set to 1, the client will publish messages */
 #endif
 
@@ -51,6 +51,11 @@
 #ifndef MCU_MQTT_CLIENT_CONFIG_EXTRA_LOGS
   #define MCU_MQTT_CLIENT_CONFIG_EXTRA_LOGS   (0)
     /*!< set to 1 to produce extra log output */
+#endif
+
+#ifndef MCU_MQTT_CLIENT_CONFIG_USE_MININI
+  #define MCU_MQTT_CLIENT_CONFIG_USE_MININI      (0)
+    /*!< if MinINI is used for storing settings */
 #endif
 
 #ifndef MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME

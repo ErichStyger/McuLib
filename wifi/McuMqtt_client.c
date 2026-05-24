@@ -18,9 +18,8 @@
 #include "McuLog.h"
 #include "McuUtility.h"
 #include "McuRTOS.h"
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   #include "minIni/McuMinINI.h"
-  #include "MinIniKeys.h"
 #endif
 
 #if !MCU_DNS_RESOLVER_CONFIG_ENABLED
@@ -214,7 +213,7 @@ void McuMqttClient_IncomingTemperature(const uint8_t *data, uint16_t len, const 
 }
 
 static void reloadSettings(void) {
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_gets(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_BROKER, MCU_MQTT_CLIENT_CONFIG_BROKER, (char*)mqtt.broker, sizeof(mqtt.broker), MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_CLIENT, MCU_MQTT_CLIENT_CONFIG_CLIENT, (char*)mqtt.client_id, sizeof(mqtt.client_id), MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_USER, MCU_MQTT_CLIENT_CONFIG_USER, (char*)mqtt.client_user, sizeof(mqtt.client_user), MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
@@ -237,7 +236,7 @@ static bool MqttClient_GetReconnect(void) {
 
 static void McuMqttClient_SetReconnect(bool on) {
   mqtt.reconnect = on;
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_putl(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_RECONNECT, on, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
 }
@@ -307,7 +306,7 @@ bool McuMqttClient_CanPublish(void) {
 }
 
 void McuMqttClient_SetDoPublish(bool publish) {
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_putl(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_PUBLISH, publish, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
   mqtt.doPublishing = publish;
@@ -451,7 +450,7 @@ static uint8_t SetBroker(const unsigned char *broker) {
 
   McuUtility_ScanDoubleQuotedString(&broker, buf, sizeof(buf));
   McuUtility_strcpy(mqtt.broker, sizeof(mqtt.broker), buf);
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_BROKER, (char*)mqtt.broker, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
   return ERR_OK;
@@ -462,7 +461,7 @@ static uint8_t SetID(const unsigned char *id) {
 
   McuUtility_ScanDoubleQuotedString(&id, buf, sizeof(buf));
   McuUtility_strcpy(mqtt.client_id, sizeof(mqtt.client_id), buf);
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_CLIENT, (char*)mqtt.client_id, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
   return ERR_OK;
@@ -473,7 +472,7 @@ static uint8_t SetUser(const unsigned char *user) {
 
   McuUtility_ScanDoubleQuotedString(&user, buf, sizeof(buf));
   McuUtility_strcpy(mqtt.client_user, sizeof(mqtt.client_user), buf);
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_USER, (char*)mqtt.client_user, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
   return ERR_OK;
@@ -484,7 +483,7 @@ static uint8_t SetPassword(const unsigned char *pass) {
 
   McuUtility_ScanDoubleQuotedString(&pass, buf, sizeof(buf));
   McuUtility_strcpy(mqtt.client_pass, sizeof(mqtt.client_pass), buf);
-#if PL_CONFIG_USE_MININI
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_PASS, (char*)mqtt.client_pass, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
   return ERR_OK;
