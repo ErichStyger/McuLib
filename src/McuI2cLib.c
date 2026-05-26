@@ -279,10 +279,12 @@ static void McuI2cLib_ConfigureI2cPins(void) {
 #endif
 }
 
+#if MCUI2CLIB_CONFIG_I2C_RELEASE_BUS
 bool McuI2cLib_ResetBus(void) {
   ResetI2CBus(); /* reset I2C bus */
   return true; /* success */
 }
+#endif /* MCUI2CLIB_CONFIG_I2C_RELEASE_BUS */
 
 void McuI2cLib_Deinit(void) {
   /* nothing implemented */
