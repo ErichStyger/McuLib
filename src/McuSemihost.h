@@ -60,7 +60,7 @@ int McuSemihost_SysHostTime(void);
  */
 int McuSemihost_SysHostClock(void);
 
-/* File modes for McuSemihost_FileOpen() */
+/* File modes for McuSemihost_FileOpen(). NOTE: SEGGER seems to ignore the 'truncate'! */
 #define SYS_FILE_MODE_READ              0   /* Open the file for reading "r" */
 #define SYS_FILE_MODE_READBINARY        1   /* Open the file for reading "rb" */
 #define SYS_FILE_MODE_READWRITE         2   /* Open the file for reading and writing "r+" */
@@ -162,7 +162,6 @@ int McuSemihost_SysReadC(void);
  * \return zero for success
  */
 int McuSemihost_SysWriteC(char ch);
-
 
 /*!
  * \brief Decides if a file handle is a standard io handle or not.
