@@ -491,6 +491,7 @@ static uint8_t SetPassword(const unsigned char *pass) {
 
 static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuShell_SendStatusStr((unsigned char*)"mqttclient", (unsigned char*)"mqttclient status\r\n", io->stdOut);
+  McuShell_SendStatusStr((unsigned char*)"  minINI", MCU_MQTT_CLIENT_CONFIG_USE_MININI?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  log", mqtt.doLogging?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  publish", mqtt.doPublishing?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  client", mqtt.isConnected?(unsigned char*)"connected\r\n":(unsigned char*)"disconnected\r\n", io->stdOut);

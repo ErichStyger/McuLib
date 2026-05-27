@@ -31,7 +31,9 @@ uint8_t McuI2cLib_SelectSlave(uint8_t Slv);
 uint8_t McuI2cLib_ReadAddress(uint8_t i2cAddr, uint8_t *memAddr, uint8_t memAddrSize, uint8_t *data, uint16_t dataSize);
 uint8_t McuI2cLib_WriteAddress(uint8_t i2cAddr, uint8_t *memAddr, uint8_t memAddrSize, uint8_t *data, uint16_t dataSize);
 
+#if MCUI2CLIB_CONFIG_I2C_RELEASE_BUS
 bool McuI2cLib_ResetBus(void);
+#endif
 
 void McuI2cLib_Deinit(void);
 void McuI2cLib_Init(void);
