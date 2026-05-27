@@ -395,6 +395,10 @@ uint8_t McuMqttClient_Connect(void) {
       return ERR_FAILED;
     }
   }
+  if (mqtt.mqtt_client==NULL) { /* additional save-guard */
+    McuLog_fatal("mqtt client has been disconnected?");
+    return ERR_FAILED;
+  }
   /* setup callbacks for incoming data: */
   mqtt_set_inpub_callback(
       mqtt.mqtt_client, /* client handle */
