@@ -921,6 +921,19 @@ static void long2str(long value, TCHAR *str)
   strreverse(str);
 }
 
+/** ini_putbool()
+ * \param Section     the name of the section to write the value in
+ * \param Key         the name of the entry to write
+ * \param Value       the value to write; it should be 0 or 1.
+ * \param Filename    the name and full path of the .ini file to write to
+ *
+ * \return            1 if successful, otherwise 0
+ */
+int ini_putbool(const TCHAR *Section, const TCHAR *Key, int Value, const TCHAR *Filename)
+{
+  return ini_puts(Section, Key, Value ? __T("true") : __T("false"), Filename);
+}
+
 /** ini_putl()
  * \param Section     the name of the section to write the value in
  * \param Key         the name of the entry to write

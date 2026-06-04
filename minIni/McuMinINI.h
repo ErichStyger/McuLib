@@ -198,6 +198,9 @@
 ** ===================================================================
 */
 
+#define McuMinINI_ini_putbool(Section, Key, Value, Filename) \
+  ini_putbool(Section, Key, Value, Filename)
+
 #define McuMinINI_ini_putl(Section, Key, Value, Filename) \
   ini_putl(Section, Key, Value, Filename)
 /*
