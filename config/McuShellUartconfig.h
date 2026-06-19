@@ -31,6 +31,8 @@
 #define McuShellUart_CONFIG_UART_LPC55S69_USART1          (12) /* FlexComm1, P1_10, pin40 (Rx) and P1_11, pin93 (Tx) */
 /* RP2040 */
 #define McuShellUart_CONFIG_UART_RP2040_UART1_GPIO4_GPIO5 (13) /* UART1 with Tx on GPIO4 and Rx on GPIO5 */
+/* NXP MCXN947 */
+#define McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9    (14) /* UART1 with Tx on P1_8/FC4 and Rx on P1_9/FC4 */
 
 /* default UART used */
 #ifndef McuShellUart_CONFIG_UART
@@ -67,6 +69,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
   #define McuShellUart_CONFIG_HAS_FIFO                      (0)
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_LPC55S16_USART0
   #include "fsl_usart.h"
   #include "fsl_iocon.h"
@@ -89,6 +96,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
   #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_LPC55S16_USART2
   #include "fsl_usart.h"
   #include "fsl_iocon.h"
@@ -112,6 +124,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
   #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_LPC55S69_USART0
   #include "fsl_usart.h"
   #include "fsl_iocon.h"
@@ -134,6 +151,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
   #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_LPC55S69_USART1
   #include "fsl_usart.h"
   #include "fsl_iocon.h"
@@ -156,6 +178,46 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
   #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
+#elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9
+  #include "fsl_lpuart.h"
+  #include "fsl_port.h"
+  #define McuShellUart_CONFIG_UART_DEVICE                   LPUART4
+  #define McuShellUart_CONFIG_UART_SET_UART_CLOCK()         
+  #define McuShellUart_CONFIG_UART_WRITE_BLOCKING           LPUART_WriteBlocking
+  #define McuShellUart_CONFIG_UART_GET_FLAGS                LPUART_GetStatusFlags
+  #define McuShellUart_CONFIG_UART_HW_RX_READY_FLAGS        (kLPUART_RxDataRegFullFlag)
+  #define McuShellUart_CONFIG_UART_READ_BYTE                LPUART_ReadByte
+  #define McuShellUart_CONFIG_UART_CONFIG_STRUCT            lpuart_config_t
+  #define McuShellUart_CONFIG_UART_GET_DEFAULT_CONFIG       LPUART_GetDefaultConfig
+  #define McuShellUart_CONFIG_UART_ENABLE_INTERRUPTS        LPUART_EnableInterrupts
+  #define McuShellUart_CONFIG_UART_ENABLE_INTERRUPT_FLAGS   (kLPUART_RxDataRegFullInterruptEnable)
+  #define McuShellUart_CONFIG_UART_IRQ_NUMBER               LP_FLEXCOMM4_IRQn
+  #define McuShellUart_CONFIG_UART_INIT                     LPUART_Init
+  #ifndef McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT
+    #define McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT  CLOCK_GetLPFlexCommClkFreq(4u)
+  #endif
+  #define McuShellUart_CONFIG_UART_IRQ_HANDLER              LP_FLEXCOMM4_IRQHandler
+  #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            LPUART_ClearStatusFlags
+  #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
+  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
+
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (1) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
+
+  #ifndef McuShellUart_CONFIG_CLOCKING_CONFIG
+    #define McuShellUart_CONFIG_CLOCKING_CONFIG()  \
+      /* attach FRO 12M to FLEXCOMM4 (debug console) */ \
+      CLOCK_SetClkDiv(kCLOCK_DivFlexcom4Clk, 1u); \
+      CLOCK_AttachClk(kFRO12M_to_FLEXCOMM4);
+  #endif
+
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FX512_UART0_A1_A2
   /* UART0 on K22FX512 */
   #include "fsl_uart.h"
@@ -179,6 +241,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            UART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
   #define McuShellUart_CONFIG_HAS_FIFO                      (1)
+
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_UART0_B16_B17
   #include "fsl_uart.h"
   #include "fsl_port.h"
@@ -201,6 +268,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            UART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
   #define McuShellUart_CONFIG_HAS_FIFO                      (1)
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_UART1_E1_E0
   #include "fsl_uart.h"
   #include "fsl_port.h"
@@ -223,6 +295,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            UART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
   #define McuShellUart_CONFIG_HAS_FIFO                      (1)
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_UART2_D2_D3
   #include "fsl_uart.h"
   #include "fsl_port.h"
@@ -245,6 +322,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            UART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
   #define McuShellUart_CONFIG_HAS_FIFO                      (1)
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_LPUART0_C3_C4
   /* LPUART on K22FN512 */
   #include "fsl_lpuart.h"
@@ -275,6 +357,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            LPUART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
   #define McuShellUart_CONFIG_HAS_FIFO                      (0)
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K64FN1M_UART0_B16_B17
   #include "fsl_uart.h"
   #include "fsl_port.h"
@@ -297,6 +384,11 @@
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            UART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
   #define McuShellUart_CONFIG_HAS_FIFO                      (1)
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_RP2040_UART1_GPIO4_GPIO5
   #define McuShellUart_CONFIG_UART_SET_UART_CLOCK()         /* nothing needed */
   #define McuShellUart_CONFIG_UART_WRITE_BLOCKING           RP_WriteBlocking
@@ -308,7 +400,11 @@
 
   #define McuShellUart_CONFIG_UART_TX_PIN   4
   #define McuShellUart_CONFIG_UART_RX_PIN   5
-
+  
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #else
   /* you have to put your configuration here */
 #endif

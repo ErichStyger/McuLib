@@ -289,6 +289,60 @@ void McuShellUart_MuxUartPins(int uart) {
       gpio_set_function(McuShellUart_CONFIG_UART_TX_PIN, GPIO_FUNC_UART);
       gpio_set_function(McuShellUart_CONFIG_UART_RX_PIN, GPIO_FUNC_UART);
       break;
+#elif McuLib_CONFIG_CPU_IS_MCXN
+    case McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9:
+        /* Enables the clock for PORT1: Enables clock */
+        CLOCK_EnableClock(kCLOCK_Port1);
+
+        /* EFT detect interrupts configuration on PORT1_ */
+        PORT_DisableEFTDetectInterrupts(PORT1, 0x0300u);
+
+        const port_pin_config_t port1_8_pinA1_config = {/* Internal pull-up/down resistor is disabled */
+                                                        .pullSelect = kPORT_PullDisable,
+                                                        /* Low internal pull resistor value is selected. */
+                                                        .pullValueSelect = kPORT_LowPullResistor,
+                                                        /* Fast slew rate is configured */
+                                                        .slewRate = kPORT_FastSlewRate,
+                                                        /* Passive input filter is disabled */
+                                                        .passiveFilterEnable = kPORT_PassiveFilterDisable,
+                                                        /* Open drain output is disabled */
+                                                        .openDrainEnable = kPORT_OpenDrainDisable,
+                                                        /* Low drive strength is configured */
+                                                        .driveStrength = kPORT_LowDriveStrength,
+                                                        /* Pin is configured as FC4_P0 */
+                                                        .mux = kPORT_MuxAlt2,
+                                                        /* Digital input enabled */
+                                                        .inputBuffer = kPORT_InputBufferEnable,
+                                                        /* Digital input is not inverted */
+                                                        .invertInput = kPORT_InputNormal,
+                                                        /* Pin Control Register fields [15:0] are not locked */
+                                                        .lockRegister = kPORT_UnlockRegister};
+        /* PORT1_8 (pin A1) is configured as FC4_P0 */
+        PORT_SetPinConfig(PORT1, 8U, &port1_8_pinA1_config);
+
+        const port_pin_config_t port1_9_pinB1_config = {/* Internal pull-up/down resistor is disabled */
+                                                        .pullSelect = kPORT_PullDisable,
+                                                        /* Low internal pull resistor value is selected. */
+                                                        .pullValueSelect = kPORT_LowPullResistor,
+                                                        /* Fast slew rate is configured */
+                                                        .slewRate = kPORT_FastSlewRate,
+                                                        /* Passive input filter is disabled */
+                                                        .passiveFilterEnable = kPORT_PassiveFilterDisable,
+                                                        /* Open drain output is disabled */
+                                                        .openDrainEnable = kPORT_OpenDrainDisable,
+                                                        /* Low drive strength is configured */
+                                                        .driveStrength = kPORT_LowDriveStrength,
+                                                        /* Pin is configured as FC4_P1 */
+                                                        .mux = kPORT_MuxAlt2,
+                                                        /* Digital input enabled */
+                                                        .inputBuffer = kPORT_InputBufferEnable,
+                                                        /* Digital input is not inverted */
+                                                        .invertInput = kPORT_InputNormal,
+                                                        /* Pin Control Register fields [15:0] are not locked */
+                                                        .lockRegister = kPORT_UnlockRegister};
+        /* PORT1_9 (pin B1) is configured as FC4_P1 */
+        PORT_SetPinConfig(PORT1, 9U, &port1_9_pinB1_config);
+        break;
 #endif /* McuLib_CONFIG_CPU_VARIANT_NXP_K22FN */
     default:
       for(;;) { /* error */ }
@@ -510,6 +564,54 @@ static void InitUartMuxing(void) {
     * : Enable Digital mode.
     * Digital input is enabled. */
   | IOCON_PIO_DIGIMODE(PIO1_11_DIGIMODE_DIGITAL));
+#elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9
+  CLOCK_EnableClock(kCLOCK_Port1);
+
+  const port_pin_config_t port1_8_pinA1_config = {/* Internal pull-up/down resistor is disabled */
+                                                  kPORT_PullDisable,
+                                                  /* Low internal pull resistor value is selected. */
+                                                  kPORT_LowPullResistor,
+                                                  /* Fast slew rate is configured */
+                                                  kPORT_FastSlewRate,
+                                                  /* Passive input filter is disabled */
+                                                  kPORT_PassiveFilterDisable,
+                                                  /* Open drain output is disabled */
+                                                  kPORT_OpenDrainDisable,
+                                                  /* Low drive strength is configured */
+                                                  kPORT_LowDriveStrength,
+                                                  /* Pin is configured as FC4_P0 */
+                                                  kPORT_MuxAlt2,
+                                                  /* Digital input enabled */
+                                                  kPORT_InputBufferEnable,
+                                                  /* Digital input is not inverted */
+                                                  kPORT_InputNormal,
+                                                  /* Pin Control Register fields [15:0] are not locked */
+                                                  kPORT_UnlockRegister};
+  /* PORT1_8 (pin A1) is configured as FC4_P0 */
+  PORT_SetPinConfig(PORT1, 8U, &port1_8_pinA1_config);
+
+  const port_pin_config_t port1_9_pinB1_config = {/* Internal pull-up/down resistor is disabled */
+                                                  kPORT_PullDisable,
+                                                  /* Low internal pull resistor value is selected. */
+                                                  kPORT_LowPullResistor,
+                                                  /* Fast slew rate is configured */
+                                                  kPORT_FastSlewRate,
+                                                  /* Passive input filter is disabled */
+                                                  kPORT_PassiveFilterDisable,
+                                                  /* Open drain output is disabled */
+                                                  kPORT_OpenDrainDisable,
+                                                  /* Low drive strength is configured */
+                                                  kPORT_LowDriveStrength,
+                                                  /* Pin is configured as FC4_P1 */
+                                                  kPORT_MuxAlt2,
+                                                  /* Digital input enabled */
+                                                  kPORT_InputBufferEnable,
+                                                  /* Digital input is not inverted */
+                                                  kPORT_InputNormal,
+                                                  /* Pin Control Register fields [15:0] are not locked */
+                                                  kPORT_UnlockRegister};
+  /* PORT1_9 (pin B1) is configured as FC4_P1 */
+  PORT_SetPinConfig(PORT1, 9U, &port1_9_pinB1_config);
 #endif
 }
 #endif /* McuShellUart_CONFIG_DO_PIN_MUXING */
@@ -521,8 +623,11 @@ static void InitUart(void) {
   McuShellUart_CONFIG_UART_CONFIG_STRUCT config;
   status_t status;
 
+#if McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+  McuShellUart_CONFIG_CLOCKING_CONFIG();
+#endif
 #if McuShellUart_CONFIG_DO_PIN_MUXING
-  InitUartMuxing(); /* NOTE: Clocking of the UART needs still to be done in the clocks tool for the MCUXpresso SDK! */
+  InitUartMuxing();
 #endif
   McuShellUart_CONFIG_UART_SET_UART_CLOCK();
   McuShellUart_CONFIG_UART_GET_DEFAULT_CONFIG(&config);
