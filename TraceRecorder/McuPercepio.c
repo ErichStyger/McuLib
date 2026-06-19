@@ -620,16 +620,17 @@ void McuPercepio_Startup(void)
 
 void McuPercepio_OnTraceWrap(void)
 {
-#if 1 /* default implementation for gdb below ... */
-  /* Write your code here ... */
   uint8_t buf[64];
+  #define TRACE_DUMP_FILE_NAME   "trc.dump"
 
   /* GDB: dump binary memory <file> <hexStartAddr> <hexEndAddr> */
-  McuPercepio_vGetGDBDumpCommand(buf, sizeof(buf), (unsigned char*)"c:\\tmp\\trc.dump");
+  McuPercepio_vGetGDBDumpCommand(buf, sizeof(buf), (unsigned char*)TRACE_DUMP_FILE_NAME);
   /* Hint: set a breakpoint on the exit of this function. Then use a gdb/debug console to execute the command in buf:
-     eval "%s", buf
+     cortex-debug: 
+        eval \"%s\", buf
+     mcuxpresso-debug:
+        eval "%s",buf
   */
-#endif
 }
 
 /* END McuPercepio. */
