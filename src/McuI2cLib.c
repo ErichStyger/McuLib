@@ -22,6 +22,8 @@
   #include "pin_mux.h"
   #include "fsl_iocon.h"
   #include "fsl_i2c.h"
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  #include "fsl_lpi2c.h"
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   #include "hardware/i2c.h"
 #elif McuLib_CONFIG_CPU_IS_ESP32
@@ -89,6 +91,13 @@ uint8_t McuI2cLib_SendBlock(void *Ptr, uint16_t Siz, uint16_t *Snt) {
   if (status!=kStatus_Success) {
     return ERR_FAILED;
   }
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  status_t status;
+
+  status = LPI2C_MasterStart(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, i2cSlaveDeviceAddr, kLPI2C_Write);
+  if (status!=kStatus_Success) {
+    return ERR_FAILED;
+  }
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   /* nothing needed */
 #elif McuLib_CONFIG_CPU_IS_ESP32
@@ -100,6 +109,11 @@ uint8_t McuI2cLib_SendBlock(void *Ptr, uint16_t Siz, uint16_t *Snt) {
 #endif
 #if McuLib_CONFIG_CPU_IS_KINETIS  || McuLib_CONFIG_CPU_IS_LPC
   status = I2C_MasterWriteBlocking(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, Ptr, Siz, kI2C_TransferNoStartFlag|kI2C_TransferNoStopFlag);
+  if (status!=kStatus_Success) {
+    return ERR_FAILED;
+  }
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  status = LPI2C_MasterSend(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, Ptr, Siz);
   if (status!=kStatus_Success) {
     return ERR_FAILED;
   }
@@ -145,6 +159,18 @@ uint8_t McuI2cLib_RecvBlock(void *Ptr, uint16_t Siz, uint16_t *Rcv) {
   if (status!=kStatus_Success) {
     return ERR_FAILED;
   }
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  status_t status;
+
+  /* LPI2C: a Start issued while the bus is already owned by the master acts as a Repeated Start */
+  status = LPI2C_MasterStart(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, i2cSlaveDeviceAddr, kLPI2C_Read);
+  if (status!=kStatus_Success) {
+    return ERR_FAILED;
+  }
+  status = LPI2C_MasterReceive(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, Ptr, Siz);
+  if (status!=kStatus_Success) {
+    return ERR_FAILED;
+  }
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   int nofBytesRead;
 
@@ -174,6 +200,14 @@ uint8_t McuI2cLib_SendStop(void) {
   status_t status;
 
   status = I2C_MasterStop(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR);
+  if (status!=kStatus_Success) {
+    return ERR_FAILED;
+  }
+  return ERR_OK;
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  status_t status;
+
+  status = LPI2C_MasterStop(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR);
   if (status!=kStatus_Success) {
     return ERR_FAILED;
   }
@@ -265,6 +299,8 @@ static void McuI2cLib_ConfigureI2cPins(void) {
     || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC55S69 \
     || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC845
   MCUI2CLIB_CONFIG_MUX_I2C_PINS();
+#elif McuLib_CONFIG_CPU_IS_MCXA
+/* nothing needed: pins are configured by BOARD_InitPins() */
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   gpio_set_function(MCUI2CLIB_CONFIG_SDA_GPIO_PIN, GPIO_FUNC_I2C);
   gpio_set_function(MCUI2CLIB_CONFIG_SCL_GPIO_PIN, GPIO_FUNC_I2C);
@@ -322,6 +358,8 @@ void McuI2cLib_Init(void) {
      || McuLib_CONFIG_CPU_IS_LPC55xx && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC55S69 \
      || McuLib_CONFIG_CPU_IS_LPC && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC845
   MCUI2CLIB_CONFIG_CLOCK_SELECT();
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  /* nothing needed: clock is set by BOARD_BootClockRUN() / generated clock config code */
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   i2c_init(MCUI2CLIB_CONFIG_I2C_DEVICE, MCUI2CLIB_CONFIG_I2C_BAUDRATE);
 #elif McuLib_CONFIG_CPU_IS_ESP32
@@ -352,6 +390,14 @@ void McuI2cLib_Init(void) {
   masterConfig.baudRate_Bps = MCUI2CLIB_CONFIG_I2C_BAUDRATE;
   sourceClock = MCUI2CLIB_CONFIG_I2C_MASTER_CLK_FREQ;
   I2C_MasterInit(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, &masterConfig, sourceClock);
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  lpi2c_master_config_t masterConfig;
+  uint32_t sourceClock;
+
+  LPI2C_MasterGetDefaultConfig(&masterConfig);
+  masterConfig.baudRate_Hz = MCUI2CLIB_CONFIG_I2C_BAUDRATE;
+  sourceClock = MCUI2CLIB_CONFIG_I2C_MASTER_CLK_FREQ;
+  LPI2C_MasterInit(MCUI2CLIB_CONFIG_I2C_MASTER_BASEADDR, &masterConfig, sourceClock);
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   /* nothing needed */
 #elif McuLib_CONFIG_CPU_IS_ESP32

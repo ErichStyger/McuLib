@@ -18,6 +18,7 @@
 #define MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI0          5
 #define MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI1          6
 #define MCUSPI_CONFIG_HW_TEMPLATE_ESP32_SPI3           7
+#define MCUSPI_CONFIG_HW_TEMPLATE_MCXA_LPSPI0          8
 
 /* NOTE: Pin muxing for the MISO/MOSI/CLK has to be done in the pins tool! */
 
@@ -101,6 +102,26 @@
   #define MCUSPI_CONFIG_HW_CS_GPIO   GPIO
   #define MCUSPI_CONFIG_HW_CS_PORT   0
   #define MCUSPI_CONFIG_HW_CS_PIN    20
+
+  #ifndef MCUSPI_CONFIG_HW_CS_INIT
+    #define MCUSPI_CONFIG_HW_CS_INIT()  /* nothing */
+  #endif
+
+#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_MCXA_LPSPI0
+  #define MCUSPI_CONFIG_HW_SPI_MASTER                   LPSPI0
+  #define MCUSPI_CONFIG_HW_SPI_MASTER_IRQ               LPSPI0_IRQn
+  #define MCUSPI_CONFIG_HW_SPI_MASTER_CLK_SRC           kCLOCK_GateLPSPI0
+  #define MCUSPI_CONFIG_HW_SPI_MASTER_CLK_FREQ          CLOCK_GetLpspiClkFreq(0)   // oder LPSPI_MASTER_CLK_FREQ
+  #define MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_INIT      kLPSPI_Pcs0
+  #define MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_TRANSFER  kLPSPI_MasterPcs0
+  #define MCUSPI_CONFIG_HW_SPI_SSEL                     0 /* wird das benötigt? kann weggelassen werden oder? */
+
+  #define MCUSPI_CONFIG_HW_SPI_INIT() /* nothing */
+
+  /* P1_3 */
+  #define MCUSPI_CONFIG_HW_CS_GPIO   GPIO1
+  #define MCUSPI_CONFIG_HW_CS_PORT   PORT1
+  #define MCUSPI_CONFIG_HW_CS_PIN    3
 
   #ifndef MCUSPI_CONFIG_HW_CS_INIT
     #define MCUSPI_CONFIG_HW_CS_INIT()  /* nothing */

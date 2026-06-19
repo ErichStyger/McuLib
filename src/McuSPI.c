@@ -12,6 +12,8 @@
   #include "fsl_dspi.h"
 #elif McuLib_CONFIG_CPU_IS_LPC55xx
   #include "fsl_spi.h"
+#elif McuLib_CONFIG_CPU_IS_MCXA
+  #include "fsl_lpspi.h"
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   #include "hardware/spi.h"
 #elif McuLib_CONFIG_CPU_IS_ESP32
@@ -59,6 +61,27 @@ int McuSPI_SendReceiveBlock(const uint8_t *txDataBuf, uint8_t *rxDataBuf, size_t
     return 0; /* ok */
   }
   return -1; /* error */
+#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_MCXA_LPSPI0
+  status_t status;
+  lpspi_transfer_t masterXfer;
+
+  /* Start master Transfer */
+  masterXfer.txData      = (uint8_t*)txDataBuf;;
+  masterXfer.rxData      = rxDataBuf;
+  masterXfer.dataSize    = dataSize;
+  #if MCUSPI_CONFIG_USE_CS
+    /* note: the CS pin is handled by the application, not by the LPSPI peripheral */
+    masterXfer.configFlags = MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_TRANSFER;
+  #else
+    masterXfer.configFlags = MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_TRANSFER | kLPSPI_MasterPcsContinuous;
+  #endif
+
+  status = LPSPI_MasterTransferBlocking(MCUSPI_CONFIG_HW_SPI_MASTER, &masterXfer);
+  if (status==kStatus_Success) {
+    return 0; /* ok */
+  }
+  return -1; /* error */
+
 #elif (MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI0) || (MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI1)
   int res;
 
@@ -212,6 +235,41 @@ void McuSPI_Init(void) {
   if (status!=kStatus_Success) {
     for(;;) { /* error */ }
   }
+#elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_MCXA_LPSPI0
+  uint32_t srcClock_Hz;
+  lpspi_master_config_t masterConfig;
+
+  /*Master config*/
+  LPSPI_MasterGetDefaultConfig(&masterConfig);
+  masterConfig.baudRate = MCUSPI_CONFIG_TRANSFER_BAUDRATE;
+  masterConfig.whichPcs = MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_INIT;
+  masterConfig.pcsToSckDelayInNanoSec        = 1000000000U / (masterConfig.baudRate * 2U);
+  masterConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / (masterConfig.baudRate * 2U);
+  masterConfig.betweenTransferDelayInNanoSec = 1000000000U / (masterConfig.baudRate * 2U);
+  
+  srcClock_Hz = MCUSPI_CONFIG_HW_SPI_MASTER_CLK_FREQ;
+  LPSPI_MasterInit(MCUSPI_CONFIG_HW_SPI_MASTER, &masterConfig, srcClock_Hz);
+
+  /* config from config tool 
+  const lpspi_master_config_t LPSPI0_config = {
+    .baudRate = 1000000UL,
+    .bitsPerFrame = 8UL,
+    .cpol = kLPSPI_ClockPolarityActiveHigh,
+    .cpha = kLPSPI_ClockPhaseFirstEdge,
+    .direction = kLPSPI_MsbFirst,
+    .pcsToSckDelayInNanoSec = 1000UL,
+    .lastSckToPcsDelayInNanoSec = 1000UL,
+    .betweenTransferDelayInNanoSec = 1000UL,
+    .whichPcs = kLPSPI_Pcs0,
+    .pcsActiveHighOrLow = kLPSPI_PcsActiveLow,
+    .pinCfg = kLPSPI_SdiInSdoOut,
+    .pcsFunc = kLPSPI_PcsAsCs,
+    .dataOutConfig = kLpspiDataOutRetained,
+    .enableInputDelay = false
+  };
+  LPSPI_MasterInit(LPSPI0_PERIPHERAL, &LPSPI0_config, LPSPI0_CLOCK_FREQ);
+  */
+
 #elif (MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI0) || (MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI1)
   #if MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_RP2040_SPI0
   spiHandle = spi0;
