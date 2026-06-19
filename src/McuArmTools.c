@@ -620,6 +620,8 @@ McuArmTools_ConstCharPtr McuArmTools_GetKinetisFamilyString(void)
   return (McuArmTools_ConstCharPtr)"NXP i.MX RT";
 #elif McuLib_CONFIG_CPU_IS_S32K
   return (McuArmTools_ConstCharPtr)"NXP S32K";
+#elif McuLib_CONFIG_CPU_IS_MCXN
+  return (McuArmTools_ConstCharPtr)"NXP MCXN";
 #elif McuLib_CONFIG_CPU_IS_LPC
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_LPC845
   return (McuArmTools_ConstCharPtr)"NXP LPC845";
