@@ -322,6 +322,11 @@ static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
   uint8_t staticallyAllocated;
   uint8_t tmpBuf[32];
   uint16_t stackSize;
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  #define SHELL_MAX_NOF_TASKS 16
+  UBaseType_t nofTasks, i;
+  TaskStatus_t taskStatusArray[SHELL_MAX_NOF_TASKS];
+  uint8_t tmpBuf[32];
 #endif
 #if configUSE_TRACE_FACILITY && !((tskKERNEL_VERSION_MAJOR<10) || McuLib_CONFIG_CPU_IS_ESP32)
   TaskStatus_t taskStatus;
@@ -422,8 +427,108 @@ static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
   ulTotalTime /= 100UL; /* For percentage calculations. */
 #endif
 
-#if (tskKERNEL_VERSION_MAJOR<10) || McuLib_CONFIG_CPU_IS_ESP32 /* otherwise xGetTaskHandles(), vTaskGetStackInfo(), pcTaskGetName() not available */
-  McuShell_SendStr((unsigned char*)"FreeRTOS version must be at least 10.0.0 and not for ESP32\r\n", io->stdOut);
+#if McuLib_CONFIG_CPU_IS_ESP32
+  /* ESP-IDF FreeRTOS does not expose xGetTaskHandles()/vTaskGetStackInfo();
+   * use uxTaskGetSystemState() instead. Stack End/Top/Static columns are
+   * not available from the IDF port and are shown as N/A. */
+  nofTasks = uxTaskGetSystemState(taskStatusArray, SHELL_MAX_NOF_TASKS, NULL);
+  if (nofTasks == 0) {
+    McuShell_SendStr((unsigned char*)"WARNING: uxTaskGetSystemState() returned 0 — array too small?\r\n", io->stdErr);
+  }
+  for (i = 0; i < nofTasks; i++) {
+  #if configUSE_TRACE_FACILITY
+    /* TCB / task number */
+    tmpBuf[0] = '\0';
+    McuUtility_strcatNum32u(tmpBuf, sizeof(tmpBuf), (uint32_t)taskStatusArray[i].xTaskNumber);
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_TCB);
+    McuShell_SendStr(buf, io->stdOut);
+  #endif
+    /* Static — not available on IDF port */
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), (unsigned char*)"N/A", ' ', PAD_STAT_TASK_STATIC);
+    McuShell_SendStr(buf, io->stdOut);
+    /* handle */
+    McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"0x");
+    McuUtility_strcatNum32Hex(tmpBuf, sizeof(tmpBuf), (uint32_t)taskStatusArray[i].xHandle);
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_HANDLE);
+    McuShell_SendStr(buf, io->stdOut);
+    /* name */
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), (unsigned char*)taskStatusArray[i].pcTaskName, ' ', PAD_STAT_TASK_NAME);
+    McuShell_SendStr(buf, io->stdOut);
+  #if configUSE_TRACE_FACILITY
+    /* state */
+    switch (taskStatusArray[i].eCurrentState) {
+      case eRunning:   McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"Running"); break;
+      case eReady:     McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"Ready"); break;
+      case eSuspended: McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"Suspended"); break;
+      case eBlocked:   McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"Blocked"); break;
+      case eDeleted:   McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"Deleted"); break;
+      case eInvalid:   McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"Invalid"); break;
+      default:         McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"UNKNOWN!"); break;
+    }
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_STATE);
+    McuShell_SendStr(buf, io->stdOut);
+    /* (baseprio,currprio) */
+    tmpBuf[0] = '\0';
+    McuUtility_chcat(tmpBuf, sizeof(tmpBuf), '(');
+    McuUtility_strcatNum32u(tmpBuf, sizeof(tmpBuf), taskStatusArray[i].uxBasePriority);
+    McuUtility_chcat(tmpBuf, sizeof(tmpBuf), ',');
+    McuUtility_strcatNum32u(tmpBuf, sizeof(tmpBuf), taskStatusArray[i].uxCurrentPriority);
+    McuUtility_chcat(tmpBuf, sizeof(tmpBuf), ')');
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_PRIO);
+    McuShell_SendStr(buf, io->stdOut);
+  #else
+    /* prio */
+    tmpBuf[0] = '\0';
+    McuUtility_strcatNum32s(tmpBuf, sizeof(tmpBuf), uxTaskPriorityGet(taskStatusArray[i].xHandle));
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_PRIO);
+    McuShell_SendStr(buf, io->stdOut);
+  #endif
+    /* stack base (pxStackBase is the lowest address) */
+    McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"0x");
+    McuUtility_strcatNum32Hex(tmpBuf, sizeof(tmpBuf), (uint32_t)taskStatusArray[i].pxStackBase);
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_STACK_BEG);
+    McuShell_SendStr(buf, io->stdOut);
+    /* stack end — not available */
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), (unsigned char*)"N/A", ' ', PAD_STAT_TASK_STACK_END);
+    McuShell_SendStr(buf, io->stdOut);
+    /* stack size — not available without end address */
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), (unsigned char*)"N/A", ' ', PAD_STAT_TASK_STACK_SIZE);
+    McuShell_SendStr(buf, io->stdOut);
+    /* stack top — not available */
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), (unsigned char*)"N/A", ' ', PAD_STAT_TASK_STACK_TOP);
+    McuShell_SendStr(buf, io->stdOut);
+  #if configUSE_TRACE_FACILITY
+    /* stack high water mark (unused bytes remaining) */
+    tmpBuf[0] = '\0';
+    McuUtility_strcatNum16uFormatted(tmpBuf, sizeof(tmpBuf),
+        taskStatusArray[i].usStackHighWaterMark * sizeof(portSTACK_TYPE), ' ', 5);
+    McuUtility_strcat(tmpBuf, sizeof(tmpBuf), (unsigned char*)" B");
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_STACK_MARK);
+    McuShell_SendStr(buf, io->stdOut);
+  #endif
+  #if configGENERATE_RUN_TIME_STATS && configUSE_TRACE_FACILITY
+    McuUtility_strcpy(tmpBuf, sizeof(tmpBuf), (unsigned char*)"0x");
+    McuUtility_strcatNum32Hex(tmpBuf, sizeof(tmpBuf), taskStatusArray[i].ulRunTimeCounter);
+    buf[0] = '\0';
+    McuUtility_strcatPad(buf, sizeof(buf), tmpBuf, ' ', PAD_STAT_TASK_RUNTIME);
+    McuShell_SendStr(buf, io->stdOut);
+  #endif
+    McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
+  }
+#elif (tskKERNEL_VERSION_MAJOR<10) /* original guard, ESP32 handled above */
+  McuShell_SendStr((unsigned char*)"FreeRTOS version must be at least 10.0.0\r\n", io->stdOut);
 #else
   nofTasks = uxTaskGetNumberOfTasks();
   if (nofTasks>SHELL_MAX_NOF_TASKS) {
@@ -584,7 +689,7 @@ static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
       McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
     } /* if */
   } /* for */
-#endif /* tskKERNEL_VERSION_MAJOR */
+#endif /* McuLib_CONFIG_CPU_IS_ESP32 / tskKERNEL_VERSION_MAJOR */
   return res;
 }
 #endif
