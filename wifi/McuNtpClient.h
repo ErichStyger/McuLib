@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025, Erich Styger
+ * Copyright (c) 2021-2026, Erich Styger
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include "McuNtp_client_config.h"
+#include "McuNtpClient_config.h"
 #if MCU_NTP_CLIENT_CONFIG_ENABLED
 
 #include <stdbool.h>

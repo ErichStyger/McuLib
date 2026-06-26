@@ -5,7 +5,7 @@
  */
 
 #if MCU_DNS_RESOLVER_CONFIG_ENABLED
-#include "McuDns_resolver.h"
+#include "McuDnsResolver.h"
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   #include "pico/cyw43_arch.h"
 #endif

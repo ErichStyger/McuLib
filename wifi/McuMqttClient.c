@@ -12,9 +12,9 @@
 #endif
 #include "lwip/apps/mqtt.h"
 #include "lwip/dns.h"
-#include "McuMqtt_client_config.h"
-#include "McuMqtt_client.h"
-#include "McuDns_resolver.h"
+#include "McuMqttClient_config.h"
+#include "McuMqttClient.h"
+#include "McuDnsResolver.h"
 #include "McuLog.h"
 #include "McuUtility.h"
 #include "McuRTOS.h"

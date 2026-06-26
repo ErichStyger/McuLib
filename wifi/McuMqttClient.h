@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include "McuMqtt_client_config.h"
+#include "McuMqttClient_config.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>

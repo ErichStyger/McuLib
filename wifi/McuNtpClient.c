@@ -9,14 +9,14 @@
   #include "pico/stdlib.h"
   #include "pico/cyw43_arch.h"
 #endif
-#include "McuNtp_client.h"
+#include "McuNtpClient.h"
 #include "lwip/udp.h"
 #include "McuShell.h"
 #include "McuRTOS.h"
 #include "McuTimeDate.h"
 #include "McuUtility.h"
 #include "McuLog.h"
-#include "McuDns_resolver.h"
+#include "McuDnsResolver.h"
 
 #if MCU_NTP_CLIENT_CONFIG_USE_MININI
   #include "minIni/McuMinINI.h"

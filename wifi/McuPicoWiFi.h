@@ -10,6 +10,7 @@
 #include "McuPicoWiFi_config.h"
 #include <stdbool.h>
 
+#if MCU_PICO_WIFI_CONFIG_ENABLED
 /*!
  * \brief Sets the initialized status of the CYW43 architecture
  * \param isInitialized If initialized or not
@@ -38,5 +39,7 @@ void McuPicoWiFi_Deinit(void);
  * \brief Module initialization
  */
 void McuPicoWiFi_Init(void);
+
+#endif /* MCU_PICO_WIFI_CONFIG_ENABLED */
 
 #endif /* MCU_PICO_WIFI_H_ */

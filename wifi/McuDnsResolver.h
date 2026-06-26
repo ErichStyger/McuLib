@@ -7,7 +7,7 @@
 #ifndef MCU_DNS_RESOLVER_H_
 #define MCU_DNS_RESOLVER_H_
 
-#include "McuDns_resolver_config.h"
+#include "McuDnsResolver_config.h"
 #if MCU_DNS_RESOLVER_CONFIG_ENABLED
 
 #include "lwip/ip_addr.h"
