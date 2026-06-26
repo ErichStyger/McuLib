@@ -84,7 +84,13 @@ uint8_t McuMqttClient_PublishText(const char *topic, const char *text) {
   const uint8_t qos = 0; /* quos: 0: fire&forget, 1: at least once */
   const uint8_t retain = 0; /* 0: do not retain. 1: Store this message as the last known value for this topic. */
 
+  #if McuLib_CONFIG_CPU_IS_RPxxxx
+    cyw43_arch_lwip_begin(); /* need to call lock wrapper if called from task (not from lwip callback) */
+  #endif
   res = mqtt_publish(McuMqttClient_getClient(), topic, text, strlen(text), qos, retain, McuMqttClient_publish_request_cb, NULL);
+  #if McuLib_CONFIG_CPU_IS_RPxxxx
+    cyw43_arch_lwip_end();
+  #endif
   if (res!=ERR_OK) {
     McuLog_error("Failed topic %s mqtt_publish: %d", topic, res);
     (void)McuMqttClient_Disconnect(); /* try disconnect and connect again */
