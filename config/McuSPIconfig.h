@@ -108,17 +108,21 @@
   #endif
 
 #elif MCUSPI_CONFIG_HW_TEMPLATE==MCUSPI_CONFIG_HW_TEMPLATE_MCXA_LPSPI0
+  /*
+    PORT1_2 (pin 58) is configured as LPSPI0_SDI
+    PORT1_0 (pin 56) is configured as LPSPI0_SDO
+    PORT1_1 (pin 57) is configured as LPSPI0_SCK.
+  */
   #define MCUSPI_CONFIG_HW_SPI_MASTER                   LPSPI0
   #define MCUSPI_CONFIG_HW_SPI_MASTER_IRQ               LPSPI0_IRQn
   #define MCUSPI_CONFIG_HW_SPI_MASTER_CLK_SRC           kCLOCK_GateLPSPI0
   #define MCUSPI_CONFIG_HW_SPI_MASTER_CLK_FREQ          CLOCK_GetLpspiClkFreq(0)   // oder LPSPI_MASTER_CLK_FREQ
   #define MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_INIT      kLPSPI_Pcs0
   #define MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_TRANSFER  kLPSPI_MasterPcs0
-  #define MCUSPI_CONFIG_HW_SPI_SSEL                     0 /* wird das benötigt? kann weggelassen werden oder? */
 
   #define MCUSPI_CONFIG_HW_SPI_INIT() /* nothing */
 
-  /* P1_3 */
+  /* Chip select: P1_3 */
   #define MCUSPI_CONFIG_HW_CS_GPIO   GPIO1
   #define MCUSPI_CONFIG_HW_CS_PORT   PORT1
   #define MCUSPI_CONFIG_HW_CS_PIN    3
