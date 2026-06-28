@@ -8,6 +8,7 @@
 #include "McuLittleFSconfig.h"
 #include "McuLittleFSBlockDevice.h"
 #include "McuShell.h"
+#include "McuLog.h"
 #include "McuTimeDate.h"
 #include "littleFS/lfs.h"
 #if McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_WINBOND_W25Q128
@@ -15,6 +16,7 @@
 #elif McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_MCU_FLASH
   #include "McuFlash.h"
 #endif
+#include "McuSystemView.h"
 
 /* variables used by the file system */
 static bool McuLFS_isMounted = FALSE;
@@ -645,14 +647,14 @@ uint8_t McuLFS_RemoveFile(const char *filePath, McuShell_ConstStdIOType *io) {
 
   if (!McuLFS_isMounted) {
     if (io != NULL) {
-      McuShell_SendStr((const uint8_t *)"ERROR: File system is not mounted.\r\n", io->stdErr);
+      McuLog_error("ERROR: File system is not mounted");
     }
     return ERR_FAILED;
   }
   result = lfs_remove(&McuLFS_lfs, filePath);
   if (result < 0) {
     if (io != NULL) {
-      McuShell_SendStr((const uint8_t *)"ERROR: Failed removing file.\r\n", io->stdErr);
+      McuLog_error("ERROR: Failed removing file '%s'", filePath);
     }
     return ERR_FAILED;
   }
@@ -666,7 +668,6 @@ lfs_t* McuLFS_GetFileSystem(void) {
 uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   lfs_file_t file;
   uint32_t i;
-  uint8_t read_buf[10];
   TIMEREC time, startTime;
   int32_t start_mseconds, mseconds;
 
@@ -685,12 +686,12 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   McuShell_SendStr((const unsigned char*)"Create benchmark file...\r\n", io->stdOut);
   (void)McuTimeDate_GetTime(&startTime);
   if (lfs_file_open(&McuLFS_lfs, &file, "./bench.txt", LFS_O_WRONLY | LFS_O_CREAT)<0) {
-    McuShell_SendStr((const unsigned char*)"*** Failed creating benchmark file!\r\n", io->stdErr);
+    McuLog_fatal("*** Failed creating benchmark file!");
     return ERR_FAILED;
   }
-  for(i=0;i<10240;i++) {
+  for(i=0;i<10240;i++) { /* write the text "benchmark" to the file */
     if (lfs_file_write(&McuLFS_lfs, &file, "benchmark ", sizeof("benchmark ")-1)<0) {
-      McuShell_SendStr((const unsigned char*)"*** Failed writing file!\r\n", io->stdErr);
+      McuLog_fatal("*** Failed writing benchmark file!");
       (void)lfs_file_close(&McuLFS_lfs, &file);
       return ERR_FAILED;
     }
@@ -713,13 +714,14 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   McuShell_SendStr((const unsigned char*)" kB/s)\r\n", io->stdOut);
 
   /* read benchmark */
+  uint8_t read_buf[10];
   McuShell_SendStr((const unsigned char*)"Read 100kB benchmark file...\r\n", io->stdOut);
   (void)McuTimeDate_GetTime(&startTime);
   if (lfs_file_open(&McuLFS_lfs, &file, "./bench.txt", LFS_O_RDONLY)<0) {
     McuShell_SendStr((const unsigned char*)"*** Failed opening benchmark file!\r\n", io->stdErr);
     return ERR_FAILED;
   }
-  for(i=0;i<10240;i++) {
+  for(i=0;i<1000 /*10240*/;i++) {
     if (lfs_file_read(&McuLFS_lfs, &file, &read_buf[0], sizeof(read_buf))<0) {
       McuShell_SendStr((const unsigned char*)"*** Failed reading file!\r\n", io->stdErr);
       (void)lfs_file_close(&McuLFS_lfs, &file);
@@ -727,6 +729,7 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
     }
   }
   (void)lfs_file_close(&McuLFS_lfs, &file);
+
   (void)McuTimeDate_GetTime(&time);
   start_mseconds = startTime.Hour*60*60*1000 + startTime.Min*60*1000 + startTime.Sec*1000
 #if McuTimeDate_HAS_SEC100_IN_TIMEREC
@@ -763,6 +766,7 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   McuShell_SendNum32s((100*1000)/mseconds, io->stdOut);
   McuShell_SendStr((const unsigned char*)" kB/s)\r\n", io->stdOut);
   McuShell_SendStr((const unsigned char*)"done!\r\n", io->stdOut);
+
   return ERR_OK;
 }
 
