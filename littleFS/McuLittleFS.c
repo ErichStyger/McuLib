@@ -698,12 +698,12 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   (void)lfs_file_close(&McuLFS_lfs, &file);
   (void)McuTimeDate_GetTime(&time);
   start_mseconds = startTime.Hour*60*60*1000 + startTime.Min*60*1000 + startTime.Sec*1000
-#if TmDt1_HAS_SEC100_IN_TIMEREC
+#if McuTimeDate_HAS_SEC100_IN_TIMEREC
   + startTime.Sec100*10
 #endif
   ;
   mseconds = time.Hour*60*60*1000 + time.Min*60*1000 + time.Sec*1000
-#if TmDt1_HAS_SEC100_IN_TIMEREC
+#if McuTimeDate_HAS_SEC100_IN_TIMEREC
   + time.Sec100*10
 #endif
   - start_mseconds;
@@ -729,12 +729,12 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   (void)lfs_file_close(&McuLFS_lfs, &file);
   (void)McuTimeDate_GetTime(&time);
   start_mseconds = startTime.Hour*60*60*1000 + startTime.Min*60*1000 + startTime.Sec*1000
-#if TmDt1_HAS_SEC100_IN_TIMEREC
+#if McuTimeDate_HAS_SEC100_IN_TIMEREC
   + startTime.Sec100*10
 #endif
   ;
   mseconds = time.Hour*60*60*1000 + time.Min*60*1000 + time.Sec*1000
-#if TmDt1_HAS_SEC100_IN_TIMEREC
+#if McuTimeDate_HAS_SEC100_IN_TIMEREC
   + time.Sec100*10
 #endif
   - start_mseconds;
@@ -749,12 +749,12 @@ uint8_t McuLFS_RunBenchmark(const McuShell_ConstStdIOType *io) {
   (void)McuLFS_CopyFile((const char*)"./bench.txt", (const char*)"./copy.txt", io);
   (void)McuTimeDate_GetTime(&time);
   start_mseconds = startTime.Hour*60*60*1000 + startTime.Min*60*1000 + startTime.Sec*1000
-#if TmDt1_HAS_SEC100_IN_TIMEREC
+#if McuTimeDate_HAS_SEC100_IN_TIMEREC
   + startTime.Sec100*10
 #endif
   ;
   mseconds = time.Hour*60*60*1000 + time.Min*60*1000 + time.Sec*1000
-#if TmDt1_HAS_SEC100_IN_TIMEREC
+#if McuTimeDate_HAS_SEC100_IN_TIMEREC
   + time.Sec100*10
 #endif
   - start_mseconds;
