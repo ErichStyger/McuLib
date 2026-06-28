@@ -44,6 +44,15 @@ Bit 7 (SRP0): Status Register Protect. Controls the Write Protect (\(\overline{\
 #define McuW25_CMD_BLOCK_ERASE_64K 0xD8
 #define McuW25_CMD_CHIP_ERASE      0xC7
 
+#define SPI_WAIT_US_AFTER_CS_DISABLE() \
+  McuWait_Waitus(10)
+
+#define SPI_WAIT_US_BETWEEN_CS_TOGGLE() \
+  McuWait_Waitus(10)
+
+#define SPI_WAIT_DURING_BUSY() \
+  McuWait_WaitOSms(1);
+
 #define SPI_WRITE(write)            \
   { \
      while(McuSPI_SendByte(write)!=0) {} \
@@ -63,6 +72,7 @@ uint8_t McuW25_ReadStatus1(uint8_t *status) {
   SPI_WRITE(McuW25_CMD_READ_STATUS1);
   SPI_WRITE_READ(0, status);
   McuW25_CONFIG_CS_DISABLE();
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
@@ -75,13 +85,13 @@ bool McuW25_isBusy(void) {
 
 void McuW25_WaitIfBusy(void) {
   while(McuW25_isBusy()) {
-    McuWait_Waitms(1);
+    //McuLog_trace("W25 is busy");
+    SPI_WAIT_DURING_BUSY();
   }
 }
 
 uint8_t McuW25_Read(uint32_t address, uint8_t *buf, size_t bufSize) {
   McuW25_WaitIfBusy();
-
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_DATA_READ);
   SPI_WRITE(address>>16);
@@ -89,32 +99,30 @@ uint8_t McuW25_Read(uint32_t address, uint8_t *buf, size_t bufSize) {
   SPI_WRITE(address);
   SPI_WRITE_READ_BLOCK(NULL, buf, bufSize);
   McuW25_CONFIG_CS_DISABLE();
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
 uint8_t McuW25_EraseAll(void) {
   McuW25_WaitIfBusy();
-
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_WRITE_ENABLE);
   McuW25_CONFIG_CS_DISABLE();
-  McuWait_Waitus(1);
+  SPI_WAIT_US_BETWEEN_CS_TOGGLE();
 
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_CHIP_ERASE);
   McuW25_CONFIG_CS_DISABLE();
-
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
-
 uint8_t McuW25_EraseSector4K(uint32_t address) {
   McuW25_WaitIfBusy();
-
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_WRITE_ENABLE);
   McuW25_CONFIG_CS_DISABLE();
-  McuWait_Waitus(1);
+  SPI_WAIT_US_BETWEEN_CS_TOGGLE();
 
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_SECTOR_ERASE_4K);
@@ -122,17 +130,16 @@ uint8_t McuW25_EraseSector4K(uint32_t address) {
   SPI_WRITE(address>>8);
   SPI_WRITE(address);
   McuW25_CONFIG_CS_DISABLE();
-
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
 uint8_t McuW25_EraseBlock32K(uint32_t address) {
   McuW25_WaitIfBusy();
-
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_WRITE_ENABLE);
   McuW25_CONFIG_CS_DISABLE();
-  McuWait_Waitus(1);
+  SPI_WAIT_US_BETWEEN_CS_TOGGLE();
 
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_BLOCK_ERASE_32K);
@@ -140,17 +147,16 @@ uint8_t McuW25_EraseBlock32K(uint32_t address) {
   SPI_WRITE(address>>8);
   SPI_WRITE(address);
   McuW25_CONFIG_CS_DISABLE();
-
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
 uint8_t McuW25_EraseBlock64K(uint32_t address) {
   McuW25_WaitIfBusy();
-
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_WRITE_ENABLE);
   McuW25_CONFIG_CS_DISABLE();
-  McuWait_Waitus(1);
+  SPI_WAIT_US_BETWEEN_CS_TOGGLE();
 
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_BLOCK_ERASE_64K);
@@ -158,7 +164,7 @@ uint8_t McuW25_EraseBlock64K(uint32_t address) {
   SPI_WRITE(address>>8);
   SPI_WRITE(address);
   McuW25_CONFIG_CS_DISABLE();
-
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
@@ -171,28 +177,19 @@ uint8_t McuW25_EraseBlock64K(uint32_t address) {
  */
 uint8_t McuW25_ProgramPage(uint32_t address, const uint8_t *data, size_t dataSize) {
   McuW25_WaitIfBusy();
-
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_WRITE_ENABLE);
   McuW25_CONFIG_CS_DISABLE();
-  McuWait_Waitus(1);
+  SPI_WAIT_US_BETWEEN_CS_TOGGLE();
 
   McuW25_CONFIG_CS_ENABLE();
   SPI_WRITE(McuW25_CMD_PAGE_PROGRAM);
   SPI_WRITE(address>>16);
   SPI_WRITE(address>>8);
   SPI_WRITE(address);
-#if 0
-  while(dataSize>0) {
-    SPI_WRITE(*data);
-    dataSize--;
-    data++;
-  }
-#else
   SPI_WRITE_READ_BLOCK(data, NULL, dataSize);
-#endif
   McuW25_CONFIG_CS_DISABLE();
-
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
@@ -233,6 +230,7 @@ uint8_t McuW25_ReadSerialNumber(uint8_t *buf, size_t bufSize) {
     SPI_WRITE_READ(0, &buf[i]);
   }
   McuW25_CONFIG_CS_DISABLE();
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK;
 }
 
@@ -248,6 +246,7 @@ uint8_t McuW25_ReadID(uint8_t *buf, size_t bufSize) {
   SPI_WRITE_READ(0, &buf[1]);
   SPI_WRITE_READ(0, &buf[2]);
   McuW25_CONFIG_CS_DISABLE();
+  SPI_WAIT_US_AFTER_CS_DISABLE();
   return ERR_OK; /* not expected part */
 }
 
@@ -277,7 +276,6 @@ static uint8_t McuW25_PrintStatus(McuShell_ConstStdIOType *io) {
   int i;
 
   McuShell_SendStatusStr((const unsigned char*)"McuW25", (const unsigned char*)"Winbond W25Q128 Flash status\r\n", io->stdOut);
-
   res = McuW25_ReadID(id, sizeof(id));
   buf[0] = '\0';
   if (res==ERR_OK) {
@@ -481,10 +479,12 @@ uint8_t McuW25_ParseCommand(const unsigned char* cmd, bool *handled, const McuSh
 
 void McuW25_Deinit(void) {
   McuW25_CONFIG_CS_DISABLE(); /* disable chip select by default */
+  SPI_WAIT_US_AFTER_CS_DISABLE();
 }
 
 void McuW25_Init(void) {
   McuW25_CONFIG_CS_DISABLE(); /* disable chip select by default */
+  SPI_WAIT_US_AFTER_CS_DISABLE();
 }
 
 #endif /* MCUW25Q128_CONFIG_ENABLED */
