@@ -54,7 +54,7 @@
 #endif
 
 #ifndef MCU_MQTT_CLIENT_CONFIG_USE_MININI
-  #define MCU_MQTT_CLIENT_CONFIG_USE_MININI      (0)
+  #define MCU_MQTT_CLIENT_CONFIG_USE_MININI      (1)
     /*!< if MinINI is used for storing settings */
 #endif
 
