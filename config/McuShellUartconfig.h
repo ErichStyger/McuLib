@@ -30,9 +30,11 @@
 #define McuShellUart_CONFIG_UART_LPC55S69_USART0          (11) /* FlexComm0, P0_29, pin92 (Rx) and P0_30, pin94 (Tx) */
 #define McuShellUart_CONFIG_UART_LPC55S69_USART1          (12) /* FlexComm1, P1_10, pin40 (Rx) and P1_11, pin93 (Tx) */
 /* RP2040 */
-#define McuShellUart_CONFIG_UART_RP2040_UART1_GPIO4_GPIO5 (13) /* UART1 with Tx on GPIO4 and Rx on GPIO5 */
-/* NXP MCXN947 */
-#define McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9    (14) /* UART1 with Tx on P1_8/FC4 and Rx on P1_9/FC4 */
+#define McuShellUart_CONFIG_UART_RP2040_UART1_GPIO4_GPIO5     (13) /* UART1 with Tx on GPIO4 and Rx on GPIO5 */
+/* NXP FRDM-MCXN947 */
+#define McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9        (14) /* LPUART4 on FlexComm4 with Tx on P1_8/FC4 and Rx on P1_9/FC4 */
+/* NXP FRDM-MCXA153 */
+#define McuShellUart_CONFIG_UART_MCXN153_LPUART0_P0_2_P0_3    (15) /* LPUART0 with Tx on P0_3 and Rx on P0_2 */
 
 /* default UART used */
 #ifndef McuShellUart_CONFIG_UART
@@ -216,6 +218,43 @@
       /* attach FRO 12M to FLEXCOMM4 (debug console) */ \
       CLOCK_SetClkDiv(kCLOCK_DivFlexcom4Clk, 1u); \
       CLOCK_AttachClk(kFRO12M_to_FLEXCOMM4);
+  #endif
+#elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_MCXN153_LPUART0_P0_2_P0_3
+  #include "fsl_lpuart.h"
+  #include "fsl_port.h"
+  #define McuShellUart_CONFIG_UART_DEVICE                   LPUART0
+  #define McuShellUart_CONFIG_UART_SET_UART_CLOCK()         
+  #define McuShellUart_CONFIG_UART_WRITE_BLOCKING           LPUART_WriteBlocking
+  #define McuShellUart_CONFIG_UART_GET_FLAGS                LPUART_GetStatusFlags
+  #define McuShellUart_CONFIG_UART_HW_RX_READY_FLAGS        (kLPUART_RxDataRegFullFlag)
+  #define McuShellUart_CONFIG_UART_READ_BYTE                LPUART_ReadByte
+  #define McuShellUart_CONFIG_UART_CONFIG_STRUCT            lpuart_config_t
+  #define McuShellUart_CONFIG_UART_GET_DEFAULT_CONFIG       LPUART_GetDefaultConfig
+  #define McuShellUart_CONFIG_UART_ENABLE_INTERRUPTS        LPUART_EnableInterrupts
+  #define McuShellUart_CONFIG_UART_ENABLE_INTERRUPT_FLAGS   (kLPUART_RxDataRegFullInterruptEnable)
+  #define McuShellUart_CONFIG_UART_IRQ_NUMBER               LP_FLEXCOMM4_IRQnxx
+  #define McuShellUart_CONFIG_UART_INIT                     LPUART_Init
+  #ifndef McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT
+    #define McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT  CLOCK_GetLPFlexCommClkFreq(4u)
+  #endif
+  #define McuShellUart_CONFIG_UART_IRQ_HANDLER              LP_FLEXCOMM4_IRQHandler
+  #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            LPUART_ClearStatusFlags
+  #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
+  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
+
+  #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (1) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
+
+  #ifndef McuShellUart_CONFIG_CLOCKING_CONFIG
+    #define McuShellUart_CONFIG_CLOCKING_CONFIG()  \
+    /* Write to PORT0: Peripheral clock is enabled */ \
+    CLOCK_EnableClock(kCLOCK_GatePORT0); \
+    /* LPUART0 peripheral is released from reset */ \
+    RESET_ReleasePeripheralReset(kLPUART0_RST_SHIFT_RSTn); \
+    /* PORT0 peripheral is released from reset */ \
+    RESET_ReleasePeripheralReset(kPORT0_RST_SHIFT_RSTn);
   #endif
 
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FX512_UART0_A1_A2
