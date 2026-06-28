@@ -12,6 +12,7 @@
 #include "McuShell.h"
 #include "McuLog.h"
 #include "McuSPI.h"
+#include "McuSystemView.h"
 
 #define McuW25_CMD_PAGE_PROGRAM  0x02
 #define McuW25_CMD_DATA_READ     0x03
@@ -45,10 +46,10 @@ Bit 7 (SRP0): Status Register Protect. Controls the Write Protect (\(\overline{\
 #define McuW25_CMD_CHIP_ERASE      0xC7
 
 #define SPI_WAIT_US_AFTER_CS_DISABLE() \
-  McuWait_Waitus(10)
+  McuWait_Waitus(1)
 
 #define SPI_WAIT_US_BETWEEN_CS_TOGGLE() \
-  McuWait_Waitus(10)
+  McuWait_Waitus(1)
 
 #define SPI_WAIT_DURING_BUSY() \
   McuWait_WaitOSms(1);
@@ -85,7 +86,9 @@ bool McuW25_isBusy(void) {
 
 void McuW25_WaitIfBusy(void) {
   while(McuW25_isBusy()) {
-    //McuLog_trace("W25 is busy");
+  #if configUSE_SEGGER_SYSTEM_VIEWER_HOOKS
+    McuSystemView_Print("W25_Busy");
+  #endif
     SPI_WAIT_DURING_BUSY();
   }
 }
