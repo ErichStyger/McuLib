@@ -17,6 +17,15 @@
 #define McuW25_CMD_DATA_READ     0x03
 
 #define McuW25_CMD_READ_STATUS1  0x05
+/*
+The 8-bit register returned by this command indicates critical device metrics:
+Bit 0 (BUSY): 1 indicates the chip is currently executing a Page Program, Sector Erase, Block Erase, Chip Erase, or Write Status Register cycle. 0 indicates ready.
+Bit 1 (WEL): Write Enable Latch. 1 indicates the device is ready to accept Program/Erase commands, while 0 means operations are blocked.
+Bits 2-4 (BP0, BP1, BP2): Block Protect. These bits define the size of the memory area that is software-protected against write and erase operations.
+Bit 5 (TB): Top/Bottom Block Protect. Determines whether the protected blocks are at the top or bottom of the memory array.
+Bit 6 (SEC): Sector/Block Protect. Works alongside the Block Protect bits to determine if protection is done in 4KB sectors or larger 64KB blocks.
+Bit 7 (SRP0): Status Register Protect. Controls the Write Protect (\(\overline{\text{WP}}\)) pin to lock or unlock the status register.
+*/
 
 #define McuW25_CMD_WRITE_ENABLE  0x06
 #define McuW25_CMD_WRITE_DISABLE  0x04
