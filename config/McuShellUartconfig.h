@@ -97,7 +97,6 @@
   #define McuShellUart_CONFIG_UART_IRQ_HANDLER              FLEXCOMM0_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
-  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
   
   #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
@@ -125,7 +124,6 @@
   #define McuShellUart_CONFIG_UART_IRQ_HANDLER              FLEXCOMM2_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
-  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
   
   #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
@@ -152,7 +150,6 @@
   #define McuShellUart_CONFIG_UART_IRQ_HANDLER              FLEXCOMM0_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
-  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
   
   #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
@@ -179,7 +176,6 @@
   #define McuShellUart_CONFIG_UART_IRQ_HANDLER              FLEXCOMM1_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            USART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
-  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
   
   #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
@@ -206,8 +202,7 @@
   #define McuShellUart_CONFIG_UART_IRQ_HANDLER              LP_FLEXCOMM4_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            LPUART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
-  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
-
+  
   #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (1) 
       /*!< if we configure the clocks for the UART or not */
@@ -232,15 +227,14 @@
   #define McuShellUart_CONFIG_UART_GET_DEFAULT_CONFIG       LPUART_GetDefaultConfig
   #define McuShellUart_CONFIG_UART_ENABLE_INTERRUPTS        LPUART_EnableInterrupts
   #define McuShellUart_CONFIG_UART_ENABLE_INTERRUPT_FLAGS   (kLPUART_RxDataRegFullInterruptEnable)
-  #define McuShellUart_CONFIG_UART_IRQ_NUMBER               LP_FLEXCOMM4_IRQnxx
+  #define McuShellUart_CONFIG_UART_IRQ_NUMBER               LPUART0_IRQn
   #define McuShellUart_CONFIG_UART_INIT                     LPUART_Init
   #ifndef McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT
     #define McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT  CLOCK_GetLPFlexCommClkFreq(4u)
   #endif
-  #define McuShellUart_CONFIG_UART_IRQ_HANDLER              LP_FLEXCOMM4_IRQHandler
+  #define McuShellUart_CONFIG_UART_IRQ_HANDLER              LPUART0_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            LPUART_ClearStatusFlags
   #define McuShellUART_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (0) /* no extra flags to clear */
-  #define McuShellUart_CONFIG_HAS_FIFO                      (0) /* not sure? */
 
   #ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS            (1) 
@@ -446,6 +440,11 @@
   #endif
 #else
   /* you have to put your configuration here */
+#endif
+
+/* set default values */
+#ifndef McuShellUart_CONFIG_HAS_FIFO
+  #define McuShellUart_CONFIG_HAS_FIFO              (0)
 #endif
 
 #ifndef McuShellUart_CONFIG_UART_RX_QUEUE_LENGTH
