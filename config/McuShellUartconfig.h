@@ -230,7 +230,7 @@
   #define McuShellUart_CONFIG_UART_IRQ_NUMBER               LPUART0_IRQn
   #define McuShellUart_CONFIG_UART_INIT                     LPUART_Init
   #ifndef McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT
-    #define McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT  CLOCK_GetLPFlexCommClkFreq(4u)
+    #define McuShellUart_CONFIG_UART_GET_CLOCK_FREQ_SELECT  kCLOCK_MainClk
   #endif
   #define McuShellUart_CONFIG_UART_IRQ_HANDLER              LPUART0_IRQHandler
   #define McuShellUART_CONFIG_CLEAR_STATUS_FLAGS            LPUART_ClearStatusFlags
@@ -444,7 +444,12 @@
 
 /* set default values */
 #ifndef McuShellUart_CONFIG_HAS_FIFO
-  #define McuShellUart_CONFIG_HAS_FIFO              (0)
+  #define McuShellUart_CONFIG_HAS_FIFO                      (0)
+#endif
+
+#ifndef McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS
+  #define McuShellUart_CONFIG_DO_CONFIGURE_CLOCKS           (0) 
+    /*!< if we configure the clocks for the UART or not */
 #endif
 
 #ifndef McuShellUart_CONFIG_UART_RX_QUEUE_LENGTH
