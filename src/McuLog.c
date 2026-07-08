@@ -240,7 +240,7 @@ static void LogHeader(TIMEREC *time, DATEREC *date, McuLog_Levels_e level, bool 
   /* level */
   buf[0] = '\0';
 #if McuLog_CONFIG_USE_COLOR
-  #define McuLOG_COLOR_IS_ENABLED()     supportColor && McuLog_ConfigData.color && channel != -1 && channel<McuLog_CONFIG_NOF_CONSOLE_LOGGER && McuLog_ConfigData.channels[channel].color 
+  #define McuLOG_COLOR_IS_ENABLED()     supportColor && McuLog_ConfigData.color && channel != 0xff && channel<McuLog_CONFIG_NOF_CONSOLE_LOGGER && McuLog_ConfigData.channels[channel].color 
   
   if (McuLOG_COLOR_IS_ENABLED()) {
     McuUtility_strcat(buf, sizeof(buf), (unsigned char*)level_colors[level]);
