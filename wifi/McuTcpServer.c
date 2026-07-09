@@ -8,10 +8,10 @@
 #if MCU_TCP_SERVER_CONFIG_ENABLED
 #include <string.h>
 #include <stdlib.h>
-
-#include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
-
+#if McuLib_CONFIG_CPU_IS_RPxxxx
+  #include "pico/stdlib.h"
+  #include "pico/cyw43_arch.h"
+#endif
 #include "lwip/pbuf.h"
 #include "lwip/tcp.h"
 #include "McuTcpServer.h"
@@ -100,10 +100,12 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb) {
   }
   state->sent_len = 0;
   McuLog_info("Writing %ld bytes to client", BUF_SIZE);
+#if McuLib_CONFIG_CPU_IS_RPxxxx
   // this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
   // can use this method to cause an assertion in debug mode, if this method is called when
   // cyw43_arch_lwip_begin IS needed
   cyw43_arch_lwip_check();
+#endif
   err_t err = tcp_write(tpcb, state->buffer_sent, BUF_SIZE, TCP_WRITE_FLAG_COPY);
   if (err != ERR_OK) {
     McuLog_error("Failed to write data %d", err);
@@ -117,10 +119,12 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
   if (!p) {
     return tcp_server_result(arg, -1);
   }
+#if McuLib_CONFIG_CPU_IS_RPxxxx
   // this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
   // can use this method to cause an assertion in debug mode, if this method is called when
   // cyw43_arch_lwip_begin IS needed
   cyw43_arch_lwip_check();
+#endif
   if (p->tot_len > 0) {
     McuLog_info("tcp_server_recv %d/%d err %d", p->tot_len, state->recv_len, err);
     // Receive the buffer
