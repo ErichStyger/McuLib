@@ -8,6 +8,7 @@ elseif ( MCULIB_TARGET STREQUAL "MCUXPRESSO" )
 else ()
     message(STATUS "McuLib for ESP32")
     # Espressif IDF CMake files are special: cannot include sub file here.
+    # Configuration below has been tested with IDF V6.0.2
     idf_component_register(
           SRCS 
               "fonts/McuFontCour08Bold.c"
@@ -89,9 +90,12 @@ else ()
               "./fonts"
               "./config/fonts"
           REQUIRES
-              driver
               esp_partition
               spi_flash
+              esp_driver_gpio
+              esp_driver_i2c
+              esp_driver_spi
+              esp_driver_uart
          )
 endif ()
 
