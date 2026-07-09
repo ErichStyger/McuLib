@@ -430,7 +430,8 @@ static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
 #if McuLib_CONFIG_CPU_IS_ESP32
   /* ESP-IDF FreeRTOS does not expose xGetTaskHandles()/vTaskGetStackInfo();
    * use uxTaskGetSystemState() instead. Stack End/Top/Static columns are
-   * not available from the IDF port and are shown as N/A. */
+   * not available from the IDF port and are shown as N/A. 
+   * Note that for uxTaskGetSystemState() you have to enable CONFIG_FREERTOS_USE_TRACE_FACILITY (e.g. with idf.py menuconfig) */
   nofTasks = uxTaskGetSystemState(taskStatusArray, SHELL_MAX_NOF_TASKS, NULL);
   if (nofTasks == 0) {
     McuShell_SendStr((unsigned char*)"WARNING: uxTaskGetSystemState() returned 0 — array too small?\r\n", io->stdErr);
