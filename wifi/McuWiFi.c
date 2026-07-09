@@ -5,12 +5,9 @@
  */
 
 #include "McuWiFi_config.h"
-
 #if MCU_WIFI_CONFIG_ENABLED
 
 #include <string.h>
-
-#include "platform.h"
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   #include "pico/cyw43_arch.h"
   #include "lwip/ip4_addr.h"
@@ -27,13 +24,12 @@
   #include "nvs_flash.h"
   #include "esp_netif.h"
   #include "esp32_mac.h"
-  #include "pwd.h"
 #endif
 #include "McuRTOS.h"
 #include "McuUtility.h"
 #include "McuLog.h"
 #include "McuXFormat.h"
-#if PL_CONFIG_USE_PING
+#if MCU_WIFI_CONFIG_USE_PING
   #include "ping.h"
 #endif
 #if MCU_NTP_CLIENT_CONFIG_ENABLED
@@ -48,10 +44,10 @@
 #if MCU_UDP_SERVER_CONFIG_ENABLED
   #include "McuUdpServer.h"
 #endif
-#if PL_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   #include "minIni/McuMinINI.h"
 #endif
-#if PL_CONFIG_USE_WATCHDOG
+#if MCU_WIFI_CONFIG_USE_WATCHDOG
   #include "McuWatchdog.h"
 #endif
 #include "application.h"
@@ -61,19 +57,6 @@
 /* ***************************************************************** */
 #define EAP_PEAP 1  /* WPA2 Enterprise with password and no certificate */
 #define EAP_TTLS 2  /* TLS method with SSID and password */
-
-#if PL_CONFIG_USE_WIFI_EEE
-  #define CONFIG_WIFI_EAP_METHOD      EAP_PEAP
-  #define CONFIG_WIFI_EAP_SSID        "EEE"
-  #define CONFIG_WIFI_PASSWORD_MODE   EAP_PEAP
-  /* hostname, user name and password are pre-configured for EEE */
-#else
-  /* custom network */
-  #define CONFIG_WIFI_EAP_METHOD      EAP_TTLS
-  #define WIFI_DEFAULT_HOSTNAME       "host"
-  #define WIFI_DEFAULT_SSID           "ssid"
-  #define WIFI_DEFAULT_PASS           "password"
-#endif
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t s_wifi_event_group;
@@ -85,22 +68,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_IS_CONNECTED_BIT            (1<<2) /* used for connection status: if set, we are connected */
 #define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
 
-#if McuLib_CONFIG_CPU_IS_ESP32
-  #if PL_CONFIG_USE_BLINKY
-    #include "blinky.h"
-    #define LED_ON_TIME_MS_CONNECTED      1000
-    #define LED_ON_TIME_MS_DISCONNECTED   20
-  #endif
-
-  #ifndef CONFIG_ESP_MAXIMUM_RETRY
-    #define CONFIG_ESP_MAXIMUM_RETRY (2) /*  number of retries to connect to the network */
-  #endif
-
-  static esp_netif_t *APP_WiFi_NetIf;
-#endif /* McuLib_CONFIG_CPU_IS_ESP32 */
-
 static struct wifi {
-#if PL_CONFIG_USE_WIFI
   bool isEnabled; /* if true, it tries to connect to the network */
   bool reconnect; /* if true, will try to reconnect after a disconnect */
   unsigned char hostname[32]; /* name of the host */
@@ -109,33 +77,26 @@ static struct wifi {
 #endif
   unsigned char ssid[32]; /* SSID of AP */
   unsigned char pass[64]; /* password for AP */
-#endif
   TaskHandle_t taskHandle; /* the WiFi task handle */
 } wifi;
 
-#if PL_CONFIG_USE_WIFI
 const char *McuWifi_GetHostName(void) {
   return (const char*)wifi.hostname;
 }
-#endif
 
-#if PL_CONFIG_USE_WIFI
 static uint8_t SetWifiReconnect(bool on) {
   wifi.reconnect = on;
-#if PL_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   if (McuMinINI_ini_putl(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_RECONNECT, on, MCU_WIFI_CONFIG_MININI_FILE_NAME)!=1) { /* 1: success */
     return ERR_FAILED;
   }
 #endif
   return ERR_OK;
 }
-#endif
 
-#if PL_CONFIG_USE_WIFI
 static bool GetWifiReconnect(void) {
   return wifi.reconnect;
 }
-#endif
 
 #if McuLib_CONFIG_CPU_IS_ESP32
 static int APP_WiFi_GetIpInfo(esp_netif_ip_info_t *pIp_info) {
@@ -222,7 +183,6 @@ static uint8_t GetMAC(uint8_t mac[6], uint8_t *macStr, size_t macStrSize) {
   return ERR_OK;
 }
 
-#if PL_CONFIG_USE_WIFI
 static uint8_t SetNetworkHostname(void) {
   McuLog_info("Setting hostname: %s", wifi.hostname);
 #if McuLib_CONFIG_CPU_IS_RPxxxx
@@ -235,7 +195,6 @@ static uint8_t SetNetworkHostname(void) {
 #endif
   return ERR_OK;
 }
-#endif
 
 bool McuWiFi_isConnected(void) {
   return s_wifi_event_group!=NULL && xEventGroupGetBits(s_wifi_event_group)&WIFI_IS_CONNECTED_BIT;
@@ -366,7 +325,7 @@ static int connect_esp_wifi_with_credentials(void) {
 }
 #endif /* #if McuLib_CONFIG_CPU_IS_ESP32 */
 
-#if PL_CONFIG_USE_PING
+#if MCU_WIFI_CONFIG_USE_PING
 static void ping_setup(const char *host) {
   static ip_addr_t ping_addr; /* has to be global! */
 
@@ -377,9 +336,8 @@ static void ping_setup(const char *host) {
 }
 #endif
 
-#if PL_CONFIG_USE_WIFI
 static void LoadWifiSettings(void) {
-#if PL_CONFIG_USE_WIFI_EEE && PL_CONFIG_USE_IDENTIFY && CONFIG_WIFI_EAP_METHOD==EAP_PEAP
+#if MCU_WIFI_CONFIG_USE_EEE && CONFIG_WIFI_EAP_METHOD==EAP_PEAP
   const ESP32_Device_t *config;
 
   config = ESP32_GetDeviceConfig();
@@ -387,7 +345,7 @@ static void LoadWifiSettings(void) {
   McuUtility_strcpy(wifi.ssid, sizeof(wifi.ssid), (const unsigned char*)CONFIG_WIFI_EAP_SSID);
   McuUtility_strcpy(wifi.pass, sizeof(wifi.pass), (unsigned char*)config->eee_pwd);
   McuUtility_strcpy(wifi.id, sizeof(wifi.id), (unsigned char*)config->eee_id);  
-#elif PL_CONFIG_USE_MININI
+#elif MCU_WIFI_CONFIG_USE_MININI
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, WIFI_DEFAULT_HOSTNAME, (char*)wifi.hostname, sizeof(wifi.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID,     WIFI_DEFAULT_SSID,     (char*)wifi.ssid, sizeof(wifi.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS,     WIFI_DEFAULT_PASS,     (char*)wifi.pass, sizeof(wifi.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
@@ -396,7 +354,7 @@ static void LoadWifiSettings(void) {
   McuUtility_strcpy(wifi.ssid, sizeof(wifi.ssid), WIFI_DEFAULT_SSID);
   McuUtility_strcpy(wifi.pass, sizeof(wifi.pass), WIFI_DEFAULT_PASS);
 #endif
-#if PL_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   wifi.isEnabled = McuMinINI_ini_getbool(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_ENABLE, MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE, MCU_WIFI_CONFIG_MININI_FILE_NAME);
   wifi.reconnect = McuMinINI_ini_getbool(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_RECONNECT, MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT, MCU_WIFI_CONFIG_MININI_FILE_NAME);
 #else
@@ -404,14 +362,11 @@ static void LoadWifiSettings(void) {
   wifi.reconnect = MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT;
 #endif
 }
-#endif /* PL_CONFIG_USE_WIFI */
 
-#if PL_CONFIG_USE_WIFI
 static void InitWiFiHardware(void) {
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   McuPicoWiFi_SetArchIsInitialized(true);
 #endif
-#if PL_CONFIG_USE_WIFI
   McuLog_info("enabling STA mode");
   #if McuLib_CONFIG_CPU_IS_RPxxxx
     cyw43_arch_enable_sta_mode();
@@ -423,13 +378,12 @@ static void InitWiFiHardware(void) {
   #endif
   LoadWifiSettings();
   SetNetworkHostname();
-#if PL_CONFIG_USE_WATCHDOG
+#if MCU_WIFI_CONFIG_USE_WATCHDOG
   McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 10, 100);
 #else
   vTaskDelay(pdMS_TO_TICKS(10*100)); /* give network tasks time to start up */
 #endif
 }
-#endif /* PL_CONFIG_USE_WIFI */
 
 static void resumeNetworkServices(void) {
 #if MCU_UDP_SERVER_CONFIG_ENABLED
@@ -464,10 +418,9 @@ static void suspendNetworkServices(void) {
 #endif
 }
 
-#if PL_CONFIG_USE_WIFI && (McuLib_CONFIG_CPU_IS_RPxxxx || McuLib_CONFIG_CPU_IS_ESP32)
 static bool ConnectWiFiWithCredentials(void) {
   bool isConnected = false;
-  #if PL_CONFIG_USE_WATCHDOG
+  #if MCU_WIFI_CONFIG_USE_WATCHDOG
     #define CONFIG_NOF_WIFI_CONNECTION  (10)
     int failedCount = 0;
   #endif
@@ -477,7 +430,7 @@ static bool ConnectWiFiWithCredentials(void) {
       break;
     }
     McuLog_info("connecting to SSID '%s'...", wifi.ssid);
-  #if PL_CONFIG_USE_WATCHDOG
+  #if MCU_WIFI_CONFIG_USE_WATCHDOG
     TickType_t tickCount = McuWatchdog_ReportTimeStart();
     McuWatchdog_SuspendCheck(McuWatchdog_REPORT_ID_TASK_WIFI);
   #endif
@@ -486,13 +439,13 @@ static bool ConnectWiFiWithCredentials(void) {
   #elif McuLib_CONFIG_CPU_IS_ESP32
     int res = connect_esp_wifi_with_credentials();
   #endif
-  #if PL_CONFIG_USE_WATCHDOG
+  #if MCU_WIFI_CONFIG_USE_WATCHDOG
     McuWatchdog_ResumeCheck(McuWatchdog_REPORT_ID_TASK_WIFI);
     McuWatchdog_ReportTimeEnd(McuWatchdog_REPORT_ID_TASK_WIFI, tickCount);
   #endif
     if (res!=0) {
       McuLog_error("connection failed! code %d", res);
-      #if PL_CONFIG_USE_WATCHDOG
+      #if MCU_WIFI_CONFIG_USE_WATCHDOG
         failedCount++;
         if (failedCount<CONFIG_NOF_WIFI_CONNECTION) {
           McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 50, 100);
@@ -514,9 +467,7 @@ static bool ConnectWiFiWithCredentials(void) {
   } /* for */
   return isConnected;
 }
-#endif /* PL_CONFIG_USE_WIFI */
 
-#if PL_CONFIG_USE_WIFI
 static int ConnectWiFi(void) {
   if (McuWiFi_isConnected()) {
     McuLog_error("already connected, disconnect first");
@@ -560,14 +511,10 @@ static bool DisconnectWiFi(void) {
   }
   return false; /* not connected any more */
 }
-#endif
 
 #if McuLib_CONFIG_CPU_IS_ESP32
 static void WiFiTask(void *pv) {
-  McuLog_info("Starting WiFi task");
-#if PL_CONFIG_USE_BLINKY
-  Blinky_SetOnTime(LED_ON_TIME_MS_DISCONNECTED);
-#endif
+  McuLog_info("Starting ESP32 WiFi task");
 
   LoadWifiSettings();
   InitWiFiHardware(); /* initialize connection and WiFi settings */
@@ -577,9 +524,6 @@ static void WiFiTask(void *pv) {
     }
   }
   for(;;) {
-    #if PL_CONFIG_USE_BLINKY
-      Blinky_SetOnTime(McuWiFi_isConnected()?LED_ON_TIME_MS_CONNECTED:LED_ON_TIME_MS_DISCONNECTED);
-    #endif
     vTaskDelay(pdMS_TO_TICKS(5000));
   } /* for */
 }
@@ -589,7 +533,7 @@ static void WiFiTask(void *pv) {
 static void WiFiTask(void *pv) {
   bool ledIsOn = false;
 
-#if PL_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   wifi.isEnabled = McuMinINI_ini_getbool(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_ENABLE, MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE, MCU_WIFI_CONFIG_MININI_FILE_NAME);
 #else
   wifi.isEnabled = MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE;
@@ -644,13 +588,13 @@ static void WiFiTask(void *pv) {
     ledIsOn = !ledIsOn;
     #endif
     if (McuWiFi_isConnected()) {
-    #if PL_CONFIG_USE_WATCHDOG
+    #if MCU_WIFI_CONFIG_USE_WATCHDOG
       McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 10, 100);
     #else
       vTaskDelay(pdMS_TO_TICKS(10*100));
     #endif
     } else {
-    #if PL_CONFIG_USE_WATCHDOG
+    #if MCU_WIFI_CONFIG_USE_WATCHDOG
       McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 1, 50);
     #else
       vTaskDelay(pdMS_TO_TICKS(50));
@@ -660,15 +604,12 @@ static void WiFiTask(void *pv) {
 }
 #endif /* McuLib_CONFIG_CPU_IS_RPxxxx */
 
-#endif /* PL_CONFIG_USE_WIFI */
-
-#if PL_CONFIG_USE_WIFI
 static uint8_t SetStringSetting(const unsigned char *value, unsigned char *target, size_t targetSize, const char *iniKey) {
   unsigned char buf[64];
 
   McuUtility_ScanDoubleQuotedString(&value, buf, sizeof(buf));
   McuUtility_strcpy(target, targetSize, buf);
-#if PL_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, iniKey, (char*)target, MCU_WIFI_CONFIG_MININI_FILE_NAME);
 #else
   (void)iniKey;
@@ -679,23 +620,17 @@ static uint8_t SetStringSetting(const unsigned char *value, unsigned char *targe
 static uint8_t SetSSID(const unsigned char *ssid) {
   return SetStringSetting(ssid, wifi.ssid, sizeof(wifi.ssid), MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID);
 }
-#endif /* PL_CONFIG_USE_WIFI */
 
-#if PL_CONFIG_USE_WIFI
 static uint8_t SetPwd(const unsigned char *pwd) {
   return SetStringSetting(pwd, wifi.pass, sizeof(wifi.pass), MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS);
 }
-#endif
 
-#if PL_CONFIG_USE_WIFI
 static uint8_t SetHostname(const unsigned char *hostname) {
   return SetStringSetting(hostname, wifi.hostname, sizeof(wifi.hostname), MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME);
 }
-#endif
 
-#if PL_CONFIG_USE_WIFI
 static uint8_t McuWiFi_Enable(bool enable) {
-#if PL_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   if (McuMinINI_ini_putl(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_ENABLE, enable, MCU_WIFI_CONFIG_MININI_FILE_NAME)!=1) { /* 1: success */
     return ERR_FAILED;
   }
@@ -703,7 +638,6 @@ static uint8_t McuWiFi_Enable(bool enable) {
   wifi.isEnabled = enable;
   return ERR_OK;
 }
-#endif
 
 static const char *GetActiveHostName(void) {
 #if McuLib_CONFIG_CPU_IS_ESP32
@@ -724,17 +658,14 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   uint8_t macStr[] = "00:00:00:00:00:00\r\n";
   uint8_t buf[96];
 
-#if PL_CONFIG_USE_WIFI
   /* load current values: they get loaded again if WiFi gets initialized. */
   LoadWifiSettings();
-#endif
   McuShell_SendStatusStr((unsigned char*)"wifi", (const unsigned char*)"Status of WiFi\r\n", io->stdOut);
 #if McuLib_CONFIG_CPU_IS_ESP32
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)IDF_VER);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  IDF", buf, io->stdOut);
 #endif
-#if PL_CONFIG_USE_WIFI
   McuShell_SendStatusStr((uint8_t*)"  enabled", wifi.isEnabled?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   
   McuUtility_strcpy(buf, sizeof(buf), McuWiFi_isConnected()?(unsigned char*)"connected: yes, ":(unsigned char*)"connected: no, ");
@@ -782,15 +713,12 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuShell_SendStatusStr((uint8_t*)"  tcp link", buf, io->stdOut);
 #endif
 
-#endif /* PL_CONFIG_USE_WIFI */
-
   if (GetMAC(mac, macStr, sizeof(macStr))==ERR_OK) {
     McuUtility_strcat(macStr, sizeof(macStr), (unsigned char*)"\r\n");
   } else {
     McuUtility_strcpy(macStr, sizeof(macStr), (unsigned char*)"ERROR\r\n");
   }
   McuShell_SendStatusStr((uint8_t*)"  MAC", macStr, io->stdOut);
-#if PL_CONFIG_USE_WIFI
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   McuUtility_strcpy(buf, sizeof(buf), ip4addr_ntoa(netif_ip4_addr(netif_list)));
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
@@ -817,7 +745,6 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
     McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   }
   McuShell_SendStatusStr((uint8_t*)"  hostname", buf, io->stdOut);
-#endif
   return ERR_OK;
 }
 
@@ -827,17 +754,15 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
   if (McuUtility_strcmp((char*)cmd, McuShell_CMD_HELP)==0 || McuUtility_strcmp((char*)cmd, "wifi help")==0) {
     McuShell_SendHelpStr((unsigned char*)"wifi", (const unsigned char*)"Group of WiFi application commands\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  help|status", (const unsigned char*)"Print help or status information\r\n", io->stdOut);
-  #if PL_CONFIG_USE_WIFI
     McuShell_SendHelpStr((unsigned char*)"  enable|disable", (const unsigned char*)"Enable or disable WiFi\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  connect|disconnect", (const unsigned char*)"Connect or disconnect\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  reconnect yes|no", (const unsigned char*)"Automatic reconnect after disconnect\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  set ssid \"<ssid>\"", (const unsigned char*)"Set the SSID\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  set pwd \"<password>\"", (const unsigned char*)"Set the password\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  set hostname \"<name>\"", (const unsigned char*)"Set the hostname\r\n", io->stdOut);
-  #endif
   #if McuLib_CONFIG_CPU_IS_ESP32
   #endif
-  #if PL_CONFIG_USE_PING
+  #if MCU_WIFI_CONFIG_USE_PING
     McuShell_SendHelpStr((unsigned char*)"  ping <host>", (const unsigned char*)"Ping host\r\n", io->stdOut);
   #endif
     *handled = TRUE;
@@ -845,7 +770,6 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
   } else if ((McuUtility_strcmp((char*)cmd, McuShell_CMD_STATUS)==0) || (McuUtility_strcmp((char*)cmd, "wifi status")==0)) {
     *handled = TRUE;
     return PrintStatus(io);
-  #if PL_CONFIG_USE_WIFI
   } else if (McuUtility_strcmp((char*)cmd, "wifi connect")==0) {
     *handled = true;
     return ConnectWiFi();
@@ -861,8 +785,6 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
   } else if (McuUtility_strcmp((char*)cmd, "wifi reconnect no")==0) {
     *handled = true;
     return SetWifiReconnect(false);
-  #endif
-  #if PL_CONFIG_USE_WIFI
   } else if (McuUtility_strncmp((char*)cmd, "wifi set ssid ", sizeof("wifi set ssid ")-1)==0) {
     *handled = true;
     p = cmd + sizeof("wifi set ssid ")-1;
@@ -880,22 +802,19 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
     if (SetNetworkHostname()!=ERR_OK) {
       return ERR_FAILED;
     }
-  #endif /* PL_CONFIG_USE_WIFI */
-  #if PL_CONFIG_USE_PING
+  #if MCU_WIFI_CONFIG_USE_PING
   } else if (McuUtility_strncmp((char*)cmd, "wifi ping ", sizeof("wifi ping ")-1)==0) {
     *handled = true;
     p = cmd + sizeof("wifi ping ")-1;
     ping_setup(p);
     return ERR_OK;
   #endif
-  #if PL_CONFIG_USE_WIFI
   } else if (McuUtility_strcmp((char*)cmd, "wifi enable")==0) {
     *handled = true;
     return McuWiFi_Enable(true);
   } else if (McuUtility_strcmp((char*)cmd, "wifi disable")==0) {
     *handled = true;
     return McuWiFi_Enable(false);
-  #endif
   }
   return ERR_OK;
 }
@@ -904,7 +823,6 @@ void McuWiFi_Deinit(void) {
 }
 
 void McuWiFi_Init(void) {
-#if PL_CONFIG_USE_WIFI
   s_wifi_event_group = xEventGroupCreate();
   if (xTaskCreate(
       WiFiTask,  /* pointer to the task */
@@ -922,7 +840,6 @@ void McuWiFi_Init(void) {
     McuLog_fatal("failed creating task");
     for(;;){} /* error! probably out of memory */
   }
-#endif /* PL_CONFIG_USE_WIFI */
 }
 
 

@@ -60,4 +60,36 @@
   #define MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT    true
 #endif
 
+/* \todo cleanup the configuration items below */
+#ifndef MCU_WIFI_CONFIG_USE_EEE
+  #define MCU_WIFI_CONFIG_USE_EEE    (0)
+#endif
+
+#if MCU_WIFI_CONFIG_USE_EEE
+  #define CONFIG_WIFI_EAP_METHOD      EAP_PEAP
+  #define CONFIG_WIFI_EAP_SSID        "EEE"
+  #define CONFIG_WIFI_PASSWORD_MODE   EAP_PEAP
+  /* hostname, user name and password are pre-configured for EEE */
+#else
+  /* custom network */
+  #define CONFIG_WIFI_EAP_METHOD      EAP_TTLS
+  #define WIFI_DEFAULT_HOSTNAME       "host"
+  #define WIFI_DEFAULT_SSID           "ssid"
+  #define WIFI_DEFAULT_PASS           "password"
+#endif
+
+#ifndef MCU_WIFI_CONFIG_USE_MININI
+  #define MCU_WIFI_CONFIG_USE_MININI    (1)
+#endif
+
+#ifndef MCU_WIFI_CONFIG_USE_PING
+  #define MCU_WIFI_CONFIG_USE_PING      (0)
+#endif
+
+#ifndef MCU_WIFI_CONFIG_USE_WATCHDOG
+  #define MCU_WIFI_CONFIG_USE_WATCHDOG  (0)
+#endif
+
+// Add callbacks for connection to change e.g. LED blinky
+
 #endif /* MCU_WIFI_CONFIG_H_ */
