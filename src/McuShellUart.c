@@ -154,6 +154,23 @@ void McuShellUart_MuxUartPins(int uart) {
                        | (uint32_t)(kPORT_PullUp));
       break;
 
+    case McuShellUart_CONFIG_UART_K22FN512_UART0_A1_A2: /* PTA1, PTA2 */
+      CLOCK_EnableClock(kCLOCK_PortA);
+
+    /* PORTA1 (pin 35) is configured as UART0_RX */
+      PORT_SetPinMux(PORTA, 1, kPORT_MuxAlt2);
+
+      /* PORTA2 (pin 36) is configured as UART0_TX */
+      PORT_SetPinMux(PORTA, 2, kPORT_MuxAlt2);
+
+      #define SOPT5_UART0TXSRC_UART_TX 0x00u /*!<@brief UART 0 transmit data source select: UART0_TX pin */
+      SIM->SOPT5 = ((SIM->SOPT5 &
+                /* Mask bits to zero which are setting */
+                (~(SIM_SOPT5_UART0TXSRC_MASK)))
+              /* UART 0 transmit data source select: UART0_TX pin. */
+              | SIM_SOPT5_UART0TXSRC(SOPT5_UART0TXSRC_UART_TX));
+      break;
+
     case McuShellUart_CONFIG_UART_K22FN512_UART0_B16_B17: /* PTB16, PTB17 */
       CLOCK_EnableClock(kCLOCK_PortB);
 
@@ -402,6 +419,8 @@ static void InitUartMuxing(void) {
                 | SIM_SOPT5_UART1TXSRC(SOPT5_UART1TXSRC_UART_TX));
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_LPUART0_C3_C4
   McuShellUart_MuxUartPins(McuShellUart_CONFIG_UART_K22FN512_LPUART0_C3_C4);
+#elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_UART0_A1_A2
+  McuShellUart_MuxUartPins(McuShellUart_CONFIG_UART_K22FN512_UART0_A1_A2);
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_UART0_B16_B17
   McuShellUart_MuxUartPins(McuShellUart_CONFIG_UART_K22FN512_UART0_B16_B17);
 #elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K22FN512_UART1_E1_E0

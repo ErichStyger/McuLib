@@ -239,7 +239,7 @@ void McuSPI_Init(void) {
   uint32_t srcClock_Hz;
   lpspi_master_config_t masterConfig;
 
-  /*Master config*/
+  /* Master config */
   LPSPI_MasterGetDefaultConfig(&masterConfig);
   masterConfig.baudRate = MCUSPI_CONFIG_TRANSFER_BAUDRATE;
   masterConfig.whichPcs = MCUSPI_CONFIG_HW_SPI_MASTER_PCS_FOR_INIT;

@@ -1914,8 +1914,6 @@ static uint8_t FindRecommendedChannels(uint8_t numRecommendations, uint8_t *chan
 
 static void PrintChannelScanResults(const McuShell_StdIOType *io, uint8_t *channelData, uint8_t numChannels) {
   unsigned char buf[128];
-  uint8_t bestChannel = 0;
-  uint8_t lowestOccupancy = 255;
   
   /* Get channel recommendations first so we can mark them in the graph */
   #define NUM_RECOMMENDATIONS 5

@@ -8,6 +8,9 @@
 #include "McuLittleFSBlockDevice.h"
 #include "McuLittleFSconfig.h"
 #include "littleFS/lfs.h"
+#include "McuSystemView.h"
+
+#define CONFIG_PRINT_SYSTEM_VIEW_MESSAGES   (0)
 
 /* pre-configured memory devices */
 #if McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_WINBOND_W25Q128
@@ -19,6 +22,9 @@
 int McuLittleFS_block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
   uint8_t res;
 
+#if CONFIG_PRINT_SYSTEM_VIEW_MESSAGES && configUSE_SEGGER_SYSTEM_VIEWER_HOOKS
+  McuSystemView_Print("McuLittleFS_block_device_read");
+#endif  
 #if McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_GENERIC
   res = ERR_FAILED; /* NYI */
 #elif McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_WINBOND_W25Q128
@@ -35,6 +41,9 @@ int McuLittleFS_block_device_read(const struct lfs_config *c, lfs_block_t block,
 int McuLittleFS_block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
   uint8_t res;
 
+#if CONFIG_PRINT_SYSTEM_VIEW_MESSAGES && configUSE_SEGGER_SYSTEM_VIEWER_HOOKS
+  McuSystemView_Print("McuLittleFS_block_device_prog");
+#endif
 #if McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_GENERIC
   res = ERR_FAILED; /* NYI */
 #elif McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_WINBOND_W25Q128
@@ -51,6 +60,9 @@ int McuLittleFS_block_device_prog(const struct lfs_config *c, lfs_block_t block,
 int McuLittleFS_block_device_erase(const struct lfs_config *c, lfs_block_t block) {
   uint8_t res;
 
+#if CONFIG_PRINT_SYSTEM_VIEW_MESSAGES && configUSE_SEGGER_SYSTEM_VIEWER_HOOKS
+  McuSystemView_Print("McuLittleFS_block_device_erase");
+#endif
 #if McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_GENERIC
   res = ERR_FAILED; /* NYI */
 #elif McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE==McuLittleFSBlockDevice_CONFIG_MEMORY_TYPE_WINBOND_W25Q128

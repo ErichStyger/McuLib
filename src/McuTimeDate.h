@@ -468,7 +468,7 @@ uint8_t McuTimeDate_GetSWTimeDate(TIMEREC *time, DATEREC *date);
 ** ===================================================================
 */
 
-uint8_t McuTimeDate_SyncWithInternalRTCsec(void);
+uint8_t McuTimeDate_SyncWithInternalRTC(void);
 /*
 ** ===================================================================
 **     Method      :  SyncWithInternalRTC (component GenericTimeDate)
