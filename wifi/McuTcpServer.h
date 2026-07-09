@@ -5,7 +5,7 @@
  */
 
 #ifndef MCU_TCP_SERVER_H_
-#define NCU_TCP_SERVER_H_
+#define MCU_TCP_SERVER_H_
 
 #ifdef __cplusplus
 extern "C" {
