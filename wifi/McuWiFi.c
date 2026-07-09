@@ -58,15 +58,23 @@
 #define EAP_PEAP 1  /* WPA2 Enterprise with password and no certificate */
 #define EAP_TTLS 2  /* TLS method with SSID and password */
 
-/* FreeRTOS event group to signal when we are connected & ready to make a request */
-static EventGroupHandle_t s_wifi_event_group;
-/* The event group allows multiple bits for each event, but we only care about two events:
-* - we are connected to the AP with an IP
-* - we failed to connect after the maximum amount of retries */
-#define WIFI_EVENT_HANDLER_CONNECTED_BIT (1<<0) /* set by the handler */
-#define WIFI_EVENT_HANDLER_FAIL_BIT      (1<<1) /* set by the handler */
-#define WIFI_IS_CONNECTED_BIT            (1<<2) /* used for connection status: if set, we are connected */
-#define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
+#if McuLib_CONFIG_CPU_IS_ESP32
+  #ifndef CONFIG_ESP_MAXIMUM_RETRY
+    #define CONFIG_ESP_MAXIMUM_RETRY (2) /*  number of retries to connect to the network */
+  #endif
+
+    /* FreeRTOS event group to signal when we are connected & ready to make a request */
+  static EventGroupHandle_t s_wifi_event_group;
+  /* The event group allows multiple bits for each event, but we only care about two events:
+  * - we are connected to the AP with an IP
+  * - we failed to connect after the maximum amount of retries */
+  #define WIFI_EVENT_HANDLER_CONNECTED_BIT (1<<0) /* set by the handler */
+  #define WIFI_EVENT_HANDLER_FAIL_BIT      (1<<1) /* set by the handler */
+  #define WIFI_IS_CONNECTED_BIT            (1<<2) /* used for connection status: if set, we are connected */
+  #define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
+
+  static esp_netif_t *APP_WiFi_NetIf;
+#endif /* McuLib_CONFIG_CPU_IS_ESP32 */
 
 static struct wifi {
   bool isEnabled; /* if true, it tries to connect to the network */
@@ -223,7 +231,7 @@ static void SetPasswordMode(void) {
     #error "Wrong connection mode";
 #endif
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-  ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+  ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 
 #if CONFIG_WIFI_EAP_METHOD == EAP_PEAP
     const ESP32_Device_t *device;

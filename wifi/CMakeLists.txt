@@ -11,10 +11,22 @@ else ()
     # Configuration below has been tested with IDF V6.0.2
     idf_component_register(
           SRCS 
+              "McuWiFi.c"
+              "McuUdpServerShell.c"
+              "McuUdpServer.c"
+              "McuUdpClientShell.c"
+              "McuUdpClient.c"
+              "McuTcpServer.c"
+              "McuNtpClient.c"
+              "McuMqttClient.c"
+              "McuMqtt.c"
               "McuDnsResolver.c"
           INCLUDE_DIRS
               "./"
           REQUIRES
-              esp_driver_gpio
+              McuLib
+              esp_wifi
+              wpa_supplicant
+              nvs_flash
          )
 endif ()
