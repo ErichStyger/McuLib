@@ -70,16 +70,6 @@
   static esp_netif_t *APP_WiFi_NetIf;
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
 
-typedef struct McuWiFi_Autentification_t {
-  McuWiFi_EAP_e type; /* either McuWiFi_EAP_PEAP or McuWiFi_EAP_TTLS */
-  unsigned char ssid[32]; /* SSID of AP */
-  unsigned char pass[64]; /* password for AP */
-#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  unsigned char id[32]; /* additional id/user name for enterprise/McuWiFi_EAP_PEAP login */
-#endif
-  unsigned char hostname[32]; /* name of the host */
-} McuWiFi_Autentification_t;
-
 static struct wifi {
   bool isEnabled; /* if true, it tries to connect to the network */
   bool reconnect; /* if true, will try to reconnect after a disconnect */
@@ -88,7 +78,7 @@ static struct wifi {
   void (*getCustomConfig)(McuWiFi_Autentification_t *);
 } wifi;
 
-void McuWiFi_SetCustomConfig(void (*customConfig)(McuWiFi_Autentification_t *)) {
+void McuWiFi_SetCustomConfigCallback(void (*customConfig)(McuWiFi_Autentification_t *)) {
   wifi.getCustomConfig = customConfig;
 }
 
@@ -353,15 +343,7 @@ static void ping_setup(const char *host) {
 #endif
 
 static void LoadWifiSettings(void) {
-#if MCU_WIFI_CONFIG_USE_EEE && CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  const ESP32_Device_t *config;
-
-  config = ESP32_GetDeviceConfig();
-  McuUtility_strcpy(wifi.hostname, sizeof(wifi.hostname), (unsigned char*)config->hostName);
-  McuUtility_strcpy(wifi.ssid, sizeof(wifi.ssid), (const unsigned char*)CONFIG_WIFI_EAP_SSID);
-  McuUtility_strcpy(wifi.pass, sizeof(wifi.pass), (unsigned char*)config->eee_pwd);
-  McuUtility_strcpy(wifi.id, sizeof(wifi.id), (unsigned char*)config->eee_id);  
-#elif MCU_WIFI_CONFIG_USE_MININI
+#if MCU_WIFI_CONFIG_USE_MININI
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, WIFI_DEFAULT_HOSTNAME, (char*)wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID,     WIFI_DEFAULT_SSID,     (char*)wifi.auth.ssid, sizeof(wifi.auth.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS,     WIFI_DEFAULT_PASS,     (char*)wifi.auth.pass, sizeof(wifi.auth.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
@@ -377,6 +359,9 @@ static void LoadWifiSettings(void) {
   wifi.isEnabled = MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE;
   wifi.reconnect = MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT;
 #endif
+  if (wifi.getCustomConfig != NULL) {
+    wifi.getCustomConfig(&wifi.auth);
+  }
 }
 
 static void InitWiFiHardware(void) {

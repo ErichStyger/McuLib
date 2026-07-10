@@ -32,6 +32,22 @@ typedef enum {
   McuWiFi_EAP_TTLS = EAP_TTLS, /* TLS method with SSID and password */
 } McuWiFi_EAP_e;
 
+typedef struct McuWiFi_Autentification_t {
+  McuWiFi_EAP_e type; /* either McuWiFi_EAP_PEAP or McuWiFi_EAP_TTLS */
+  unsigned char ssid[32]; /* SSID of AP */
+  unsigned char pass[64]; /* password for AP */
+#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
+  unsigned char id[32]; /* additional id/user name for enterprise/McuWiFi_EAP_PEAP login */
+#endif
+  unsigned char hostname[32]; /* name of the host */
+} McuWiFi_Autentification_t;
+
+/*!
+ * \brief Callback which can set custom authentification settings
+ * \param customConfig Pointer to data to configure
+ */
+void McuWiFi_SetCustomConfigCallback(void (*customConfig)(McuWiFi_Autentification_t *));
+
 /*!
  * \brief Decides if we are connected or not
  * \return true if we are connected to WiFi, false otherwise
