@@ -52,20 +52,21 @@
 #endif
 #include "application.h"
 
+/* FreeRTOS event group to signal when we are connected & ready to make a request */
+static EventGroupHandle_t s_wifi_event_group;
+/* The event group allows multiple bits for each event, but we only care about two events:
+* - we are connected to the AP with an IP
+* - we failed to connect after the maximum amount of retries */
+#define WIFI_EVENT_HANDLER_CONNECTED_BIT (1<<0) /* set by the handler */
+#define WIFI_EVENT_HANDLER_FAIL_BIT      (1<<1) /* set by the handler */
+#define WIFI_IS_CONNECTED_BIT            (1<<2) /* used for connection status: if set, we are connected */
+#define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
+
+
 #if McuLib_CONFIG_CPU_IS_ESP32
   #ifndef CONFIG_ESP_MAXIMUM_RETRY
     #define CONFIG_ESP_MAXIMUM_RETRY (2) /*  number of retries to connect to the network */
   #endif
-
-    /* FreeRTOS event group to signal when we are connected & ready to make a request */
-  static EventGroupHandle_t s_wifi_event_group;
-  /* The event group allows multiple bits for each event, but we only care about two events:
-  * - we are connected to the AP with an IP
-  * - we failed to connect after the maximum amount of retries */
-  #define WIFI_EVENT_HANDLER_CONNECTED_BIT (1<<0) /* set by the handler */
-  #define WIFI_EVENT_HANDLER_FAIL_BIT      (1<<1) /* set by the handler */
-  #define WIFI_IS_CONNECTED_BIT            (1<<2) /* used for connection status: if set, we are connected */
-  #define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
 
   static esp_netif_t *APP_WiFi_NetIf;
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
@@ -188,7 +189,7 @@ static uint8_t GetMAC(uint8_t mac[6], uint8_t *macStr, size_t macStrSize) {
 static uint8_t SetNetworkHostname(void) {
   McuLog_info("Setting hostname: %s", wifi.auth.hostname);
 #if McuLib_CONFIG_CPU_IS_RPxxxx
-  netif_set_hostname(&cyw43_state.netif[0], wifi.hostname);
+  netif_set_hostname(&cyw43_state.netif[0], wifi.auth.hostname);
 #else
   if (esp_netif_set_hostname(APP_WiFi_NetIf, (const char*)wifi.auth.hostname)!=ESP_OK) {
     McuLog_fatal("failed setting hostname '%s'", wifi.auth.hostname);
@@ -443,7 +444,7 @@ static bool ConnectWiFiWithCredentials(void) {
     McuWatchdog_SuspendCheck(McuWatchdog_REPORT_ID_TASK_WIFI);
   #endif
   #if McuLib_CONFIG_CPU_IS_RPxxxx
-    int res = cyw43_arch_wifi_connect_timeout_ms(wifi.ssid, wifi.pass, CYW43_AUTH_WPA2_AES_PSK, 30000); /* can take some time to connect */
+    int res = cyw43_arch_wifi_connect_timeout_ms(wifi.auth.ssid, wifi.auth.pass, CYW43_AUTH_WPA2_AES_PSK, 30000); /* can take some time to connect */
   #elif McuLib_CONFIG_CPU_IS_ESP32
     int res = connect_esp_wifi_with_credentials();
   #endif
