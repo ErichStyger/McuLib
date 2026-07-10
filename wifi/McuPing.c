@@ -13,7 +13,6 @@
 #if McuLib_CONFIG_CPU_IS_ESP32
   #include "esp_event.h"
   #include "nvs_flash.h"
-//  #include "argtable3/argtable3.h"
   #include "ping/ping_sock.h"
 #endif
 #include "McuLog.h"
@@ -56,9 +55,9 @@ void cmd_ping_on_ping_end(esp_ping_handle_t hdl, void *args) {
   esp_ping_get_profile(hdl, ESP_PING_PROF_DURATION, &total_time_ms, sizeof(total_time_ms));
   uint32_t loss = (uint32_t)((1 - ((float)received) / transmitted) * 100);
   if (IP_IS_V4(&target_addr)) {
-      McuLog_info("\n--- %s ping statistics ---\n", inet_ntoa(*ip_2_ip4(&target_addr)));
+    McuLog_info("\n--- %s ping statistics ---\n", inet_ntoa(*ip_2_ip4(&target_addr)));
   } else {
-      McuLog_info("\n--- %s ping statistics ---\n", inet6_ntoa(*ip_2_ip6(&target_addr)));
+    McuLog_info("\n--- %s ping statistics ---\n", inet6_ntoa(*ip_2_ip6(&target_addr)));
   }
   McuLog_info("%lu packets transmitted, %lu received, %lu%% packet loss, time %lums\n",
          transmitted, received, loss, total_time_ms);
@@ -76,7 +75,6 @@ int McuPing_DoPingCmd(const char *host) {
   ip_addr_t target_addr;
   const char *hostp = host; /* extra pointer for getaddrinfo() as it might change it */
   memset(&target_addr, 0, sizeof(target_addr));
-
   if (inet_pton(AF_INET6, hostp, &sock_addr6.sin6_addr) == 1) {
     /* convert ip6 string to ip6 address */
     ipaddr_aton(host, &target_addr);
