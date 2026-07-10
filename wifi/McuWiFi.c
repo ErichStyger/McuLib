@@ -72,28 +72,28 @@
 
 typedef struct McuWiFi_Autentification_t {
   McuWiFi_EAP_e type; /* either McuWiFi_EAP_PEAP or McuWiFi_EAP_TTLS */
-  unsigned char hostname[32]; /* name of the host: AP might check on this too */
   unsigned char ssid[32]; /* SSID of AP */
   unsigned char pass[64]; /* password for AP */
 #if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  unsigned char id[32]; /* additional id/user name for enterprise login */
+  unsigned char id[32]; /* additional id/user name for enterprise/McuWiFi_EAP_PEAP login */
 #endif
+  unsigned char hostname[32]; /* name of the host */
 } McuWiFi_Autentification_t;
 
 static struct wifi {
   bool isEnabled; /* if true, it tries to connect to the network */
   bool reconnect; /* if true, will try to reconnect after a disconnect */
-  unsigned char hostname[32]; /* name of the host */
-#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  unsigned char id[32]; /* additional id/user name for enterprise login */
-#endif
-  unsigned char ssid[32]; /* SSID of AP */
-  unsigned char pass[64]; /* password for AP */
+  McuWiFi_Autentification_t auth; /* authentification information */
   TaskHandle_t taskHandle; /* the WiFi task handle */
+  void (*getCustomConfig)(McuWiFi_Autentification_t *);
 } wifi;
 
+void McuWiFi_SetCustomConfig(void (*customConfig)(McuWiFi_Autentification_t *)) {
+  wifi.getCustomConfig = customConfig;
+}
+
 const char *McuWifi_GetHostName(void) {
-  return (const char*)wifi.hostname;
+  return (const char*)wifi.auth.hostname;
 }
 
 static uint8_t SetWifiReconnect(bool on) {
@@ -196,12 +196,12 @@ static uint8_t GetMAC(uint8_t mac[6], uint8_t *macStr, size_t macStrSize) {
 }
 
 static uint8_t SetNetworkHostname(void) {
-  McuLog_info("Setting hostname: %s", wifi.hostname);
+  McuLog_info("Setting hostname: %s", wifi.auth.hostname);
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   netif_set_hostname(&cyw43_state.netif[0], wifi.hostname);
 #else
-  if (esp_netif_set_hostname(APP_WiFi_NetIf, (const char*)wifi.hostname)!=ESP_OK) {
-    McuLog_fatal("failed setting hostname '%s'", wifi.hostname);
+  if (esp_netif_set_hostname(APP_WiFi_NetIf, (const char*)wifi.auth.hostname)!=ESP_OK) {
+    McuLog_fatal("failed setting hostname '%s'", wifi.auth.hostname);
     return ERR_FAILED;
   }
 #endif
@@ -226,9 +226,9 @@ static void SetPasswordMode(void) {
 #if CONFIG_WIFI_EAP_METHOD == EAP_PEAP
     strncpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_EAP_SSID, sizeof(wifi_config.sta.ssid));
 #elif (CONFIG_WIFI_EAP_METHOD == EAP_TTLS)
-    strncpy((char*)wifi_config.sta.ssid, (char*)wifi.ssid, sizeof(wifi_config.sta.ssid));
-    strncpy((char*)wifi_config.sta.password, (char*)wifi.pass, sizeof(wifi_config.sta.password));
-    if (strlen((char*)wifi.pass)>8) {
+    strncpy((char*)wifi_config.sta.ssid, (char*)wifi.auth.ssid, sizeof(wifi_config.sta.ssid));
+    strncpy((char*)wifi_config.sta.password, (char*)wifi.auth.pass, sizeof(wifi_config.sta.password));
+    if (strlen((char*)wifi.auth.pass)>8) {
       wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK; /* explicit set auth mode, force for longer passwords, otherwise get "Password length matches WPA2 standards, authmode threshold changes from OPEN to WPA2" */
     }
 #else
@@ -288,12 +288,16 @@ static int connect_esp_wifi_with_credentials(void) {
   if (SetNetworkHostname()!=ERR_OK) {
     return -1;
   }
-  if (esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL)!=ESP_OK) {
-    McuLog_fatal("failed registering event handler");
+  /* unregister handler first, in case they are already registered */
+  esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler);
+  esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, event_handler);
+  /* register event handler */
+  if (esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler, NULL)!=ESP_OK) {
+    McuLog_fatal("failed registering WIFI_EVENT event handler");
     return -2;
   }
-  if (esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL)!=ESP_OK) {
-    McuLog_fatal("failed registering event handler");
+  if (esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_handler, NULL)!=ESP_OK) {
+    McuLog_fatal("failed registering IP_EVENT event handler");
     return -3;
   }
   SetPasswordMode();
@@ -324,11 +328,11 @@ static int connect_esp_wifi_with_credentials(void) {
 
   /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually happened. */
   if (bits&WIFI_EVENT_HANDLER_CONNECTED_BIT) {
-    McuLog_info("connected to AP SSID: %s",  wifi.ssid);
+    McuLog_info("connected to AP SSID: %s",  wifi.auth.ssid);
     xEventGroupSetBits(s_wifi_event_group, WIFI_IS_CONNECTED_BIT|WIFI_CAN_RECONNECT_BIT); /* set connection status */
     return 0;
   } else if (bits & WIFI_EVENT_HANDLER_FAIL_BIT) {
-    McuLog_info("Failed to connect to SSID: %s", wifi.ssid);
+    McuLog_info("Failed to connect to SSID: %s", wifi.auth.ssid);
     return -5;
   } else {
     McuLog_error("unexpected WiFi event");
@@ -358,9 +362,9 @@ static void LoadWifiSettings(void) {
   McuUtility_strcpy(wifi.pass, sizeof(wifi.pass), (unsigned char*)config->eee_pwd);
   McuUtility_strcpy(wifi.id, sizeof(wifi.id), (unsigned char*)config->eee_id);  
 #elif MCU_WIFI_CONFIG_USE_MININI
-  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, WIFI_DEFAULT_HOSTNAME, (char*)wifi.hostname, sizeof(wifi.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
-  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID,     WIFI_DEFAULT_SSID,     (char*)wifi.ssid, sizeof(wifi.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
-  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS,     WIFI_DEFAULT_PASS,     (char*)wifi.pass, sizeof(wifi.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, WIFI_DEFAULT_HOSTNAME, (char*)wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID,     WIFI_DEFAULT_SSID,     (char*)wifi.auth.ssid, sizeof(wifi.auth.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS,     WIFI_DEFAULT_PASS,     (char*)wifi.auth.pass, sizeof(wifi.auth.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
 #else
   McuUtility_strcpy(wifi.hostname, sizeof(wifi.hostname), WIFI_DEFAULT_HOSTNAME);
   McuUtility_strcpy(wifi.ssid, sizeof(wifi.ssid), WIFI_DEFAULT_SSID);
@@ -441,7 +445,7 @@ static bool ConnectWiFiWithCredentials(void) {
     if (!wifi.isEnabled) {
       break;
     }
-    McuLog_info("connecting to SSID '%s'...", wifi.ssid);
+    McuLog_info("connecting to SSID '%s'...", wifi.auth.ssid);
   #if MCU_WIFI_CONFIG_USE_WATCHDOG
     TickType_t tickCount = McuWatchdog_ReportTimeStart();
     McuWatchdog_SuspendCheck(McuWatchdog_REPORT_ID_TASK_WIFI);
@@ -630,15 +634,15 @@ static uint8_t SetStringSetting(const unsigned char *value, unsigned char *targe
 }
 
 static uint8_t SetSSID(const unsigned char *ssid) {
-  return SetStringSetting(ssid, wifi.ssid, sizeof(wifi.ssid), MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID);
+  return SetStringSetting(ssid, wifi.auth.ssid, sizeof(wifi.auth.ssid), MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID);
 }
 
 static uint8_t SetPwd(const unsigned char *pwd) {
-  return SetStringSetting(pwd, wifi.pass, sizeof(wifi.pass), MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS);
+  return SetStringSetting(pwd, wifi.auth.pass, sizeof(wifi.auth.pass), MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS);
 }
 
 static uint8_t SetHostname(const unsigned char *hostname) {
-  return SetStringSetting(hostname, wifi.hostname, sizeof(wifi.hostname), MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME);
+  return SetStringSetting(hostname, wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME);
 }
 
 static uint8_t McuWiFi_Enable(bool enable) {
@@ -684,22 +688,28 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), McuWiFi_canReconnect()?(unsigned char*)"can reconnect: yes, ":(unsigned char*)"can reconnect: no, ");
   McuUtility_strcat(buf, sizeof(buf), GetWifiReconnect()?(unsigned char*)"reconnect: yes\r\n":(unsigned char*)"reconnect: no\r\n");
   McuShell_SendStatusStr((uint8_t*)"  connection", buf, io->stdOut);
-#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_PEAP, WPA2 Enterprise\r\n", io->stdOut);
-#elif CONFIG_WIFI_EAP_METHOD==EAP_TTLS
-  McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_TTLS, SSID + password\r\n", io->stdOut);
-#endif
-  McuUtility_strcpy(buf, sizeof(buf), wifi.ssid);
+  switch(wifi.auth.type) {
+    case McuWiFi_EAP_PEAP:
+      McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_PEAP, WPA2 Enterprise\r\n", io->stdOut);
+      break;
+    case McuWiFi_EAP_TTLS:
+      McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_TTLS, SSID + password\r\n", io->stdOut);
+      break;
+    default:
+      McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"** ERROR ***\r\n", io->stdOut);
+      break;
+  } /* switch */
+  McuUtility_strcpy(buf, sizeof(buf), wifi.auth.ssid);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((uint8_t*)"  SSID", buf, io->stdOut);
 
 #if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  McuUtility_strcpy(buf, sizeof(buf), wifi.id);
+  McuUtility_strcpy(buf, sizeof(buf), wifi.auth.id);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((uint8_t*)"  id", buf, io->stdOut);
 #endif
 
-  McuUtility_strcpy(buf, sizeof(buf), wifi.pass);
+  McuUtility_strcpy(buf, sizeof(buf), wifi.auth.pass);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((uint8_t*)"  pass", buf, io->stdOut);
 
@@ -753,7 +763,7 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
     McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)GetActiveHostName()); /* get the network name */
     McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   } else { /* not connected? use the stored name */
-    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)wifi.hostname);
+    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)wifi.auth.hostname);
     McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   }
   McuShell_SendStatusStr((uint8_t*)"  hostname", buf, io->stdOut);
@@ -836,6 +846,13 @@ void McuWiFi_Deinit(void) {
 
 void McuWiFi_Init(void) {
   s_wifi_event_group = xEventGroupCreate();
+#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
+  wifi.auth.type = McuWiFi_EAP_PEAP;
+#elif CONFIG_WIFI_EAP_METHOD==EAP_TTLS
+  wifi.auth.type = McuWiFi_EAP_TTLS;
+#else
+  #error "must be PEAP or TTLS"
+#endif
   if (xTaskCreate(
       WiFiTask,  /* pointer to the task */
       "WiFi", /* task name for kernel awareness debugging */
