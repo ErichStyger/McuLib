@@ -21,6 +21,8 @@ else ()
               "McuMqttClient.c"
               "McuMqtt.c"
               "McuDnsResolver.c"
+              "McuPing.c"
+              "McuPingShell.c"
               "cJSON.c"
           INCLUDE_DIRS
               "./"
