@@ -65,6 +65,9 @@
   #define MCU_WIFI_CONFIG_USE_EEE    (0)
 #endif
 
+#define EAP_PEAP 1  /* WPA2 Enterprise with password and no certificate */
+#define EAP_TTLS 2  /* TLS method with SSID and password */
+
 #if MCU_WIFI_CONFIG_USE_EEE
   #define CONFIG_WIFI_EAP_METHOD      EAP_PEAP
   #define CONFIG_WIFI_EAP_SSID        "EEE"

@@ -27,6 +27,11 @@ extern "C" {
   uint8_t McuWiFi_ParseCommand(const unsigned char* cmd, bool *handled, const McuShell_StdIOType *io);
 #endif
 
+typedef enum {
+  McuWiFi_EAP_PEAP = EAP_PEAP, /* WPA2 Enterprise with password and no certificate */
+  McuWiFi_EAP_TTLS = EAP_TTLS, /* TLS method with SSID and password */
+} McuWiFi_EAP_e;
+
 /*!
  * \brief Decides if we are connected or not
  * \return true if we are connected to WiFi, false otherwise

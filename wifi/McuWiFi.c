@@ -52,12 +52,6 @@
 #endif
 #include "application.h"
 
-/* ***************************************************************** */
-/* network authentication settings */
-/* ***************************************************************** */
-#define EAP_PEAP 1  /* WPA2 Enterprise with password and no certificate */
-#define EAP_TTLS 2  /* TLS method with SSID and password */
-
 #if McuLib_CONFIG_CPU_IS_ESP32
   #ifndef CONFIG_ESP_MAXIMUM_RETRY
     #define CONFIG_ESP_MAXIMUM_RETRY (2) /*  number of retries to connect to the network */
@@ -75,6 +69,16 @@
 
   static esp_netif_t *APP_WiFi_NetIf;
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
+
+typedef struct McuWiFi_Autentification_t {
+  McuWiFi_EAP_e type; /* either McuWiFi_EAP_PEAP or McuWiFi_EAP_TTLS */
+  unsigned char hostname[32]; /* name of the host: AP might check on this too */
+  unsigned char ssid[32]; /* SSID of AP */
+  unsigned char pass[64]; /* password for AP */
+#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
+  unsigned char id[32]; /* additional id/user name for enterprise login */
+#endif
+} McuWiFi_Autentification_t;
 
 static struct wifi {
   bool isEnabled; /* if true, it tries to connect to the network */
