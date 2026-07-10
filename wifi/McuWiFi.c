@@ -215,7 +215,7 @@ static void SetPasswordMode(void) {
   ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
   memset(&wifi_config, 0, sizeof(wifi_config_t)); /* initialize all fields */
 #if CONFIG_WIFI_EAP_METHOD == EAP_PEAP
-  strncpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_EAP_SSID, sizeof(wifi_config.sta.ssid));
+  strncpy((char*)wifi_config.sta.ssid, "EEE", sizeof(wifi_config.sta.ssid));
 #elif (CONFIG_WIFI_EAP_METHOD == EAP_TTLS)
   strncpy((char*)wifi_config.sta.ssid, (char*)wifi.auth.ssid, sizeof(wifi_config.sta.ssid));
   strncpy((char*)wifi_config.sta.password, (char*)wifi.auth.pass, sizeof(wifi_config.sta.password));

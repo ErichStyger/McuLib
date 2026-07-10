@@ -60,22 +60,12 @@
   #define MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT    true
 #endif
 
-/* \todo cleanup the configuration items below */
-#ifndef MCU_WIFI_CONFIG_USE_EEE
-  #define MCU_WIFI_CONFIG_USE_EEE    (0)
-#endif
-
+/* supported authentification methods: Can be overwritten with using McuWiFi_SetCustomConfigCallback() */
 #define EAP_PEAP 1  /* WPA2 Enterprise with password and no certificate */
 #define EAP_TTLS 2  /* TLS method with SSID and password */
 
-#if MCU_WIFI_CONFIG_USE_EEE
-  #define CONFIG_WIFI_EAP_METHOD      EAP_PEAP
-  #define CONFIG_WIFI_EAP_SSID        "EEE"
-  #define CONFIG_WIFI_PASSWORD_MODE   EAP_PEAP
-  /* hostname, user name and password are pre-configured for EEE */
-#else
-  /* custom network */
-  #define CONFIG_WIFI_EAP_METHOD              EAP_TTLS
+#ifndef CONFIG_WIFI_EAP_METHOD
+  #define CONFIG_WIFI_EAP_METHOD    EAP_TTLS
 #endif
 
 #ifndef CONFIG_WIFI_DEFAULT_HOSTNAME
@@ -86,6 +76,9 @@
 #endif
 #ifndef WIFI_DEFAULT_PASS
   #define CONFIG_WIFI_DEFAULT_PASS            "password"
+#endif
+#ifndef WIFI_DEFAULT_ID
+  #define CONFIG_WIFI_DEFAULT_ID              "id"
 #endif
 
 #ifndef MCU_WIFI_CONFIG_USE_MININI
