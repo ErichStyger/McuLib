@@ -214,20 +214,27 @@ static void SetPasswordMode(void) {
   ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
   memset(&wifi_config, 0, sizeof(wifi_config_t)); /* initialize all fields */
 #if CONFIG_WIFI_EAP_METHOD == EAP_PEAP
-    strncpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_EAP_SSID, sizeof(wifi_config.sta.ssid));
+  strncpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_EAP_SSID, sizeof(wifi_config.sta.ssid));
 #elif (CONFIG_WIFI_EAP_METHOD == EAP_TTLS)
-    strncpy((char*)wifi_config.sta.ssid, (char*)wifi.auth.ssid, sizeof(wifi_config.sta.ssid));
-    strncpy((char*)wifi_config.sta.password, (char*)wifi.auth.pass, sizeof(wifi_config.sta.password));
-    if (strlen((char*)wifi.auth.pass)>8) {
-      wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK; /* explicit set auth mode, force for longer passwords, otherwise get "Password length matches WPA2 standards, authmode threshold changes from OPEN to WPA2" */
-    }
+  strncpy((char*)wifi_config.sta.ssid, (char*)wifi.auth.ssid, sizeof(wifi_config.sta.ssid));
+  strncpy((char*)wifi_config.sta.password, (char*)wifi.auth.pass, sizeof(wifi_config.sta.password));
+  if (strlen((char*)wifi.auth.pass)>8) {
+    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK; /* explicit set auth mode, force for longer passwords, otherwise get "Password length matches WPA2 standards, authmode threshold changes from OPEN to WPA2" */
+  }
 #else
-    #error "Wrong connection mode";
+  #error "Wrong connection mode";
 #endif
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 
 #if CONFIG_WIFI_EAP_METHOD == EAP_PEAP
+  McuLog_info("PEAP_ID: %s", wifi.auth.id);
+  ESP_ERROR_CHECK( esp_eap_client_set_identity((uint8_t *)wifi.auth.id, strlen((char*)wifi.auth.id)) );
+  McuLog_info("PEAP_USERNAME: %s", wifi.auth.id);
+  ESP_ERROR_CHECK( esp_eap_client_set_username((uint8_t *)wifi.auth.id, strlen((char*)wifi.auth.id)) );
+  ESP_ERROR_CHECK( esp_eap_client_set_password((uint8_t *)wifi.auth.pass, strlen((char*)wifi.auth.pass)) );
+  ESP_ERROR_CHECK( esp_wifi_sta_enterprise_enable() );
+#elif 0
     const ESP32_Device_t *device;
 
     device = ESP32_GetDeviceConfig();
@@ -344,13 +351,13 @@ static void ping_setup(const char *host) {
 
 static void LoadWifiSettings(void) {
 #if MCU_WIFI_CONFIG_USE_MININI
-  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, WIFI_DEFAULT_HOSTNAME, (char*)wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
-  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID,     WIFI_DEFAULT_SSID,     (char*)wifi.auth.ssid, sizeof(wifi.auth.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
-  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS,     WIFI_DEFAULT_PASS,     (char*)wifi.auth.pass, sizeof(wifi.auth.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, CONFIG_WIFI_DEFAULT_HOSTNAME, (char*)wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID,     CONFIG_WIFI_DEFAULT_SSID,     (char*)wifi.auth.ssid, sizeof(wifi.auth.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS,     CONFIG_WIFI_DEFAULT_PASS,     (char*)wifi.auth.pass, sizeof(wifi.auth.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
 #else
-  McuUtility_strcpy(wifi.hostname, sizeof(wifi.hostname), WIFI_DEFAULT_HOSTNAME);
-  McuUtility_strcpy(wifi.ssid, sizeof(wifi.ssid), WIFI_DEFAULT_SSID);
-  McuUtility_strcpy(wifi.pass, sizeof(wifi.pass), WIFI_DEFAULT_PASS);
+  McuUtility_strcpy(wifi.hostname, sizeof(wifi.auth.hostname), CONFIG_WIFI_DEFAULT_HOSTNAME);
+  McuUtility_strcpy(wifi.ssid, sizeof(wifi.auth.ssid), CONFIG_WIFI_DEFAULT_SSID);
+  McuUtility_strcpy(wifi.pass, sizeof(wifi.auth.pass), CONFIG_WIFI_DEFAULT_PASS);
 #endif
 #if MCU_WIFI_CONFIG_USE_MININI
   wifi.isEnabled = McuMinINI_ini_getbool(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_ENABLE, MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE, MCU_WIFI_CONFIG_MININI_FILE_NAME);

@@ -75,10 +75,17 @@
   /* hostname, user name and password are pre-configured for EEE */
 #else
   /* custom network */
-  #define CONFIG_WIFI_EAP_METHOD      EAP_TTLS
-  #define WIFI_DEFAULT_HOSTNAME       "host"
-  #define WIFI_DEFAULT_SSID           "ssid"
-  #define WIFI_DEFAULT_PASS           "password"
+  #define CONFIG_WIFI_EAP_METHOD              EAP_TTLS
+#endif
+
+#ifndef CONFIG_WIFI_DEFAULT_HOSTNAME
+  #define CONFIG_WIFI_DEFAULT_HOSTNAME        "host"
+#endif
+#ifndef CONFIG_WIFI_DEFAULT_SSID
+  #define CONFIG_WIFI_DEFAULT_SSID            "ssid"
+#endif
+#ifndef WIFI_DEFAULT_PASS
+  #define CONFIG_WIFI_DEFAULT_PASS            "password"
 #endif
 
 #ifndef MCU_WIFI_CONFIG_USE_MININI
