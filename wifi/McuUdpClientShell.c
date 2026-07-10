@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Erich Styger
+ * Copyright (c) 2021-2026, Erich Styger
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -26,14 +26,14 @@ const char *McuUdpClient_GetDefaultHostName(void) {
 }
 
 void McuUdpClient_SetDefaultHostName(const char *host) {
-  McuUtility_strcpy(udp_client_destination_host, sizeof(udp_client_destination_host), host);
+  McuUtility_strcpy((uint8_t*)udp_client_destination_host, sizeof(udp_client_destination_host), (const unsigned char*)host);
 }
 
 static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   unsigned char buf[64];
 
   McuShell_SendStatusStr((unsigned char*)"udpc", (unsigned char*)"UDP client status\r\n", io->stdOut);
-  McuUtility_strcpy(buf, sizeof(buf), McuUdpClient_GetDefaultHostName());
+  McuUtility_strcpy(buf, sizeof(buf), (const unsigned char*)McuUdpClient_GetDefaultHostName());
   McuUtility_chcat(buf, sizeof(buf), ':');
   McuUtility_strcatNum16u(buf, sizeof(buf), McuUdpClient_GetDefaultHostPort());
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
@@ -64,10 +64,10 @@ uint8_t McuUdpClient_ParseCommand(const unsigned char* cmd, bool *handled, const
   } else if (McuUtility_strncmp((char*)cmd, (char*)"udpc host ", sizeof("udpc host ")-1)==0) {
     *handled = TRUE;
     p = cmd + sizeof("udpc host ")-1;
-    McuUdpClient_SetDefaultHostName(p);
+    McuUdpClient_SetDefaultHostName((const char*)p);
     return ERR_OK;
   } else if (McuUtility_strncmp((char*)cmd, (char*)"udpc port ", sizeof("udpc port ")-1)==0) {
-    int16_t port;
+    uint16_t port;
     *handled = TRUE;
     p = cmd + sizeof("udpc port ")-1;
     if (McuUtility_ScanDecimal16uNumber(&p, &port)!=ERR_OK) {
@@ -78,7 +78,7 @@ uint8_t McuUdpClient_ParseCommand(const unsigned char* cmd, bool *handled, const
   } else if (McuUtility_strncmp((char*)cmd, (char*)"udpc tx ", sizeof("udpc tx ")-1)==0) {
    *handled = TRUE;
     p = cmd + sizeof("udpc tx ")-1;
-    if (McuUdpClient_Send(McuUdpClient_GetDefaultHostName(), McuUdpClient_GetDefaultHostPort(), p, rxBuf, sizeof(rxBuf))!=ERR_OK) {
+    if (McuUdpClient_Send(McuUdpClient_GetDefaultHostName(), McuUdpClient_GetDefaultHostPort(), (const char*)p, (char*)rxBuf, sizeof(rxBuf))!=ERR_OK) {
       return ERR_FAILED;
     }
     McuShell_SendStr(rxBuf, io->stdOut); /* writing data received to shell */
@@ -98,7 +98,7 @@ uint8_t McuUdpClient_ParseCommand(const unsigned char* cmd, bool *handled, const
     while(*p==' ') { /* skip spaces */
        p++;
     }
-    if (McuUdpClient_Send(ip, port, p, rxBuf, sizeof(rxBuf))!=ERR_OK) {
+    if (McuUdpClient_Send((const char*)ip, port, (const char*)p, (char*)rxBuf, sizeof(rxBuf))!=ERR_OK) {
       return ERR_FAILED;
     }
     McuShell_SendStr(rxBuf, io->stdOut);
