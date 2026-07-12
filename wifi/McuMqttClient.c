@@ -122,21 +122,21 @@ uint8_t McuMqttClient_PublishSwitch(const char *topic, bool isOn, bool asJSON) {
       McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"OFF");
     }    
   }
-  return McuMqttClient_PublishText(topic, buf);
+  return McuMqttClient_PublishText(topic, (char*)buf);
 }
 
 void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(bool)) {
   unsigned char buf[32];
 
-  McuMqttClient_GetDataString(buf, sizeof(buf), data, len);
+  McuMqttClient_GetDataString((char*)buf, sizeof(buf), data, len);
   if (logMsg!=NULL && McuMqttClient_doLogging()) {
     McuLog_trace("Rx: %s: %s", logMsg, buf);
   }
-  if (McuUtility_strcmp(buf, "ON")==0) {
+  if (McuUtility_strcmp((char*)buf, "ON")==0) {
     if (setter!=NULL) {
       setter(true);
     }
-  } else if(McuUtility_strcmp(buf, "OFF")==0) {
+  } else if(McuUtility_strcmp((char*)buf, "OFF")==0) {
     if (setter!=NULL) {
       setter(false);
     }
@@ -156,13 +156,13 @@ uint8_t McuMqttClient_PublishTime(const char *topic, uint8_t hours, uint8_t minu
     /* NYI */
     return ERR_FAILED;
   }
-  return McuMqttClient_PublishText(topic, buf);
+  return McuMqttClient_PublishText(topic, (char*)buf);
 }
 
 void McuMqttClient_IncomingTime(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(uint8_t, uint8_t)) {
   unsigned char buf[32];
   
-  McuMqttClient_GetDataString(buf, sizeof(buf), data, len);
+  McuMqttClient_GetDataString((char*)buf, sizeof(buf), data, len);
   if (logMsg!=NULL && McuMqttClient_doLogging()) {
     McuLog_trace("Rx: %s: %s", logMsg, buf); /* e.g. "16:15" */
   }
@@ -185,13 +185,13 @@ uint8_t McuMqttClient_PublishTemperature(const char *topic, float temperature, b
   } else {
     return ERR_FAILED; /* NYI */
   }
-  return McuMqttClient_PublishText(topic, buf);
+  return McuMqttClient_PublishText(topic, (char*)buf);
 }
 
 void McuMqttClient_IncomingTemperature(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(float)) {
   unsigned char buf[32];
   
-  McuMqttClient_GetDataString(buf, sizeof(buf), data, len);
+  McuMqttClient_GetDataString((char*)buf, sizeof(buf), data, len);
   if (logMsg!=NULL && McuMqttClient_doLogging()) {
     McuLog_trace("Rx: %s: %s", logMsg, buf); /* e.g. "25.5" */
   }
@@ -296,13 +296,6 @@ void McuMqttClient_SetIncomingPubID(const char *topic, const McuMqttClient_Topic
   }
 }
 
-static void mqtt_publish_request_cb(void *arg, err_t err) {
-#if 0 && MCU_MQTT_CLIENT_CONFIG_EXTRA_LOGS /* be careful not to delay callback too much */
-  const struct mqtt_connect_client_info_t *client_info = (const struct mqtt_connect_client_info_t*)arg;
-  McuLog_trace("MQTT client \"%s\" publish request cb: err %d", client_info->client_id, (int)err);
-#endif
-}
-
 bool McuMqttClient_isConnected(void) {
   return mqtt.isConnected;
 }
@@ -321,7 +314,7 @@ void McuMqttClient_SetDoPublish(bool publish) {
 void McuMqttClient_GetDataString(char *buf, size_t bufSize, const uint8_t *data, uint16_t len) {
   buf[0] = '\0';
   for(int i=0; i<len; i++){
-    McuUtility_chcat(buf, bufSize, data[i]);
+    McuUtility_chcat((uint8_t*)buf, bufSize, data[i]);
   }
 }
 
@@ -361,7 +354,11 @@ static void McuMqttClient_connection_cb(mqtt_client_t *client, void *arg, mqtt_c
     McuLog_trace("MQTT connection disconnected");
     McuMqttClient_Disconnect();
   }
-  mqtt.conn_cb(client, arg, status); /* call user connection callback */
+  if (mqtt.conn_cb!=NULL) {
+    mqtt.conn_cb(client, arg, status); /* call user connection callback */
+  } else {
+    McuLog_error("MQTT connection callback not set. Missed to call McuMqttClient_SetCallbacks()?");
+  }
 }
 
 uint8_t McuMqttClient_Connect(void) {
@@ -406,6 +403,12 @@ uint8_t McuMqttClient_Connect(void) {
     return ERR_FAILED;
   }
   /* setup callbacks for incoming data: */
+  if (mqtt.pub_cb==NULL) {
+    McuLog_error("MQTT publish callback has not been set. Missed to call McuMqttClient_SetCallbacks()?");
+  }
+  if (mqtt.data_cb==NULL) {
+    McuLog_error("MQTT data callback has not been set. Missed to call McuMqttClient_SetCallbacks()?");
+  }
   mqtt_set_inpub_callback(
       mqtt.mqtt_client, /* client handle */
       mqtt.pub_cb, /* callback for incoming publish messages */
@@ -592,7 +595,7 @@ uint8_t McuMqttClient_ParseCommand(const unsigned char *cmd, bool *handled, cons
     if (McuUtility_ScanDoubleQuotedString(&p, text, sizeof(text))!=ERR_OK) {
       return ERR_FAILED;
     }
-    return McuMqttClient_PublishText(topic, text);
+    return McuMqttClient_PublishText((char*)topic, (char*)text);
   }
   return ERR_OK;
 }
