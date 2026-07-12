@@ -15,7 +15,7 @@
 #if McuLib_CONFIG_CPU_IS_ESP32
   #include "esp_event.h"
   #include "nvs_flash.h"
-  #include "ping/ping_sock.h"$
+  #include "ping/ping_sock.h"
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   #include <errno.h>
   #include <string.h>
