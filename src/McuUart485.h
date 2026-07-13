@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief RS-485 UART communication and shell transport interface.
+ */
+
 #ifndef MCUUART485_H_
 #define MCUUART485_H_
 

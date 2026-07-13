@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief SWO/ITM console and shell transport interface.
+ */
+
 #ifndef SWO_H_
 #define SWO_H_
 
@@ -14,8 +19,10 @@ extern "C" {
 #include "McuSWOconfig.h"
 #include "McuShell.h"
 
+/*! Default shell input buffer for SWO shell integration. */
 extern uint8_t McuSWO_DefaultShellBuffer[McuShell_DEFAULT_SHELL_BUFFER_SIZE]; /* default buffer which can be used by the application */
 
+/*! Default stdio descriptor for SWO input/output. */
 extern McuShell_ConstStdIOType McuSWO_stdio; /* default standard I/O */
 
 /*!
@@ -84,13 +91,21 @@ unsigned McuSWO_printf(const char *fmt, ...);
  */
 void McuSWO_TestStdio(void);
 
-/*! The TraceClock is used to configure the SWO speed. Use this method if the clock has been changed */
+/*!
+ * \brief Updates SWO trace clock setting.
+ * \param traceClock Trace clock frequency in Hz.
+ */
 void McuSWO_ChangeTraceClock(uint32_t traceClock);
 
-/*! used to change speed to the desired value */
+/*!
+ * \brief Changes SWO output baud rate.
+ * \param baud Target SWO baud rate in bps.
+ */
 void McuSWO_ChangeSpeed(uint32_t baud);
 
-/*! called to initialize the module. */
+/*!
+ * \brief Initializes the SWO module.
+ */
 void McuSWO_Init(void);
 
 #ifdef __cplusplus
