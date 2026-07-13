@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Generic ring buffer interface.
+ */
+
 #ifndef MCURINGBUFFER_H_
 #define MCURINGBUFFER_H_
 
@@ -16,50 +21,105 @@ extern "C" {
 #include <stddef.h>
 #include "McuRBconfig.h"
 
-typedef void *McuRB_Handle_t; /* handle to be used in API */
+typedef void *McuRB_Handle_t; /*!< Opaque ring buffer handle */
 
 typedef struct {
-  size_t nofElements; /* max number of elements in buffer */
-  size_t elementSize; /* size of element in bytes */
+  size_t nofElements; /*!< Maximum number of elements in buffer */
+  size_t elementSize; /*!< Size of one element in bytes */
 } McuRB_Config_t;
 
-/* return number of elements in ring buffer */
+/*!
+ * \brief Returns number of used elements in the ring buffer.
+ * \param rb Ring buffer handle.
+ * \return Number of elements currently stored.
+ */
 size_t McuRB_NofElements(McuRB_Handle_t rb);
 
-/* return number of free elements in ring buffer */
+/*!
+ * \brief Returns number of free element slots in the ring buffer.
+ * \param rb Ring buffer handle.
+ * \return Number of free elements.
+ */
 size_t McuRB_NofFreeElements(McuRB_Handle_t rb);
 
-/* put an element into the ring buffer. Returns ERR_OK if OK. */
+/*!
+ * \brief Adds one element to the ring buffer.
+ * \param rb Ring buffer handle.
+ * \param data Pointer to element data.
+ * \return ERR_OK on success.
+ */
 uint8_t McuRB_Put(McuRB_Handle_t rb, void *data);
 
-/* put a number of elements into the buffer */
+/*!
+ * \brief Adds multiple elements to the ring buffer.
+ * \param rb Ring buffer handle.
+ * \param data Pointer to the first element.
+ * \param nof Number of elements to add.
+ * \return ERR_OK on success.
+ */
 uint8_t McuRB_Putn(McuRB_Handle_t rb, void *data, size_t nof);
 
-/* clear the ring buffer */
+/*!
+ * \brief Clears all elements from the ring buffer.
+ * \param rb Ring buffer handle.
+ */
 void McuRB_Clear(McuRB_Handle_t rb);
 
-/* get an element from the ring buffer. Returns ERR_OK if OKy. */
+/*!
+ * \brief Retrieves and removes one element from the ring buffer.
+ * \param rb Ring buffer handle.
+ * \param data Pointer receiving the element.
+ * \return ERR_OK on success.
+ */
 uint8_t McuRB_Get(McuRB_Handle_t rb, void *data);
 
-/* peek an element of the ring buffer without removing it */
+/*!
+ * \brief Reads one element from the ring buffer without removing it.
+ * \param rb Ring buffer handle.
+ * \param index Element index relative to current read position.
+ * \param data Pointer receiving the element.
+ * \return ERR_OK on success.
+ */
 uint8_t McuRB_Peek(McuRB_Handle_t rb, size_t index, void *data);
 
-/* compare elements in the ring buffer with data. Returns 0 if the data is the same, -1 otherwise */
+/*!
+ * \brief Compares ring buffer content with provided data.
+ * \param rb Ring buffer handle.
+ * \param index Start index relative to current read position.
+ * \param data Pointer to comparison data.
+ * \param nof Number of elements to compare.
+ * \return 0 if equal, non-zero otherwise.
+ */
 uint8_t McuRB_Compare(McuRB_Handle_t rb, size_t index, void *data, size_t nof);
 
-/* return a default ring buffer configuration */
+/*!
+ * \brief Fills a configuration with default ring buffer settings.
+ * \param config Pointer to configuration structure.
+ */
 void McuRB_GetDefaultconfig(McuRB_Config_t *config);
 
-/* initialize a new ring buffer and return a handle for it */
+/*!
+ * \brief Creates and initializes a new ring buffer instance.
+ * \param config Pointer to ring buffer configuration.
+ * \return Ring buffer handle, or NULL on error.
+ */
 McuRB_Handle_t McuRB_InitRB(McuRB_Config_t *config);
 
-/* de-initialize a ring buffer */
+/*!
+ * \brief Deinitializes a ring buffer instance.
+ * \param rb Ring buffer handle.
+ * \return NULL.
+ */
 McuRB_Handle_t McuRB_DeinitRB(McuRB_Handle_t rb);
 
-/* de-initialize the module */
+/*!
+ * \brief Deinitializes the ring buffer module.
+ */
 void McuRB_Deinit(void);
 
-/* initialize the module */
+/*!
+ * \brief Initializes the ring buffer module.
+ */
 void McuRB_Init(void);
 
 #ifdef __cplusplus

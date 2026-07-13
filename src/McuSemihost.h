@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief ARM semihosting interface and utility helpers.
+ */
+
 #ifndef MCUSEMIHOST_H_
 #define MCUSEMIHOST_H_
 
@@ -22,11 +27,20 @@ extern "C" {
 #define McuSemihost_STDOUT          1 /*!< handle for standard output */
 #define McuSemihost_STDERR          2 /*!< handle for standard error */
 
+/*!
+ * \brief Reads bytes from a semihosting file handle.
+ * \param handle File handle.
+ * \param data Destination buffer.
+ * \param nofBytes Number of bytes to read.
+ * \return Number of bytes not read (semihosting convention) or negative on error.
+ */
 extern int McuSemihost_Read(int handle, unsigned char *data, size_t nofBytes);
 
+/*! Default shell input buffer for semihosting shell integration. */
 extern uint8_t McuSemihost_DefaultShellBuffer[McuShell_DEFAULT_SHELL_BUFFER_SIZE];
   /*!< default buffer which can be used by the application or shell */
 
+/*! Default stdio descriptor for semihosting integration. */
 extern McuShell_ConstStdIOType McuSemihost_stdio;
   /*!< Default standard I/O handler, can be used for a shell intergration */
 
@@ -191,10 +205,10 @@ int McuSemihost_SysErrNo(void);
 int McuSemihost_SysGetCmdLine(unsigned char *cmd, size_t cmdSize);
 
 typedef struct McuSemihost_HeapInfo_t {
-  uint32_t heap_base;
-  uint32_t heap_limit;
-  uint32_t stack_base;
-  uint32_t stack_limit;
+  uint32_t heap_base;   /*!< Heap start address */
+  uint32_t heap_limit;  /*!< Heap end address */
+  uint32_t stack_base;  /*!< Stack start address */
+  uint32_t stack_limit; /*!< Stack end address */
 } McuSemihost_HeapInfo_t;
 
 /*!
@@ -211,7 +225,7 @@ int McuSemihost_SysHeapInfo(McuSemihost_HeapInfo_t *heapInfo);
 int McuSemihost_SysEnterSVC(void);
 
 typedef enum McuSemihost_Exception_e {
-  McuSemihost_ADP_Stopped_ApplicationExit = 0x20026, /* exit target application */
+  McuSemihost_ADP_Stopped_ApplicationExit = 0x20026, /*!< Exit target application */
 } McuSemihost_Exception_e;
 
 /*!

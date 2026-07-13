@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  * \file
- * \brief \brief Interface for the McuShellUart module.
+ * \brief Interface for the McuShellUart module.
  */
 
 #ifndef MCUSHELLUART_H_
@@ -22,6 +22,10 @@ extern uint8_t McuShellUart_DefaultShellBuffer[McuShell_DEFAULT_SHELL_BUFFER_SIZ
 /*! Standard I/O for input/output */
 extern McuShell_ConstStdIOType McuShellUart_stdio;
 
+/*!
+ * \brief Returns the stdio interface for the UART shell transport.
+ * \return Pointer to stdio descriptor.
+ */
 McuShell_ConstStdIOTypePtr McuShellUart_GetStdio(void);
 
 /*!

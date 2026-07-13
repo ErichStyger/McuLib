@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Button debounce finite-state machine interface.
+ */
+
 #ifndef MCUDEBOUNCE_H_
 #define MCUDEBOUNCE_H_
 
@@ -38,25 +43,35 @@ typedef enum {
 } McuDbnc_EventKinds;
 
 typedef struct {
-  McuDbnc_State_e state;        /* data */
+  McuDbnc_State_e state;        /*!< Runtime FSM state */
   /* uint32_t flags; */
-  uint32_t timerPeriodMs;       /* config: period of timer in ms */
+  uint32_t timerPeriodMs;       /*!< Configuration: timer period in ms */
   #if McuLib_CONFIG_SDK_USE_FREERTOS && configUSE_TIMERS
-  TimerHandle_t timer;          /* config: RTOS timer handle */
+  TimerHandle_t timer;          /*!< Configuration: RTOS timer handle */
   #endif
-  uint32_t scanValue;           /* data: value of buttons at debounce start */
-  uint32_t countTimeMs;         /* data: counting time in ms from the beginning */
-  uint32_t lastEventTimeMs;     /* data: time of last event, used for repeated messages */
-  uint32_t debounceTimeMs;      /* config: debounce time in ms */
-  uint32_t repeatTimeMs;        /* config: wait time for a button repeat message */
-  uint32_t longKeyTimeMs;       /* config: wait time for a long key press */
-  uint32_t (*getButtons)(void); /* config: get the pressed buttons */
-  void (*onDebounceEvent)(McuDbnc_EventKinds event, uint32_t buttons); /* config: event handler called */
+  uint32_t scanValue;           /*!< Runtime: button value captured at debounce start */
+  uint32_t countTimeMs;         /*!< Runtime: elapsed time in ms since debounce start */
+  uint32_t lastEventTimeMs;     /*!< Runtime: timestamp of the last emitted event */
+  uint32_t debounceTimeMs;      /*!< Configuration: debounce time in ms */
+  uint32_t repeatTimeMs;        /*!< Configuration: repeat interval in ms */
+  uint32_t longKeyTimeMs;       /*!< Configuration: long-press threshold in ms */
+  uint32_t (*getButtons)(void); /*!< Configuration: callback to read current button bitmask */
+  void (*onDebounceEvent)(McuDbnc_EventKinds event, uint32_t buttons); /*!< Configuration: callback invoked on debounce events */
 } McuDbnc_Desc_t;
 
+/*!
+ * \brief Processes one debounce FSM step.
+ * \param data Pointer to debounce descriptor and runtime data.
+ */
 void McuDbnc_Process(McuDbnc_Desc_t *data);
 
+/*!
+ * \brief Deinitializes the debounce module.
+ */
 void McuDbnc_Deinit(void);
+/*!
+ * \brief Initializes the debounce module.
+ */
 void McuDbnc_Init(void);
 
 #ifdef __cplusplus
