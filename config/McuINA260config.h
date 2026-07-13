@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Configuration for the McuINA260 module.
+ */
+
 #ifndef McuINA260_CONFIG_H_
 #define McuINA260_CONFIG_H_
 
