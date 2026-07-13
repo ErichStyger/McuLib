@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Ping module interface.
+ */
+
 #ifndef MCU_PING_H_
 #define MCU_PING_H_
 

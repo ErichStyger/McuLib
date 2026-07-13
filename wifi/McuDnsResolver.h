@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief DNS resolver interface.
+ */
+
 #ifndef MCU_DNS_RESOLVER_H_
 #define MCU_DNS_RESOLVER_H_
 
@@ -14,9 +19,9 @@
 #include <stdbool.h>
 
 typedef struct McuDnsResolver_info_t {
-  bool dns_request_sent;      /* flag set after sending a DNS response. Reset if received a good answer */
-  bool dns_response_received; /* flag to indicate in DNS callback that we have received a response */
-  ip_addr_t resolved_addr;    /* here the resolved address gets stored */
+  bool dns_request_sent;      /*!< Set after sending a DNS request; cleared after a valid response */
+  bool dns_response_received; /*!< Set in DNS callback after a response is received */
+  ip_addr_t resolved_addr;    /*!< Resolved IP address */
 } McuDnsResolver_info_t;
 
 /*!

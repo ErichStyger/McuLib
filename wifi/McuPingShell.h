@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Shell interface for the ping module.
+ */
+
 #ifndef PING_SHELL_H_
 #define PING_SHELL_H_
 

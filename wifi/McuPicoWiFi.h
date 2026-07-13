@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Pico WiFi integration interface.
+ */
+
 #ifndef MCU_PICO_WIFI_H_
 #define MCU_PICO_WIFI_H_
 

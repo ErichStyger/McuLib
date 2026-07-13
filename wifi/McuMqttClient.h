@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief MQTT client interface.
+ */
+
 #ifndef MCU_MQTT_CLIENT_H_
 #define MCU_MQTT_CLIENT_H_
 
@@ -29,11 +34,17 @@ extern "C" {
   uint8_t McuMqttClient_ParseCommand(const unsigned char* cmd, bool *handled, const McuShell_StdIOType *io);
 #endif
 
-#define MCU_MQTT_CLIENT_TOPIC_ID_NONE   (-1) /* special topic ID for an unknown topic */
+#define MCU_MQTT_CLIENT_TOPIC_ID_NONE   (-1) /*!< Special topic ID for an unknown topic */
 
-typedef void *McuMqtt_client_handle;  /* is actually a pointer to mqtt_client_s */
-typedef const void *McuMqtt_connect_client_info_handle;  /* is actually a pointer to const struct mqtt_connect_client_info_t */
+typedef void *McuMqtt_client_handle; /*!< Opaque MQTT client handle (actually mqtt_client_s *) */
+typedef const void *McuMqtt_connect_client_info_handle; /*!< Opaque connection info handle */
 
+/*!
+ * \brief Subscribes the MQTT client to a topic.
+ * \param client MQTT client handle.
+ * \param client_info MQTT connection info handle.
+ * \param topic Topic string to subscribe to.
+ */
 void McuMqttClient_subscribeTopic(McuMqtt_client_handle client, McuMqtt_connect_client_info_handle client_info, const char *topic);
 
 /*!
@@ -49,8 +60,8 @@ McuMqtt_client_handle McuMqttClient_getClient(void);
 bool McuMqttClient_doLogging(void);
 
 typedef struct McuMqttClient_Topic_ID_Map_t {
-  const char *topic; /* topic string */
-  int id;            /* ID for topic string */
+  const char *topic; /*!< Topic string */
+  int id;            /*!< ID associated with topic string */
 } McuMqttClient_Topic_ID_Map_t;
 
 /*!
@@ -81,6 +92,7 @@ void McuMqttClient_SetIncomingPubID(const char *topic, const McuMqttClient_Topic
 
 /*!
  * \brief Set the incoming topic ID
+* \param id Incoming topic ID.
 */
 void McuMqttClient_set_in_pub_ID(int id);
 
@@ -145,14 +157,16 @@ void McuMqttClient_SetCallbacks(
  * \brief Publish a text string to a topic
  * \param topic The topic to publish to
  * \param text Pointer to string with the content to publish
+ * \return Error code, otherwise ERR_OK.
  */
 uint8_t McuMqttClient_PublishText(const char *topic, const char *text);
 
 /*!
  * \brief Publish a switch value to a topic
  * \param topic The topic to publish to
- * \param on If switch is ON or OFF
+ * \param isOn If switch is ON or OFF
  * \param asJSON If text is published as JSON or simply as "ON" or "OFF"
+ * \return Error code, otherwise ERR_OK.
  */
 uint8_t McuMqttClient_PublishSwitch(const char *topic, bool isOn, bool asJSON);
 
@@ -171,6 +185,7 @@ void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char 
  * \param hours Number of hours
  * \param minutes Number of minutes
  * \param asJSON If text is published as JSON or simply e.g. as "12:25"
+ * \return Error code, otherwise ERR_OK.
  */
 uint8_t McuMqttClient_PublishTime(const char *topic, uint8_t hours, uint8_t minutes, bool asJSON);
 
@@ -188,6 +203,7 @@ void McuMqttClient_IncomingTime(const uint8_t *data, uint16_t len, const char *l
  * \param topic The topic to publish to
  * \param temperature Temperature value (degree Celsius)
  * \param asJSON If text is published as JSON with value and unit
+ * \return Error code, otherwise ERR_OK.
  */
 uint8_t McuMqttClient_PublishTemperature(const char *topic, float temperature, bool isJSON);
 
