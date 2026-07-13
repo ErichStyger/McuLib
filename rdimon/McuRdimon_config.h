@@ -10,8 +10,7 @@
 #define RDIMON_MCURDIMON_CONFIG_H_
 
 #ifndef McuRdimon_CONFIG_IS_ENABLED
-  #define McuRdimon_CONFIG_IS_ENABLED     (0)
-    /*!< 1: module is enabled; 0: module is disabled */
+  #define McuRdimon_CONFIG_IS_ENABLED     (0) /*!< 1: module is enabled; 0: module is disabled */
 #endif
 
 #endif /* RDIMON_MCURDIMON_CONFIG_H_ */

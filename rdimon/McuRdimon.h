@@ -1,7 +1,7 @@
 /*!
-** \file McuRdimon.h
-** \brief Interface for Remote Debugger Interface.
-*/         
+ * \file
+ * \brief Interface for the Remote Debugger Interface (RdiMon).
+ */
 
 #ifndef MCURDIMON_H
 #define MCURDIMON_H
@@ -13,7 +13,9 @@
 extern "C" {
 #endif
 
-/* initializes standard I/O handles */
+/*!
+ * \brief Initializes the RdiMon standard I/O handles.
+ */
 void McuRdimon_Init(void);
 
 #ifdef __cplusplus
