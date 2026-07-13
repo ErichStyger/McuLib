@@ -6,6 +6,11 @@
  * Driver for the X12.017 Quad-Stepper motor driver
  */
 
+/*!
+ * \file
+ * \brief Interface for McuX12_017 module.
+ */
+
 #ifndef MCU_X12_017_H_
 #define MCU_X12_017_H_
 

@@ -6,6 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuPCF85063A module.
+ */
+
 #include "McuPCF85063A.h"
 #include "McuShell.h"
 #include "McuUtility.h"

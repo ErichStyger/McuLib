@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuFlash module.
+ */
+
 #include "McuFlash.h"
 #if McuFlash_CONFIG_IS_ENABLED
 #include "McuLib.h"

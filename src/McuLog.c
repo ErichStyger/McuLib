@@ -20,6 +20,11 @@
  * IN THE SOFTWARE.
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuLog module.
+ */
+
 /* Original source is from https://github.com/rxi/log.c
  * McuLib integration and extensions: Copyright (c) 2020 Erich Styger
  */

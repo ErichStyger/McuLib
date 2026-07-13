@@ -6,6 +6,11 @@
  * \brief Implementation of the McuCoverage module.
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuCoverage module.
+ */
+
 #include "McuCoverage.h"
 
 #if McuCoverage_CONFIG_IS_ENABLED

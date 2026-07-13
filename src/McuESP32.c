@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuESP32 module.
+ */
+
 #include "McuESP32config.h"
 #if McuESP32_CONFIG_SHELL_UART!=McuShellUart_CONFIG_UART_NONE
 #include "McuESP32.h"

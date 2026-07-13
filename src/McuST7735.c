@@ -5,6 +5,11 @@
  * Register values and driver IC initialization: https://github.com/afiskon/stm32-st7735
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuST7735 module.
+ */
+
 #include "McuST7735.h"
 
 #if McuST7735_CONFIG_IS_ENABLED

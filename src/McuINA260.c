@@ -6,6 +6,11 @@
  * \brief Driver for the TI INA260 current/voltage sensor.
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuINA260 module.
+ */
+
 #include "McuINA260.h"
 #include "McuUtility.h"
 #include "McuGenericI2C.h"

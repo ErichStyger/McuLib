@@ -56,6 +56,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuWait module.
+ */
+
+/*!
 ** @file McuWait.h
 ** @version 01.00
 ** @brief

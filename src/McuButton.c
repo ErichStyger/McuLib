@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuButton module.
+ */
+
 #include "McuLibconfig.h"
 #include "McuButton.h"
 #include "McuUtility.h"

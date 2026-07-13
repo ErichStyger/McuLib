@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuButton module.
+ */
+
 #ifndef MCUBUTTON_H_
 #define MCUBUTTON_H_
 

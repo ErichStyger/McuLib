@@ -95,6 +95,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuTimeDate module.
+ */
+
+/*!
 ** @file McuTimeDate.h
 ** @version 01.00
 ** @brief

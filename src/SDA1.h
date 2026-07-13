@@ -61,6 +61,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for SDA1 module.
+ */
+
+/*!
 ** @file SDA1.h
 ** @version 01.00
 ** @brief

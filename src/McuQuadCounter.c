@@ -62,6 +62,11 @@ This driver implements a quadrature encoder using two signals (C1 and C2) to gen
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuQuadCounter module.
+ */
+
+/*!
 ** @file McuQuadCounter.h
 ** @version 01.00
 ** @brief

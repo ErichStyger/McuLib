@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuULN2003 module.
+ */
+
 #ifndef MCUULN2003_H_
 #define MCUULN2003_H_
 

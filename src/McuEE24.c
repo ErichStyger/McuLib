@@ -72,6 +72,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuEE24 module.
+ */
+
+/*!
 ** @file McuEE24.h
 ** @version 01.00
 ** @brief

@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuUnity module.
+ */
+
 #include "McuUnity.h"
 #include "McuLib.h"
 #include "McuRTT.h"

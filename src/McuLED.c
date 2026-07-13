@@ -7,6 +7,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuLED module.
+ */
+
 #include "McuLibconfig.h"
 #include "McuLEDconfig.h"
 #include "McuLED.h"

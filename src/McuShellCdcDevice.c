@@ -7,6 +7,11 @@
  * 
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuShellCdcDevice module.
+ */
+
 #include "McuLib.h"
 #if McuShellCdcDevice_CONFIG_IS_ENABLED
 #include "McuShellCdcDevice.h"

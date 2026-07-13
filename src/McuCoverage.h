@@ -7,6 +7,11 @@
  * It helps collecting coverage information for gcov (GNU Coverage).
  */
 
+/*!
+ * \file
+ * \brief Interface for McuCoverage module.
+ */
+
 #ifndef MCUCOVERAGE_H_
 #define MCUCOVERAGE_H_
 

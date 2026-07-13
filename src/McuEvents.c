@@ -51,6 +51,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuEvents module.
+ */
+
+/*!
 ** @file McuEvents.h
 ** @version 01.00
 ** @brief

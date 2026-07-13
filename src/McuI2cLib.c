@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuI2cLib module.
+ */
+
 #include "McuI2cLibconfig.h"
 
 #if McuLib_CONFIG_MCUI2CLIB_ENABLED

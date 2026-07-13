@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuIO module.
+ */
+
 #include "McuLib.h"
 #include "McuIO.h"
 #include "McuRTOS.h"

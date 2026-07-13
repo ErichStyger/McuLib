@@ -54,6 +54,11 @@ a periodic interrupt.
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuTimeout module.
+ */
+
+/*!
 ** @file McuTimeout.h
 ** @version 01.00
 ** @brief

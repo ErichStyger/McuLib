@@ -64,6 +64,11 @@ This is a component for the Maxim DS18B20 1-Wire temperature sensor.
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuDS18B20 module.
+ */
+
+/*!
 ** @file McuDS18B20.h
 ** @version 01.00
 ** @brief

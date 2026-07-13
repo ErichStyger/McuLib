@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuDebounce module.
+ */
+
 #include "McuDebounce.h"
 #include <stdint.h>
 #if McuLib_CONFIG_SDK_USE_FREERTOS

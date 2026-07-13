@@ -7,6 +7,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuSHT31 module.
+ */
+
 #ifndef SOURCES_MCUSHT31_H_
 #define SOURCES_MCUSHT31_H_
 

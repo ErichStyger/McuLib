@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuESP32 module.
+ */
+
 #ifndef McuESP32_H_
 #define McuESP32_H_
 

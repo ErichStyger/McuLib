@@ -44,6 +44,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuHardFault module.
+ */
+
+/*!
 ** @file McuHardFault.h
 ** @version 01.00
 ** @brief

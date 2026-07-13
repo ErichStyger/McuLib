@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuWatchdog module.
+ */
+
 #include "McuWatchdog.h"
 #if McuWatchdog_CONFIG_USE_WATCHDOG
 #include "McuRTOS.h"

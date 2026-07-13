@@ -83,6 +83,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuRTT module.
+ */
+
+/*!
 ** @file McuRTT.h
 ** @version 01.00
 ** @brief

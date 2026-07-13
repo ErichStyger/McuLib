@@ -7,6 +7,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuSHT31 module.
+ */
+
 #include "McuSHT31config.h"
 #include "McuSHT31.h"
 #include "McuGenericI2C.h"

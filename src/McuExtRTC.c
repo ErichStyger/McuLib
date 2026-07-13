@@ -67,6 +67,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuExtRTC module.
+ */
+
+/*!
 ** @file McuExtRTC.h
 ** @version 01.00
 ** @brief

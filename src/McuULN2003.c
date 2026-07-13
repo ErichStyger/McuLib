@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuULN2003 module.
+ */
+
 #include "McuULN2003config.h"
 #include "McuULN2003.h"
 #include "McuGPIO.h"

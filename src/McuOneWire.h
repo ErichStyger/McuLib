@@ -85,6 +85,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuOneWire module.
+ */
+
+/*!
 ** @file McuOneWire.h
 ** @version 01.00
 ** @brief

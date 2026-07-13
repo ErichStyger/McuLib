@@ -44,6 +44,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuLib module.
+ */
+
+/*!
 ** @file McuLib.h
 ** @version 01.00
 ** @brief

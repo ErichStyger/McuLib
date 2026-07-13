@@ -61,6 +61,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for Output1 module.
+ */
+
+/*!
 ** @file Output1.h
 ** @version 01.00
 ** @brief

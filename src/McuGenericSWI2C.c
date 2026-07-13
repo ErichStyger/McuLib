@@ -60,6 +60,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuGenericSWI2C module.
+ */
+
+/*!
 ** @file McuGenericSWI2C.h
 ** @version 01.00
 ** @brief
