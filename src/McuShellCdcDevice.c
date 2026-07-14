@@ -23,6 +23,14 @@
 #include "McuWait.h"
 #include "McuXFormat.h"
 #include "tusb.h"
+#if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
+  #include "MK22F51212.h"
+  #include "clock_config.h"
+#elif McuLib_CONFIG_CPU_IS_RPxxxx
+  /* no other include needed */
+#else
+  #error "device not supported"
+#endif
 
 #if McuShellCdcDevice_CONFIG_USE_FREERTOS
   static QueueHandle_t rxQueue;
@@ -144,7 +152,7 @@ void McuShellCdcDevice_WriteChar(char ch) {
 }
 
 void McuShellCdcDevice_ReadChar(char *ch) {
-  McuShellCdcDevice_ReceiveChar(ch);
+  McuShellCdcDevice_ReceiveChar((uint8_t*)ch);
 }
 
 bool McuShellCdcDevice_IsDataPresent(void) {
@@ -188,29 +196,28 @@ static void McuShellCdcDevice_GetLineCodingStr(unsigned char *buf, size_t bufSiz
   tud_cdc_get_line_coding(&info);
   buf[0] = '\0';
   McuUtility_strcatNum32u(buf, bufSize, info.bit_rate);
-  McuUtility_strcat(buf, bufSize, ", data: ");
+  McuUtility_strcat(buf, bufSize, (unsigned char*)", data: ");
   McuUtility_strcatNum8u(buf, bufSize, info.data_bits);
   switch(info.parity) {
-    case 0: McuUtility_strcat(buf, bufSize, ", parity: None"); break;
-    case 1: McuUtility_strcat(buf, bufSize, ", parity: Odd"); break;
-    case 2: McuUtility_strcat(buf, bufSize, ", parity: Even"); break;
-    case 3: McuUtility_strcat(buf, bufSize, ", parity: Mark"); break;
-    case 4: McuUtility_strcat(buf, bufSize, ", parity: Space"); break;
-    default: McuUtility_strcat(buf, bufSize, ", parity: ???"); break;
+    case 0: McuUtility_strcat(buf, bufSize, (unsigned char*)", parity: None"); break;
+    case 1: McuUtility_strcat(buf, bufSize, (unsigned char*)", parity: Odd"); break;
+    case 2: McuUtility_strcat(buf, bufSize, (unsigned char*)", parity: Even"); break;
+    case 3: McuUtility_strcat(buf, bufSize, (unsigned char*)", parity: Mark"); break;
+    case 4: McuUtility_strcat(buf, bufSize, (unsigned char*)", parity: Space"); break;
+    default: McuUtility_strcat(buf, bufSize, (unsigned char*)", parity: ???"); break;
   }
   switch(info.stop_bits) {
-    case 0: McuUtility_strcat(buf, bufSize, ", stop: 1"); break;
-    case 1: McuUtility_strcat(buf, bufSize, ", stop: 1.5"); break;
-    case 2: McuUtility_strcat(buf, bufSize, ", stop: 2"); break;
-    default: McuUtility_strcat(buf, bufSize, ", stop: ???"); break;
+    case 0: McuUtility_strcat(buf, bufSize, (unsigned char*)", stop: 1"); break;
+    case 1: McuUtility_strcat(buf, bufSize, (unsigned char*)", stop: 1.5"); break;
+    case 2: McuUtility_strcat(buf, bufSize, (unsigned char*)", stop: 2"); break;
+    default: McuUtility_strcat(buf, bufSize, (unsigned char*)", stop: ???"); break;
   }
-  McuUtility_strcat(buf, bufSize, "\r\n");
+  McuUtility_strcat(buf, bufSize, (unsigned char*)"\r\n");
 }
 
 /* Invoked when CDC interface received data from host */
 void tud_cdc_rx_cb(uint8_t itf) {
   (void)itf; /*not uesed */
-  static bool prevNewline = true;
   char buf[McuShellCdcDevice_CONFIG_RX_BUFFER_SIZE];
   uint32_t count = tud_cdc_read(buf, sizeof(buf));
   
@@ -227,28 +234,51 @@ void tud_cdc_rx_cb(uint8_t itf) {
   }
 }
 
+/*!
+ * \brief sets up USB Clock and USB interrupts
+ */
+static void usb_hardware_init(void) {
+#if McuLib_CONFIG_CPU_IS_KINETIS
+  #if CFG_TUSB_OS == OPT_OS_FREERTOS
+    /* If freeRTOS is used, IRQ priority is limit by max syscall ( smaller is higher ) */
+    NVIC_SetPriority(USB0_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY );
+  #endif
+  /* Set Clock for USB (is not enabled by default. */
+  SystemCoreClockUpdate();
+  CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U);
+#elif McuLib_CONFIG_CPU_IS_RPxxxx
+  /* hardware setup done in SDK */
+#else
+  #error "target not supported"
+#endif
+}
+
 #define RH_PORT_NUM  (0)
+
+static bool tiny_usb_init(void) {
+  tusb_rhport_init_t const rhport_init = {
+    .role  = TUSB_ROLE_DEVICE,
+    .speed = TUSB_SPEED_FULL,
+  };
+  return tusb_init(RH_PORT_NUM, &rhport_init); /* init device stack on native usb (roothub port0) */
+}
 
 static void UsbDeviceRestart(void) {
   tud_deinit(RH_PORT_NUM);
   McuWait_WaitOSms(100);
-  tud_init(RH_PORT_NUM);
+  tiny_usb_init();
 }
 
 #if McuShellCdcDevice_CONFIG_USE_FREERTOS
 static void cdcTask(void *pv) {
   for(;;) {
-    #if McuLib_CONFIG_CPU_IS_RPxxxx
     tud_task(); /* tinyusb (CDC) device task */
-    #endif
     vTaskDelay(pdMS_TO_TICKS(pdMS_TO_TICKS(McuShellCdcDevice_CONFIG_PROCESS_WAIT_TIME_MS)));
   }
 }
 #else
 void McuShellCdcDevice_Process(void) {
-  #if McuLib_CONFIG_CPU_IS_RPxxxx
   tud_task(); /* tinyusb (CDC) device task */
-  #endif
 }
 #endif
 
@@ -260,9 +290,9 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuShell_SendStatusStr((const unsigned char*)"  ready", McuShellCdcDevice_IsReady()?(const unsigned char*)"yes\r\n":(const unsigned char*)"no\r\n", io->stdOut);
   
   val = McuShellCdcDevice_GetLineState();
-  McuUtility_strcpy(buf, sizeof(buf), "0x");
+  McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"0x");
   McuUtility_strcatNum8Hex(buf, sizeof(buf), val);
-  McuUtility_strcat(buf, sizeof(buf), "\r\n");
+  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((const unsigned char*)"  line state", buf, io->stdOut);
 
   McuShellCdcDevice_GetLineCodingStr(buf, sizeof(buf));
@@ -291,7 +321,7 @@ uint8_t McuShellCdcDevice_ParseCommand(const unsigned char *cmd, bool *handled, 
     return ERR_OK;
   } else if (McuUtility_strncmp((char*)cmd, "McuShellCdc text ", sizeof("McuShellCdc text ")-1)==0) {
     *handled = true;
-    McuShellCdcDevice_WriteStr(cmd + sizeof("McuShellCdc text ")-1);
+    McuShellCdcDevice_WriteStr((char*)cmd + sizeof("McuShellCdc text ")-1);
     McuShellCdcDevice_WriteStr("\r\n");
     McuShellCdcDevice_Flush();
     return ERR_OK;
@@ -332,7 +362,8 @@ void McuShellCdcDevice_Init(void) {
     for(;;) {/* error */}
   }
 #endif
-  tud_init(RH_PORT_NUM); /* init device stack on native usb (roothub port0) */
+  usb_hardware_init();
+  tiny_usb_init();
 }
 
 #endif /* McuShellCdcDevice_CONFIG_IS_ENABLED */
