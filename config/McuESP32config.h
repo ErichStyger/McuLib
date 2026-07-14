@@ -59,7 +59,9 @@
 #endif
 
 /* UART connection to the ESP32 */
-#if   (McuESP32_CONFIG_SHELL_UART==McuShellUart_CONFIG_UART_K22FX512_UART1_E1_E0)  \
+#if McuESP32_CONFIG_SHELL_UART==McuShellUart_CONFIG_UART_NONE
+  /* no settings */
+#elif   (McuESP32_CONFIG_SHELL_UART==McuShellUart_CONFIG_UART_K22FX512_UART1_E1_E0)  \
    || (McuESP32_CONFIG_SHELL_UART==McuShellUart_CONFIG_UART_K22FN512_UART1_E1_E0)
   #include "fsl_uart.h"
   #define McuESP32_CONFIG_UART_DEVICE                   UART1
@@ -77,6 +79,8 @@
   #define McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT    kCLOCK_CoreSysClk
   #define McuESP32_CONFIG_UART_IRQ_HANDLER              UART1_RX_TX_IRQHandler
   #define McuESP32_CONFIG_UART_BAUDRATE                 115200
+#else
+  #error "configuration not supported"
 #endif
 
 #endif /* MCUESP32CONFIG_H_ */
