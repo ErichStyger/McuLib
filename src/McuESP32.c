@@ -416,7 +416,7 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
   return ERR_OK;
 }
 
-static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module and coming from the UART of the ESP32 */
+static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module */
   unsigned char ch;
   BaseType_t res;
   McuShell_ConstStdIOType *io;

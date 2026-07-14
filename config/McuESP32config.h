@@ -34,6 +34,7 @@
     #define McuESP32_CONFIG_ENABLE_CTRL_PINS_CLOCK()    /*!< Enables port clock used by control pins */ \
       CLOCK_EnableClock(kCLOCK_PortA);
   #endif
+  /* EN pin on ESP32 */
   #ifndef McuESP32_CONFIG_EN_GPIO
     #define McuESP32_CONFIG_EN_GPIO  GPIOA
   #endif
@@ -44,6 +45,7 @@
     #define McuESP32_CONFIG_EN_PIN   12
   #endif
 
+  /* IO0 pin on ESP32 */
   #ifndef McuESP32_CONFIG_RST_GPIO
     #define McuESP32_CONFIG_RST_GPIO  GPIOA
   #endif
