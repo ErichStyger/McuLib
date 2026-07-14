@@ -529,6 +529,7 @@ static void InitPins(void) {
 #if McuESP32_CONFIG_USE_CTRL_PINS
   McuGPIO_Config_t gpioConfig;
 
+  McuESP32_CONFIG_ENABLE_CTRL_PINS_CLOCK();
   McuGPIO_GetDefaultConfig(&gpioConfig);
   gpioConfig.isInput = true;
   gpioConfig.hw.gpio = McuESP32_CONFIG_EN_GPIO;

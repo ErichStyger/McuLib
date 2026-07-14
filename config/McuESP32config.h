@@ -30,6 +30,10 @@
 
 #if McuESP32_CONFIG_USE_CTRL_PINS
   /* control signal pin definition */
+  #ifndef McuESP32_CONFIG_ENABLE_CTRL_PINS_CLOCK
+    #define McuESP32_CONFIG_ENABLE_CTRL_PINS_CLOCK()    /*!< Enables port clock used by control pins */ \
+      CLOCK_EnableClock(kCLOCK_PortA);
+  #endif
   #ifndef McuESP32_CONFIG_EN_GPIO
     #define McuESP32_CONFIG_EN_GPIO  GPIOA
   #endif
