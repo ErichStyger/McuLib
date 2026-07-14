@@ -71,6 +71,7 @@ file(GLOB MCULIBFILES
   src/McuSemihost.c
   src/McuShell.c
   src/McuShellUart.c
+  src/McuShellCdcDevice.c
   src/McuSHT31.c
   src/McuSHT40.c
   src/McuSPI.c

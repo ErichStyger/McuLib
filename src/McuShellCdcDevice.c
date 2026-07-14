@@ -11,7 +11,6 @@
  * \file
  * \brief Implementation of McuShellCdcDevice module.
  */
-
 #include "McuLib.h"
 #if McuShellCdcDevice_CONFIG_IS_ENABLED
 #include "McuShellCdcDevice.h"
@@ -23,9 +22,7 @@
 #include "McuRB.h"
 #include "McuWait.h"
 #include "McuXFormat.h"
-#if McuLib_CONFIG_CPU_IS_RPxxxx
-  #include "tusb.h"
-#endif
+#include "tusb.h"
 
 #if McuShellCdcDevice_CONFIG_USE_FREERTOS
   static QueueHandle_t rxQueue;
