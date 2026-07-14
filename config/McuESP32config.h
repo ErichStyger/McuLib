@@ -9,6 +9,10 @@
 #ifndef MCUESP32CONFIG_H_
 #define MCUESP32CONFIG_H_
 
+#ifndef McuESP32_CONFIG_IS_ENABLED
+  #define McuESP32_CONFIG_IS_ENABLED                 (0)
+#endif
+
 #ifndef McuESP32_CONFIG_USE_USB_CDC
   #define McuESP32_CONFIG_USE_USB_CDC (0)
   /*!< 1: using USB CDC gateway for programming; 0: do not use USB CDC */

@@ -11,7 +11,7 @@
  */
 
 #include "McuESP32config.h"
-#if McuESP32_CONFIG_SHELL_UART!=McuShellUart_CONFIG_UART_NONE
+#if McuESP32_CONFIG_IS_ENABLED
 #include "McuESP32.h"
 #include "McuGPIO.h"
 #include "McuRTOS.h"
@@ -580,4 +580,4 @@ void McuESP32_Init(void) {
     for(;;){} /* error! probably out of memory */
   }
 }
-#endif /* #if McuESP32_CONFIG_SHELL_UART */
+#endif /* #if McuESP32_CONFIG_IS_ENABLED */
