@@ -255,6 +255,20 @@ static void usb_hardware_init(void) {
 
 #define RH_PORT_NUM  (0)
 
+#if McuLib_CONFIG_CPU_IS_KINETIS
+  //--------------------------------------------------------------------+
+  // Forward USB interrupt events to TinyUSB IRQ Handler
+  //--------------------------------------------------------------------+
+  void USB0_IRQHandler(void) {
+  #if CFG_TUH_ENABLED
+    tuh_int_handler(RH_PORT_NUM);
+  #endif
+  #if CFG_TUD_ENABLED
+    tud_int_handler(RH_PORT_NUM);
+  #endif
+  }
+#endif
+
 static bool tiny_usb_init(void) {
   tusb_rhport_init_t const rhport_init = {
     .role  = TUSB_ROLE_DEVICE,
@@ -270,16 +284,21 @@ static void UsbDeviceRestart(void) {
 }
 
 #if McuShellCdcDevice_CONFIG_USE_FREERTOS
-static void cdcTask(void *pv) {
-  for(;;) {
-    tud_task(); /* tinyusb (CDC) device task */
-    vTaskDelay(pdMS_TO_TICKS(pdMS_TO_TICKS(McuShellCdcDevice_CONFIG_PROCESS_WAIT_TIME_MS)));
+  static void cdcTask(void *pv) {
+    usb_hardware_init();
+    if (!tiny_usb_init()) {
+      McuLog_fatal("failed initializing tinyusb");
+      for(;;) { /* error */}
+    }
+    for(;;) {
+      tud_task(); /* tinyusb (CDC) device task */
+      vTaskDelay(pdMS_TO_TICKS(pdMS_TO_TICKS(McuShellCdcDevice_CONFIG_PROCESS_WAIT_TIME_MS)));
+    }
   }
-}
 #else
-void McuShellCdcDevice_Process(void) {
-  tud_task(); /* tinyusb (CDC) device task */
-}
+  void McuShellCdcDevice_Process(void) {
+    tud_task(); /* tinyusb (CDC) device task */
+  }
 #endif
 
 static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
@@ -362,8 +381,6 @@ void McuShellCdcDevice_Init(void) {
     for(;;) {/* error */}
   }
 #endif
-  usb_hardware_init();
-  tiny_usb_init();
 }
 
 #endif /* McuShellCdcDevice_CONFIG_IS_ENABLED */
