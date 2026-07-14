@@ -71,7 +71,6 @@ file(GLOB MCULIBFILES
   src/McuSemihost.c
   src/McuShell.c
   src/McuShellUart.c
-  src/McuShellCdcDevice.c
   src/McuSHT31.c
   src/McuSHT40.c
   src/McuSPI.c
@@ -161,3 +160,16 @@ target_include_directories(
   ./Modbus
   ./RNet
  )
+
+if(CONFIG_USE_TINYUSB)
+  message(STATUS "tinyusb stack enabled in McuLib, adding include to ${TINYUSB_DIR} with config in ${TINYUSB_CONFIG_DIR}")
+  target_sources(McuLib PRIVATE
+    src/McuShellCdcDevice.c
+  )
+  # extra include if tinyusb is used
+  target_include_directories(McuLib
+    PRIVATE
+        ${TINYUSB_DIR}/src
+        ${TINYUSB_CONFIG_DIR}
+  )
+endif()
