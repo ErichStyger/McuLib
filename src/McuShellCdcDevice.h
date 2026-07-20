@@ -101,6 +101,12 @@ bool McuShellCdcDevice_IsConnected(void); /* note: connection status might not b
 void McuShellCdcDevice_SetBufferRxCharCallback(void (*buffer_rx_char_cb)(char ch));
 
 /*!
+ * \brief Set callback for RTS/CTS changes
+ * \param callback Callback indicating RTS and CTS settings
+ */
+void McuShellCdcDevice_SetRtsCtsCallback(void (*callback)(bool rts, bool cts));
+
+/*!
  * \brief Parses shell commands handled by this module.
  * \param cmd Command string.
  * \param handled Set to true if command is handled.

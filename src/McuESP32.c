@@ -19,9 +19,6 @@
 #include "McuWait.h"
 #include "McuLog.h"
 #include "McuShellUart.h"
-#if McuESP32_CONFIG_USE_USB_CDC
-  #include "virtual_com.h"
-#endif
 
 #if McuESP32_CONFIG_USE_CTRL_PINS
   static McuGPIO_Handle_t McuESP32_RF_EN_Pin;  /* pin pulled LOW to reset the module */
@@ -41,8 +38,22 @@ static QueueHandle_t uartTxQueue;  /* Tx to ESP32 module */
   static McuESP32_USB_PrgMode_e McuESP32_UsbPrgMode = McuESP32_USB_PRG_MODE_AUTO;
   static bool McuESP32_IsProgramming = false; /* if we are currently programming the ESP32 */
   static bool McuESP32_ScheduleReset = true; /* do an initial reset at restart time */
+  static McuShell_ConstStdIOType *McuESP32_UsbCdcIo = NULL; /* I/O handler to be used for USB CDC. Configure with McuESP32_SetUsbCdcStdio() */
+  static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP_SetUsbCdcIsConnectedCallback() */
 #endif
-static bool McuESP32_CopyUartToShell = true; /* if we copy the ESP32 UART to the Shell */
+static bool McuESP32_CopyUartToShell = McuESP32_CONFIG_UART_RX_TO_SHELL; /* if we copy the ESP32 UART to the Shell configured with McuESP32_SetRxFromESPStdio() */
+
+#if McuESP32_CONFIG_USE_USB_CDC
+void McuESP_SetUsbCdcIsConnectedCallback(bool (*callback)(void)) {
+  McuESP32_UsbIsConnected = callback;
+}
+#endif
+
+#if McuESP32_CONFIG_USE_USB_CDC
+void McuESP32_SetUsbCdcStdio(McuShell_ConstStdIOTypePtr stdio) {
+  McuESP32_UsbCdcIo = stdio;
+}
+#endif
 
 /* Below is the I/O handler for the console: data from the ESP is sent to that stdout (e.g. shell console).
  * Optionally with McuESP32_CONFIG_USE_USB_CDC enabled all CDC data is sent to the ESP32 as well.
@@ -109,7 +120,7 @@ static void DeassertBootloaderMode(void) {
  * 00> State: 0, DtrRts: 0
  */
 
-void McuESP32_UartState_Callback(uint8_t state) { /* callback for DTR and RTS lines */
+void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and RTS lines */
   static uint8_t prevState = -1;
   static uint8_t prevPrevState = -1;
   uint8_t DtrRts;
@@ -117,6 +128,7 @@ void McuESP32_UartState_Callback(uint8_t state) { /* callback for DTR and RTS li
 #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
   McuLog_trace("state: %d, prev: %d, prevprev: %d", state, prevState, prevPrevState);
 #endif
+  uint8_t state = (rts<<1)|dtr; /* map it to set of bits */
   if (state != prevState) {
     if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_AUTO || McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_ON) {
       /*
@@ -130,7 +142,7 @@ void McuESP32_UartState_Callback(uint8_t state) { /* callback for DTR and RTS li
       if ((state&1)==1) { /* DTR */
         DtrRts |= 2; /* DTR set */
       }
-      if ((state&2)==2) { /* DTR */
+      if ((state&2)==2) { /* RTS */
         DtrRts |= 1; /* RTS set */
       }
     #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
@@ -142,35 +154,35 @@ void McuESP32_UartState_Callback(uint8_t state) { /* callback for DTR and RTS li
           DeassertReset();
           McuWait_Waitus(100); /* block for a short time (in the ISR!!!) ==> should have a 100 uF added to the reset line */
           DeassertBootloaderMode();
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
+        #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
          McuLog_trace("Release both: %d", DtrRts);
-#endif
+        #endif
           break;
         case 1:
           AssertBootloaderMode();
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
+        #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
           McuLog_trace("assert BL: %d", DtrRts);
-#endif
+        #endif
           break;
         case 2:
           if (McuGPIO_IsLow(McuESP32_RF_EN_Pin)) {
             if (McuGPIO_IsLow(McuESP32_RF_IO0_Pin)) {
               McuESP32_IsProgramming = true; /* the DeassertReset() below will enter bootloader mode */
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
+            #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
               McuLog_trace("Enter Bootloader Mode");
-#endif
+            #endif
             } else {
               McuESP32_IsProgramming = false; /* the DeassertReset() below will do a reset without bootloader */
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
+            #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
               McuLog_trace("Reset");
-#endif
+            #endif
             }
           }
           DeassertReset();
           McuWait_Waitus(100); /* block for a short time (in the ISR!!!) ==> should have a 100 uF added to the reset line */
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
+        #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
           McuLog_trace("release reset: %d", DtrRts);
-#endif
+        #endif
           break;
         case 3:
           AssertReset();
@@ -182,9 +194,9 @@ void McuESP32_UartState_Callback(uint8_t state) { /* callback for DTR and RTS li
         // State: 0 DtrRts: 0 Release both: 0
         // State: 2 DtrRts: 1 assert BL: 1
         // State: 0 DtrRts: 0 Release both: 0
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
+      #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
         McuLog_info("Request Reset");
-#endif
+      #endif
         McuESP32_ScheduleReset = true; /* cannot do reset sequence here, as called from an interrupt, so we cannot block */
         McuESP32_IsProgramming = false;
       }
@@ -193,7 +205,7 @@ void McuESP32_UartState_Callback(uint8_t state) { /* callback for DTR and RTS li
     prevState = state;
   } /* if state!=prevState */
 }
-#endif
+#endif /* McuESP32_CONFIG_USE_USB_CDC */
 
 /*********************************************************************************************************/
 /* Stdio Handler for sending text to the ESP32 */
@@ -426,8 +438,10 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
     res = xQueueReceive(uartRxQueue, &ch, portMAX_DELAY);
     if (res==pdPASS) {
   #if McuESP32_CONFIG_USE_USB_CDC
-      if (USB_CdcIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
-        USB_CdcStdio.stdOut(ch); /* forward to USB CDC and the programmer on the host */
+      if (McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
+        if (McuESP32_UsbCdcIo!=NULL) {
+          McuESP32_UsbCdcIo->stdOut(ch); /* forward to USB CDC and the programmer on the host */
+        }
       }
   #endif
       if (   McuESP32_CopyUartToShell
@@ -474,9 +488,9 @@ static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 mo
       }
     } while (res==pdPASS);
 #if McuESP32_CONFIG_USE_USB_CDC
-    while (USB_CdcStdio.keyPressed()) { /* check USB CDC data stream */
+    while (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbCdcIo->keyPressed()) { /* check USB CDC data stream */
       workToDo = true;
-      USB_CdcStdio.stdIn(&ch); /* read byte */
+      McuESP32_UsbCdcIo->stdIn(&ch); /* read byte */
       McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, &ch, 1); /* send to ESP */
       /* check if we can copy the USB CDC data to shell console too */
       if (McuESP32_CopyUartToShell && !McuESP32_IsProgramming) {
@@ -559,7 +573,7 @@ void McuESP32_Init(void) {
   if (xTaskCreate(
       UartRxTask,  /* pointer to the task */
       "ESP32UartRx", /* task name for kernel awareness debugging */
-      500/sizeof(StackType_t), /* task stack size */
+      1024/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
       tskIDLE_PRIORITY+4,  /* initial priority */
       (TaskHandle_t*)NULL /* optional task handle to create */
@@ -571,7 +585,7 @@ void McuESP32_Init(void) {
   if (xTaskCreate(
       UartTxTask,  /* pointer to the task */
       "ESP32UartTx", /* task name for kernel awareness debugging */
-      500/sizeof(StackType_t), /* task stack size */
+      1024/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
       tskIDLE_PRIORITY+4,  /* initial priority */
       (TaskHandle_t*)NULL /* optional task handle to create */

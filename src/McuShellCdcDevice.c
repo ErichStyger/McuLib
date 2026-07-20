@@ -277,6 +277,32 @@ static bool tiny_usb_init(void) {
   return tusb_init(RH_PORT_NUM, &rhport_init); /* init device stack on native usb (roothub port0) */
 }
 
+static void (*McuShellCdcDevice_RtsCtsCallback)(bool rts, bool cts) = NULL;
+
+void McuShellCdcDevice_SetRtsCtsCallback(void (*callback)(bool rts, bool cts)) {
+  McuShellCdcDevice_RtsCtsCallback = callback;
+}
+
+/* callback called from tinyusb stack to indicate DTR/RTS changes */
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
+  // http://markdingst.blogspot.com/2014/06/implementing-usb-communication-device.html
+  // bit 0: Indicates to DCE if DTE is present or not. This signal corresponds to V.24 signal 108/2 and RS232 signal DTR.
+  // 0: DTE is not present.
+  // 1: DTE is present
+
+  // bit 1: Carrier control for half duplex modems. This signal corresponds to V.24 signal 105 and RS232 signal RTS.
+  //  0: Deactivate carrier.
+  //  1: Activate carrier.
+  //  The device ignores the value of this bit when operating in full duplex mode.
+  /*
+   * Keep this callback short. If substantial processing is needed,
+   * set an event flag and handle it in the application task.
+   */
+  if (McuShellCdcDevice_RtsCtsCallback!=NULL) {
+    McuShellCdcDevice_RtsCtsCallback(dtr, rts);
+  }
+}
+
 static void UsbDeviceRestart(void) {
   tud_deinit(RH_PORT_NUM);
   McuWait_WaitOSms(100);

@@ -25,7 +25,12 @@
 
 #ifndef McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
   #define McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS   (0 && McuESP32_CONFIG_USE_CTRL_PINS)
-    /* if status of control signals shall be printed on McuLog channel */
+    /*!< if status of control signals shall be printed on McuLog channel */
+#endif
+
+#ifndef McuESP32_CONFIG_UART_RX_TO_SHELL
+  #define McuESP32_CONFIG_UART_RX_TO_SHELL   (0)
+    /*!< if the UART Rx data from the ESP shall be forwareded to the shell/IO configured with McuESP32_SetRxFromESPStdio()  */
 #endif
 
 #if McuESP32_CONFIG_USE_CTRL_PINS

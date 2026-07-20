@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 /* used to deal with USB CDC flow control pins */
-void McuESP32_UartState_Callback(uint8_t state);
+void McuESP32_UartState_Callback(bool dtr, bool rts);
 
 #include "McuShell.h"
 /*!
@@ -50,6 +50,18 @@ McuShell_ConstStdIOTypePtr McuESP32_GetRxFromESPStdio(void);
  * \return standard I/O handler
  */
 McuShell_ConstStdIOTypePtr McuESP32_GetTxToESPStdio(void);
+
+/*!
+ * \brief Set the callback which decides if USB CDC is connected or not.
+ * \param callback Function pointer to callback
+ */
+void McuESP_SetUsbCdcIsConnectedCallback(bool (*callback)(void));
+
+/*!
+ * \brief Set the standard I/O handler to be used for sending ESP32 Rx traffic to.
+ * \param stdio Standard I/O handler to be used.
+ */
+void McuESP32_SetUsbCdcStdio(McuShell_ConstStdIOTypePtr stdio);
 
 /*!
  * \brief Module de-initialization
