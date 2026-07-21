@@ -125,10 +125,10 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
   static uint8_t prevPrevState = -1;
   uint8_t DtrRts;
 
+  uint8_t state = (rts<<1)|dtr; /* map it to set of bits */
 #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
   McuLog_trace("state: %d, prev: %d, prevprev: %d", state, prevState, prevPrevState);
 #endif
-  uint8_t state = (rts<<1)|dtr; /* map it to set of bits */
   if (state != prevState) {
     if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_AUTO || McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_ON) {
       /*
