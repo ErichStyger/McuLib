@@ -39,13 +39,20 @@ static QueueHandle_t uartTxQueue;  /* Tx to ESP32 module */
   static bool McuESP32_IsProgramming = false; /* if we are currently programming the ESP32 */
   static bool McuESP32_ScheduleReset = true; /* do an initial reset at restart time */
   static McuShell_ConstStdIOType *McuESP32_UsbCdcIo = NULL; /* I/O handler to be used for USB CDC. Configure with McuESP32_SetUsbCdcStdio() */
-  static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP_SetUsbCdcIsConnectedCallback() */
+  static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP32_SetUsbCdcIsConnectedCallback() */
+  static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
 #endif
 static bool McuESP32_CopyUartToShell = McuESP32_CONFIG_UART_RX_TO_SHELL; /* if we copy the ESP32 UART to the Shell configured with McuESP32_SetRxFromESPStdio() */
 
 #if McuESP32_CONFIG_USE_USB_CDC
-void McuESP_SetUsbCdcIsConnectedCallback(bool (*callback)(void)) {
+void McuESP32_SetUsbCdcIsConnectedCallback(bool (*callback)(void)) {
   McuESP32_UsbIsConnected = callback;
+}
+#endif
+
+#if McuESP32_CONFIG_USE_USB_CDC
+void McuESP32_SetUsbFlushCallback(void (*callback)(void)) {
+  McuESP32_UsbFlush = callback;
 }
 #endif
 
@@ -441,8 +448,9 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
       if (McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
         if (McuESP32_UsbCdcIo!=NULL) {
           McuESP32_UsbCdcIo->stdOut(ch); /* forward to USB CDC and the programmer on the host */
-          void McuShellCdcDevice_Flush(void);
-          McuShellCdcDevice_Flush();
+          if (McuESP32_UsbFlush!=NULL) {
+            McuESP32_UsbFlush();
+          }
         }
       }
   #endif

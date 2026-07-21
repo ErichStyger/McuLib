@@ -20,9 +20,6 @@
 extern "C" {
 #endif
 
-/* used to deal with USB CDC flow control pins */
-void McuESP32_UartState_Callback(bool dtr, bool rts);
-
 #include "McuShell.h"
 /*!
  * \brief Shell parser routine.
@@ -55,7 +52,20 @@ McuShell_ConstStdIOTypePtr McuESP32_GetTxToESPStdio(void);
  * \brief Set the callback which decides if USB CDC is connected or not.
  * \param callback Function pointer to callback
  */
-void McuESP_SetUsbCdcIsConnectedCallback(bool (*callback)(void));
+void McuESP32_SetUsbCdcIsConnectedCallback(bool (*callback)(void));
+
+/*!
+ * \brief Used to deal with USB CDC flow control pins.
+ * \param dtr State of DTR signal.
+ * \param rts State of RTS signal.
+ */
+void McuESP32_UartState_Callback(bool dtr, bool rts);
+
+/*!
+ * \brief Sets the USB flush callback, required for idf.py flash operations.
+ * \param callback Callback to be called for a flush operation.
+ */
+void McuESP32_SetUsbFlushCallback(void (*callback)(void));
 
 /*!
  * \brief Set the standard I/O handler to be used for sending ESP32 Rx traffic to.
