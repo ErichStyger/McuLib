@@ -258,9 +258,9 @@ static uint8_t McuESP32_PrintHelp(const McuShell_StdIOType *io) {
   McuShell_SendHelpStr((unsigned char*)"esp32", (unsigned char*)"Group of ESP32 WiFi module commands\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Shows ESP32 help or status\r\n", io->stdOut);
 #if McuESP32_CONFIG_USE_CTRL_PINS
-  McuShell_SendHelpStr((unsigned char*)"  reset", (unsigned char*)"Perform reset sequence\r\n", io->stdOut);
-  McuShell_SendHelpStr((unsigned char*)"  assert|deassart reset", (unsigned char*)"Assert or deassert reset pin\r\n", io->stdOut);
-  McuShell_SendHelpStr((unsigned char*)"  assert|deassart bl", (unsigned char*)"Assert or deassert bootloader pin\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  reset", (unsigned char*)"Perform reset sequence with pulling low/assert EN and release/deassert\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  assert|deassart reset", (unsigned char*)"Assert or deassert reset (EN) pin\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  assert|deassart bl", (unsigned char*)"Assert or deassert bootloader (IO0) pin\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  prg start|stop", (unsigned char*)"Start and stop programming sequence\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  uarttoshell on|off", (unsigned char*)"Copy UART Rx to Shell\r\n", io->stdOut);
 #if McuESP32_CONFIG_USE_USB_CDC
@@ -441,6 +441,8 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
       if (McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
         if (McuESP32_UsbCdcIo!=NULL) {
           McuESP32_UsbCdcIo->stdOut(ch); /* forward to USB CDC and the programmer on the host */
+          void McuShellCdcDevice_Flush(void);
+          McuShellCdcDevice_Flush();
         }
       }
   #endif
@@ -545,7 +547,7 @@ static void InitPins(void) {
 
   McuESP32_CONFIG_ENABLE_CTRL_PINS_CLOCK();
   McuGPIO_GetDefaultConfig(&gpioConfig);
-  gpioConfig.isInput = true;
+  gpioConfig.isInput = true; /* we are initializeing pins as input: that way we do not drive the signals and do not touch them */
   gpioConfig.hw.gpio = McuESP32_CONFIG_EN_GPIO;
   gpioConfig.hw.port = McuESP32_CONFIG_EN_PORT;
   gpioConfig.hw.pin = McuESP32_CONFIG_EN_PIN;

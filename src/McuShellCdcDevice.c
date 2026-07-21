@@ -303,6 +303,11 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
   }
 }
 
+void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding) {
+  McuLog_info("tinyusb: request for %d baud", coding->bit_rate);
+  //uart_set_baudrate(coding->bit_rate);
+}
+
 static void UsbDeviceRestart(void) {
   tud_deinit(RH_PORT_NUM);
   McuWait_WaitOSms(100);
@@ -318,7 +323,9 @@ static void UsbDeviceRestart(void) {
     }
     for(;;) {
       tud_task(); /* tinyusb (CDC) device task */
-      vTaskDelay(pdMS_TO_TICKS(pdMS_TO_TICKS(McuShellCdcDevice_CONFIG_PROCESS_WAIT_TIME_MS)));
+      #if 0 /* no need to wait, as tinyUSB will block inside tud_task() and waits for data */
+        vTaskDelay(pdMS_TO_TICKS(pdMS_TO_TICKS(McuShellCdcDevice_CONFIG_PROCESS_WAIT_TIME_MS)));
+      #endif
     }
   }
 #else

@@ -36,6 +36,7 @@ McuShell_ConstStdIOTypePtr McuShellCdcDevice_GetStdio(void);
  * \brief Flushes pending USB CDC output data.
  */
 void McuShellCdcDevice_Flush(void);
+
 /*!
  * \brief Writes a buffer and flushes it immediately.
  * \param buf Pointer to bytes to write.
