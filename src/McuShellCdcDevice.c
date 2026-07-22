@@ -217,7 +217,7 @@ static void McuShellCdcDevice_GetLineCodingStr(unsigned char *buf, size_t bufSiz
 
 /* Invoked when CDC interface received data from host */
 void tud_cdc_rx_cb(uint8_t itf) {
-  (void)itf; /*not uesed */
+  (void)itf; /*not used */
   char buf[McuShellCdcDevice_CONFIG_RX_BUFFER_SIZE];
   uint32_t count = tud_cdc_read(buf, sizeof(buf));
   
