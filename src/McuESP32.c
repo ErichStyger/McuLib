@@ -438,33 +438,47 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
 static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module */
   unsigned char ch;
   BaseType_t res;
-  McuShell_ConstStdIOType *io;
-
+ 
   (void)pv; /* not used */
   for(;;) {
     res = xQueueReceive(uartRxQueue, &ch, portMAX_DELAY);
-    if (res==pdPASS) {
+    if (res==pdPASS) { /* received something */
   #if McuESP32_CONFIG_USE_USB_CDC
-      if (McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
-        if (McuESP32_UsbCdcIo!=NULL) {
-          McuESP32_UsbCdcIo->stdOut(ch); /* forward to USB CDC and the programmer on the host */
+      if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
+        /* receive multiple characters into a buffer first, then send it */  
+          unsigned char buf[64];
+          size_t bufIdx = 0;
+          buf[bufIdx++] = ch;
+          do {
+            res = xQueueReceive(uartRxQueue, &ch, pdMS_TO_TICKS(100)); /* check with timeout. After timeout, we will write and flush */
+            if (res==pdPASS) {
+              buf[bufIdx++] = ch;
+            } else { /* timeout */
+              break; /* leave loop */
+            }
+          } while(bufIdx<sizeof(buf));
+          for(int i=0; i<bufIdx; i++) {
+            McuESP32_UsbCdcIo->stdOut(buf[i]); /* forward to USB CDC and the programmer on the host */
+          }
           if (McuESP32_UsbFlush!=NULL) {
             McuESP32_UsbFlush();
           }
-        }
-      }
+      } /* forward to USB CDC */
   #endif
+  #if 0 /* \TODO */
       if (   McuESP32_CopyUartToShell
   #if McuESP32_CONFIG_USE_USB_CDC
           && !McuESP32_IsProgramming
   #endif
          )
       { /* only write to shell if not in programming mode. Programming mode might crash RTT */
+        McuShell_ConstStdIOType *io;
         io = McuESP32_GetRxFromESPStdio();
         if (io!=NULL) {
           McuShell_SendCh(ch, io->stdOut); /* forward character */
         }
       }
+  #endif
     } else {
 #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
       McuLog_fatal("ESP32 UartRxTask queue failed");
