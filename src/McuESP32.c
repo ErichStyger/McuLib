@@ -274,6 +274,10 @@ static void QueueTxChar(unsigned char ch) {
 #endif
 }
 
+uint32_t McuESP32_SendTxData(const void *data, uint32_t nofBytes) {
+  return xStreamBufferSend(txStreamBuffer, data, nofBytes, portMAX_DELAY);
+}
+
 static void Dummy_ReadChar(uint8_t *c) {
   *c = '\0'; /* nothing received */
 }
@@ -595,9 +599,18 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
     if (size!=0) { /* received something */
   #if McuESP32_CONFIG_USE_USB_CDC
       if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
+        #if 1
+        uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* using private interface \todo */
+
+        uint32_t nof = McuShellCdcDevice_Send(buffer, size);
+        if (nof!=size) {
+          for(;;) {}
+        }
+        #else
         for(int i=0; i<size; i++) {
           McuESP32_UsbCdcIo->stdOut(buffer[i]); /* forward to USB CDC and the programmer on the host */
         }
+        #endif
         if (McuESP32_UsbFlush!=NULL) {
           McuESP32_UsbFlush();
         }
@@ -808,7 +821,7 @@ void McuESP32_Init(void) {
       "ESP32UartRx", /* task name for kernel awareness debugging */
       1024/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
-      tskIDLE_PRIORITY+5,  /* initial priority */
+      tskIDLE_PRIORITY+4,  /* initial priority */
       (TaskHandle_t*)NULL /* optional task handle to create */
     ) != pdPASS)
   {
@@ -820,7 +833,7 @@ void McuESP32_Init(void) {
       "ESP32UartTx", /* task name for kernel awareness debugging */
       1024/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
-      tskIDLE_PRIORITY+5,  /* initial priority */
+      tskIDLE_PRIORITY+4,  /* initial priority */
       (TaskHandle_t*)NULL /* optional task handle to create */
     ) != pdPASS)
   {

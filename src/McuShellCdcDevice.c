@@ -70,6 +70,10 @@ static void McuShellCdcDevice_SendChar(unsigned char ch) {
   } /* if */
 }
 
+uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes) {
+  return tud_cdc_write(buf, nofBytes);
+}
+
 static void McuShellCdcDevice_ReceiveChar(uint8_t *c) {
   uint8_t ch;
 
@@ -222,15 +226,23 @@ void tud_cdc_rx_cb(uint8_t itf) {
   uint32_t count = tud_cdc_read(buf, sizeof(buf));
   
   if (count>0) {
-    if (McuShellCdcDevice_callbacks.buffer_rx_char!=NULL) {
   #if McuShellCdcDevice_CONFIG_USE_FREERTOS
+    if (McuShellCdcDevice_callbacks.buffer_rx_char!=NULL) {
+      #if 1
+      uint32_t McuESP32_SendTxData(const void *data, uint32_t nofBytes);
+
+      if (McuESP32_SendTxData(buf, count)!=count) {
+        for(;;){}
+      }
+      #else
       for(int i=0; i<count; i++) {
         McuShellCdcDevice_callbacks.buffer_rx_char(buf[i]);
       }
-  #else
-      McuRB_Putn(rxRingBuffer, buf, count);
-  #endif
+      #endif
     }
+  #else
+    McuRB_Putn(rxRingBuffer, buf, count);
+  #endif
   }
 }
 
