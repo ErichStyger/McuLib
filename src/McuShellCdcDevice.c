@@ -316,7 +316,7 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
 }
 
 void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding) {
-  McuLog_info("tinyusb: request for %d baud", coding->bit_rate);
+  //McuLog_info("tinyusb: request for %d baud", coding->bit_rate);
   //uart_set_baudrate(coding->bit_rate);
 }
 
