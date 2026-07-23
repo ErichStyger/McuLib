@@ -34,6 +34,11 @@
     /*!< 1: events for task ready are generated. 0: no task ready events are generated */
 #endif
 
+#ifndef McuSystemView_CONFIG_GENERATE_TASK_NOTIFY_EVENTS
+  #define McuSystemView_CONFIG_GENERATE_TASK_NOTIFY_EVENTS  (1)
+    /*!< 1: events for task task notification are generated. 0: no task task events are generated */
+#endif
+
 #ifndef McuSystemView_CONFIG_USE_STATIC_BUFFER
   #define McuSystemView_CONFIG_USE_STATIC_BUFFER  (1)
     /*!< 1: Use a static buffer to generate events instead of a buffer on the stack. 0: Use a buffer on the stack */
