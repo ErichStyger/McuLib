@@ -64,19 +64,6 @@ void McuESP32_SetUsbCdcStdio(McuShell_ConstStdIOTypePtr stdio) {
 }
 #endif
 
-/* Below is the I/O handler for the console: data from the ESP is sent to that stdout (e.g. shell console).
- * Optionally with McuESP32_CONFIG_USE_USB_CDC enabled all CDC data is sent to the ESP32 as well.
- */
-static McuShell_ConstStdIOType *McuESP32_RxFromESPStdIO = NULL; /* can be overwritten with McuESP32_SetRxFromESPStdio(); */
-
-void McuESP32_SetRxFromESPStdio(McuShell_ConstStdIOTypePtr stdio) {
- McuESP32_RxFromESPStdIO = stdio;
-}
-
-McuShell_ConstStdIOTypePtr McuESP32_GetRxFromESPStdio(void) {
-  return McuESP32_RxFromESPStdIO;
-}
-
 #if McuESP32_CONFIG_USE_CTRL_PINS
 static void AssertReset(void) {
   McuGPIO_SetAsOutput(McuESP32_RF_EN_Pin, false); /* output, LOW */
@@ -534,7 +521,7 @@ void McuESP32_Init(void) {
       "ESP32UartRx", /* task name for kernel awareness debugging */
       1024/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
-      tskIDLE_PRIORITY+4,  /* initial priority */
+      McuESP32_CONFIG_PROCESS_PRIORITY,  /* initial priority */
       (TaskHandle_t*)NULL /* optional task handle to create */
     ) != pdPASS)
   {
@@ -546,7 +533,7 @@ void McuESP32_Init(void) {
       "ESP32UartTx", /* task name for kernel awareness debugging */
       1024/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
-      tskIDLE_PRIORITY+4,  /* initial priority */
+      McuESP32_CONFIG_PROCESS_PRIORITY,  /* initial priority */
       (TaskHandle_t*)NULL /* optional task handle to create */
     ) != pdPASS)
   {

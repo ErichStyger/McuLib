@@ -28,9 +28,9 @@
     /*!< if status of control signals shall be printed on McuLog channel */
 #endif
 
-#ifndef McuESP32_CONFIG_UART_RX_TO_SHELL
-  #define McuESP32_CONFIG_UART_RX_TO_SHELL   (0)
-    /*!< if the UART Rx data from the ESP shall be forwarded to the shell/IO configured with McuESP32_SetRxFromESPStdio()  */
+#ifndef McuESP32_CONFIG_PROCESS_PRIORITY
+  #define McuESP32_CONFIG_PROCESS_PRIORITY    (configMAX_PRIORITIES-1)
+    /*!< FreeRTOS task priority for RX and TX task */
 #endif
 
 #if McuESP32_CONFIG_USE_CTRL_PINS
