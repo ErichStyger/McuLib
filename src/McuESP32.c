@@ -26,13 +26,14 @@
   static McuGPIO_Handle_t McuESP32_RF_IO0_Pin; /* pin pulled LOW to enable programming mode */
 #endif
 
-#define McuESP32_UART_RX_QUEUE_LENGTH                 (2*4096)
-#define McuESP32_UART_TX_QUEUE_LENGTH                 (2*4096)
+#define McuESP32_UART_RX_QUEUE_LENGTH                 (4096)
+#define McuESP32_UART_TX_QUEUE_LENGTH                 (4096)
 
 #if McuESP32_CONFIG_USE_QUEUE
   static QueueHandle_t uartRxQueue;  /* Rx from ESP32 module */
   static QueueHandle_t uartTxQueue;  /* Tx to ESP32 module, e.g. used by shell commands */
 #elif McuESP32_CONFIG_USE_STREAM_BUFFER
+  #define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16)
   static StreamBufferHandle_t rxStreamBuffer;
   static StreamBufferHandle_t txStreamBuffer;
 #else
@@ -150,7 +151,7 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
     * DTR  RTS  EN  GPIO0
     * 1    1    1   1
     * 0    0    1   1
-    * 1    0    0   0
+    * 1    0    0   1
     * 0    1    1   0
     */
   switch((dtr<<1)|rts) {
@@ -164,7 +165,7 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
       break;
     case 0b10:
       McuGPIO_SetAsOutput(McuESP32_RF_EN_Pin, false); /* output, LOW */
-      McuGPIO_SetAsOutput(McuESP32_RF_IO0_Pin, false); /* output, LOW */
+      McuGPIO_SetAsOutput(McuESP32_RF_IO0_Pin, true); /* output, HIGH */
       DeassertBootloaderMode();
       break;
     case 0b01:
@@ -331,7 +332,7 @@ void McuESP32_CONFIG_UART_IRQ_HANDLER(void) {
     }
   #elif McuESP32_CONFIG_USE_STREAM_BUFFER
     if (count!=0) {
-      unsigned char buf[16];
+      unsigned char buf[8];
       for(int i=0; i<count; i++) {
         buf[i] = McuESP32_CONFIG_UART_READ_BYTE(McuESP32_CONFIG_UART_DEVICE);
       }
@@ -589,28 +590,36 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
   }
 }
 #elif McuESP32_CONFIG_USE_STREAM_BUFFER
+
+static void sendData(const void *buffer, uint32_t size) {
+  #if 1
+  uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* using private interface \todo */
+
+  uint32_t nof = McuShellCdcDevice_Send(buffer, size);
+  if (nof!=size) {
+    for(;;) {}
+  }
+  #else
+  for(int i=0; i<size; i++) {
+    McuESP32_UsbCdcIo->stdOut(buffer[i]); /* forward to USB CDC and the programmer on the host */
+  }
+  #endif
+}
+
 static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module */
   size_t size;
-  unsigned char buffer[64];
+  unsigned char buffer[128];
  
   (void)pv; /* not used */
   for(;;) {
-    size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), portMAX_DELAY);
+    size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(50));
     if (size!=0) { /* received something */
   #if McuESP32_CONFIG_USE_USB_CDC
       if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
-        #if 1
-        uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* using private interface \todo */
-
-        uint32_t nof = McuShellCdcDevice_Send(buffer, size);
-        if (nof!=size) {
-          for(;;) {}
-        }
-        #else
-        for(int i=0; i<size; i++) {
-          McuESP32_UsbCdcIo->stdOut(buffer[i]); /* forward to USB CDC and the programmer on the host */
-        }
-        #endif
+        do {
+          sendData(buffer, size);
+          size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use shorter timeout */
+        } while(size>0);
         if (McuESP32_UsbFlush!=NULL) {
           McuESP32_UsbFlush();
         }
@@ -657,7 +666,7 @@ static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 mo
  
   (void)pv; /* not used */
   for(;;) {
-    size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), portMAX_DELAY);
+    size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(20));
     if (size!=0) { /* received something */
       McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, buffer, size); /* send to ESP */
     }
@@ -725,11 +734,11 @@ static void InitQueues(void) {
   }
   vQueueAddToRegistry(uartTxQueue, "ESP32UartTxQueue");
 #elif McuESP32_CONFIG_USE_STREAM_BUFFER
-  rxStreamBuffer = xStreamBufferCreate(McuESP32_UART_RX_QUEUE_LENGTH, 16);
+  rxStreamBuffer = xStreamBufferCreate(McuESP32_UART_RX_QUEUE_LENGTH, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
   if (rxStreamBuffer==NULL) {
     for(;;) {}
   }
-  txStreamBuffer = xStreamBufferCreate(McuESP32_UART_TX_QUEUE_LENGTH, 16);
+  txStreamBuffer = xStreamBufferCreate(McuESP32_UART_TX_QUEUE_LENGTH, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
   if (txStreamBuffer==NULL) {
     for(;;) {}
   }
