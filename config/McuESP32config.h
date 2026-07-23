@@ -18,6 +18,16 @@
   /*!< 1: using USB CDC gateway for programming; 0: do not use USB CDC */
 #endif
 
+#ifndef McuESP32_CONFIG_USE_STREAM_BUFFER
+  #define McuESP32_CONFIG_USE_STREAM_BUFFER        (McuLib_CONFIG_SDK_USE_FREERTOS)
+  /*!< 1: using FreeRTOS stream buffer for buffering; 0: use a FreeRTOS queue */
+#endif
+
+#ifndef McuESP32_CONFIG_USE_QUEUE
+  #define McuESP32_CONFIG_USE_QUEUE         (McuLib_CONFIG_SDK_USE_FREERTOS && !McuESP32_CONFIG_USE_STREAM_BUFFER)
+  /*!< 1: using FreeRTOS queues for buffering; 0: use a non-FreeRTOS ringbuffer */
+#endif
+
 #ifndef McuESP32_CONFIG_USE_CTRL_PINS
   #define McuESP32_CONFIG_USE_CTRL_PINS  (0)
     /*!< 1: Using RST and BL signals to load software; 0: only using the UART */
@@ -30,7 +40,7 @@
 
 #ifndef McuESP32_CONFIG_UART_RX_TO_SHELL
   #define McuESP32_CONFIG_UART_RX_TO_SHELL   (0)
-    /*!< if the UART Rx data from the ESP shall be forwareded to the shell/IO configured with McuESP32_SetRxFromESPStdio()  */
+    /*!< if the UART Rx data from the ESP shall be forwarded to the shell/IO configured with McuESP32_SetRxFromESPStdio()  */
 #endif
 
 #if McuESP32_CONFIG_USE_CTRL_PINS
@@ -108,9 +118,9 @@
     #define McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT  kCLOCK_BusClk
   #endif
   #define McuESP32_CONFIG_UART_IRQ_HANDLER              UART2_RX_TX_IRQHandler
-  #define McuESP32_CONFIG_CLEAR_STATUS_FLAGS            UART_ClearStatusFlags
-  #define McuESP32_CONFIG_CLEAR_EXTRA_STATUS_FLAGS      (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
-  #define McuESP32_CONFIG_HAS_FIFO                      (1)
+  #define McuESP32_CONFIG_UART_CLEAR_STATUS_FLAGS       UART_ClearStatusFlags
+  #define McuESP32_CONFIG_UART_CLEAR_EXTRA_STATUS_FLAGS (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
+  #define McuESP32_CONFIG_UART_HAS_FIFO                 (1)
   
   #ifndef McuESP32_CONFIG_DO_CONFIGURE_CLOCKS
     #define McuESP32_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
