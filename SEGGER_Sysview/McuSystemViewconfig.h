@@ -24,6 +24,11 @@
     /*!< 1: events for Stream Buffer are generated. 0: no Stream Buffer events are generated */
 #endif
 
+#ifndef McuSystemView_CONFIG_GENERATE_STREAMBUFFER_ISR_EVENTS
+  #define McuSystemView_CONFIG_GENERATE_STREAMBUFFER_ISR_EVENTS  (1)
+    /*!< 1: events for Stream Buffer from ISR are generated. 0: no Stream Buffer events are generated */
+#endif
+
 #ifndef McuSystemView_CONFIG_GENERATE_STEPTICK_EVENTS
   #define McuSystemView_CONFIG_GENERATE_STEPTICK_EVENTS  (1)
     /*!< 1: events for tickets steps are generated. 0: no ticket step events are generated */
