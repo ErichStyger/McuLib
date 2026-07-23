@@ -215,7 +215,7 @@ static void McuShellCdcDevice_GetLineCodingStr(unsigned char *buf, size_t bufSiz
   McuUtility_strcat(buf, bufSize, (unsigned char*)"\r\n");
 }
 
-/* Invoked when CDC interface received data from host */
+/* Invoked when CDC interface received data from host. Called from the cdc task */
 void tud_cdc_rx_cb(uint8_t itf) {
   (void)itf; /*not used */
   char buf[McuShellCdcDevice_CONFIG_RX_BUFFER_SIZE];
