@@ -45,7 +45,6 @@ static StreamBufferHandle_t txStreamBuffer;
   static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP32_SetUsbCdcIsConnectedCallback() */
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
 #endif
-static bool McuESP32_CopyUartToShell = McuESP32_CONFIG_UART_RX_TO_SHELL; /* if we copy the ESP32 UART to the Shell configured with McuESP32_SetRxFromESPStdio() */
 
 #if McuESP32_CONFIG_USE_USB_CDC
 void McuESP32_SetUsbCdcIsConnectedCallback(bool (*callback)(void)) {
@@ -304,12 +303,9 @@ static uint8_t McuESP32_PrintHelp(const McuShell_StdIOType *io) {
   McuShell_SendHelpStr((unsigned char*)"  assert|deassart bl", (unsigned char*)"Assert or deassert bootloader (IO0) pin\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  prg start|stop", (unsigned char*)"Start and stop programming sequence\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  uarttoshell on|off", (unsigned char*)"Copy UART Rx to Shell\r\n", io->stdOut);
-#if McuESP32_CONFIG_USE_USB_CDC
-  McuShell_SendHelpStr((unsigned char*)"  usbprg auto|on|off", (unsigned char*)"Use USB CDC to UART for programming\r\n", io->stdOut);
-#endif
+  McuShell_SendHelpStr((unsigned char*)"  usbprg auto|on|off", (unsigned char*)"Use USB CDC-UART bridge for programming\r\n", io->stdOut);
 #endif
   McuShell_SendHelpStr((unsigned char*)"  send <cmd>", (unsigned char*)"Send a command or string to the ESP32 (non-blocking), <cmd> can be double quoted\r\n", io->stdOut);
-  McuShell_SendHelpStr((unsigned char*)"  sendwait <ms> <cmd>", (unsigned char*)"Send a command or string to the ESP32 and wait ms time for the response, cmd can be double quoted\r\n", io->stdOut);
   return ERR_OK;
 }
 
@@ -328,14 +324,8 @@ static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  IO0", buf, io->stdOut);
 #endif
-#if McuESP32_CONFIG_USE_USB_CDC
   if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_ON) {
-    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"on");
-    if (McuESP32_CopyUartToShell) {
-      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)", nothing will be copied to shell.\r\n");
-    } else {
-      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
-    }
+    McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"on\r\n");
   } else if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_AUTO) {
     McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"auto\r\n");
   } else if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_OFF) {
@@ -345,9 +335,6 @@ static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
   }
   McuShell_SendStatusStr((unsigned char*)"  usbprg", buf, io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  programming", McuESP32_IsProgramming?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
-#endif
-
-  McuShell_SendStatusStr((unsigned char*)"  uarttoshell", McuESP32_CopyUartToShell?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   return ERR_OK;
 }
 
@@ -399,14 +386,6 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
     DeassertReset();
     return ERR_OK;
 #endif
-  } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 uarttoshell on")==0) {
-    *handled = true;
-    McuESP32_CopyUartToShell = true;
-    return ERR_OK;
-  } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 uarttoshell off")==0) {
-    *handled = true;
-    McuESP32_CopyUartToShell = false;
-    return ERR_OK;
 #if McuESP32_CONFIG_USE_USB_CDC
   } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 usbprg auto")==0) {
     *handled = true;
@@ -435,35 +414,6 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
     }
     McuShell_SendStr(p, McuESP32_GetTxToESPStdio()->stdOut);
     McuShell_SendStr((unsigned char*)"\r\n", McuESP32_GetTxToESPStdio()->stdOut);
-    return ERR_OK;
-  } else if (McuUtility_strncmp((char*)cmd, (char*)"esp32 sendwait ", sizeof("esp32 sendwait ")-1)==0) {
-    /* this sends a command, but captures output with a timeout so it can show it on the io used for the command, e.g. on RTT */
-    uint32_t ms;
-
-    *handled = true;
-    p = cmd+sizeof("esp32 sendwait ")-1;
-    if (McuUtility_ScanDecimal32uNumber(&p, &ms)!=ERR_OK) {
-      return ERR_FAILED;
-    }
-    while(*p==' ') {
-      p++; /* skip spaces */
-    }
-    if (*p=='"') { /* double-quoted command: it can contain multiple commands */
-      if (McuUtility_ScanDoubleQuotedString(&p, cmd_buffer, sizeof(cmd_buffer))!=ERR_OK) {
-        return ERR_FAILED;
-      }
-      p = cmd_buffer;
-    }
-    /* send command string: temporarily change where the response from the ESP32 goes to  */
-    McuShell_ConstStdIOType *prevIO;
-
-    prevIO = McuESP32_GetRxFromESPStdio(); /* get current I/O */
-    McuESP32_SetRxFromESPStdio(io); /* set current shell I/O as output channel for what's coming from the ESP */
-    McuShell_SendStr(p, McuESP32_GetTxToESPStdio()->stdOut);
-    McuShell_SendStr((unsigned char*)"\r\n", McuESP32_GetTxToESPStdio()->stdOut);
-    vTaskDelay(pdMS_TO_TICKS(ms)); /* wait for the ESP to send the response */
-    McuESP32_SetRxFromESPStdio(prevIO); /* restore previous io */
-
     return ERR_OK;
   }
   return ERR_OK;
