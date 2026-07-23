@@ -18,7 +18,6 @@
 #include "McuUtility.h"
 #include "McuWait.h"
 #include "McuLog.h"
-#include "McuRB.h"
 #include "McuShellUart.h"
 
 #if McuESP32_CONFIG_USE_CTRL_PINS
@@ -29,17 +28,9 @@
 #define McuESP32_UART_RX_QUEUE_LENGTH                 (4096)
 #define McuESP32_UART_TX_QUEUE_LENGTH                 (4096)
 
-#if McuESP32_CONFIG_USE_QUEUE
-  static QueueHandle_t uartRxQueue;  /* Rx from ESP32 module */
-  static QueueHandle_t uartTxQueue;  /* Tx to ESP32 module, e.g. used by shell commands */
-#elif McuESP32_CONFIG_USE_STREAM_BUFFER
-  #define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16)
-  static StreamBufferHandle_t rxStreamBuffer;
-  static StreamBufferHandle_t txStreamBuffer;
-#else
-  static McuRB_Handle_t rxRingBuffer;
-  static McuRB_Handle_t txRingBuffer;
-#endif
+#define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16)
+static StreamBufferHandle_t rxStreamBuffer;
+static StreamBufferHandle_t txStreamBuffer;
 
 #if McuESP32_CONFIG_USE_USB_CDC
   typedef enum McuESP32_USB_PrgMode_e {
@@ -141,46 +132,13 @@ static void DeassertBootloaderMode(void) {
  */
 
 void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and RTS lines */
-//  return;
   static uint8_t prevState = -1;
   static uint8_t prevPrevState = -1;
   uint8_t DtrRts;
 
-  McuLog_trace("dtr:%d rts:%d", dtr, rts);
-  /*
-    * DTR  RTS  EN  GPIO0
-    * 1    1    1   1
-    * 0    0    1   1
-    * 1    0    0   1
-    * 0    1    1   0
-    */
-  switch((dtr<<1)|rts) {
-    case 0b11:
-      McuGPIO_SetAsOutput(McuESP32_RF_EN_Pin, true); /* output, HIGH */
-      McuGPIO_SetAsOutput(McuESP32_RF_IO0_Pin, true); /* output, HIGH */
-      break;
-    case 0b00:
-      McuGPIO_SetAsOutput(McuESP32_RF_EN_Pin, true); /* output, HIGH */
-      McuGPIO_SetAsOutput(McuESP32_RF_IO0_Pin, true); /* output, HIGH */
-      break;
-    case 0b10:
-      McuGPIO_SetAsOutput(McuESP32_RF_EN_Pin, false); /* output, LOW */
-      McuGPIO_SetAsOutput(McuESP32_RF_IO0_Pin, true); /* output, HIGH */
-      DeassertBootloaderMode();
-      break;
-    case 0b01:
-      McuGPIO_SetAsOutput(McuESP32_RF_EN_Pin, true); /* output, HIGH */
-      McuGPIO_SetAsOutput(McuESP32_RF_IO0_Pin, false); /* output, LOW */
-      break;
-    default:
-      McuLog_fatal("unknown");
-      break;
-  } /* switch */
-  return;
-
   uint8_t state = (rts<<1)|dtr; /* map it to set of bits */
 #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-  McuLog_trace("state: %d, prev: %d, prevprev: %d", state, prevState, prevPrevState);
+  McuLog_trace("dtr:%d rts:%d, state: %d, prev: %d, prevprev: %d", dtr, rts, state, prevState, prevPrevState);
 #endif
   if (state != prevState) {
     if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_AUTO || McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_ON) {
@@ -264,15 +222,9 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
 /*********************************************************************************************************/
 /* Stdio Handler for sending text to the ESP32 */
 static void QueueTxChar(unsigned char ch) {
-#if McuESP32_CONFIG_USE_QUEUE
- (void)xQueueSendToBack(uartTxQueue, &ch, 0); /* put it back in to the Tx queue */
-#elif McuESP32_CONFIG_USE_STREAM_BUFFER
   if (xStreamBufferSend(txStreamBuffer, &ch, 1, portMAX_DELAY)!=1) {
     McuLog_error("failed sending to streambuffer");
   }
-#else
-  McuRB_Put(txRingBuffer, &ch);
-#endif
 }
 
 uint32_t McuESP32_SendTxData(const void *data, uint32_t nofBytes) {
@@ -304,9 +256,7 @@ McuShell_ConstStdIOTypePtr McuESP32_GetTxToESPStdio(void) {
 /*********************************************************************************************************/
 void McuESP32_CONFIG_UART_IRQ_HANDLER(void) {
   uint32_t flags;
-#if McuLib_CONFIG_SDK_USE_FREERTOS
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-#endif
   uint8_t count;
 
   flags = McuESP32_CONFIG_UART_GET_FLAGS(McuESP32_CONFIG_UART_DEVICE);
@@ -322,15 +272,6 @@ void McuESP32_CONFIG_UART_IRQ_HANDLER(void) {
   #else
     count = 1;
   #endif
-  #if McuESP32_CONFIG_USE_QUEUE
-    while(count!=0) {
-      uint8_t data = McuESP32_CONFIG_UART_READ_BYTE(McuESP32_CONFIG_UART_DEVICE);
-      if (uartRxQueue!=NULL) {
-        (void)xQueueSendFromISR(uartRxQueue, &data, &xHigherPriorityTaskWoken);
-      }
-      count--;
-    }
-  #elif McuESP32_CONFIG_USE_STREAM_BUFFER
     if (count!=0) {
       unsigned char buf[8];
       for(int i=0; i<count; i++) {
@@ -341,20 +282,11 @@ void McuESP32_CONFIG_UART_IRQ_HANDLER(void) {
         for(;;) {}
       }
     }
-  #else
-    while(count!=0) {
-      uint8_t data = McuESP32_CONFIG_UART_READ_BYTE(McuESP32_CONFIG_UART_DEVICE);
-      McuRB_Put(rxRingBuffer, &data);
-      count--;
-    }
-  #endif
   }
   McuESP32_CONFIG_UART_CLEAR_STATUS_FLAGS(McuESP32_CONFIG_UART_DEVICE, flags|McuESP32_CONFIG_UART_CLEAR_EXTRA_STATUS_FLAGS);
-#if McuLib_CONFIG_SDK_USE_FREERTOS
   if (xHigherPriorityTaskWoken != pdFALSE) {
     vPortYieldFromISR();
   }
-#endif
 #if McuLib_CONFIG_CPU_IS_ARM_CORTEX_M && ((McuLib_CONFIG_CORTEX_M==4) || (McuLib_CONFIG_CORTEX_M==7))
   /* ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping exception return operation might vector to incorrect interrupt.
   * For Cortex-M7, if core speed much faster than peripheral register write speed, the peripheral interrupt flags may be still set after exiting ISR, this results to
@@ -537,73 +469,13 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
   return ERR_OK;
 }
 
-#if McuESP32_CONFIG_USE_QUEUE
-static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module */
-  unsigned char ch;
-  BaseType_t res;
- 
-  (void)pv; /* not used */
-  for(;;) {
-    res = xQueueReceive(uartRxQueue, &ch, portMAX_DELAY);
-    if (res==pdPASS) { /* received something */
-  #if McuESP32_CONFIG_USE_USB_CDC
-      if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
-        /* receive multiple characters into a buffer first, then send it */  
-          unsigned char buf[64];
-          size_t bufIdx = 0;
-          buf[bufIdx++] = ch;
-          do {
-            res = xQueueReceive(uartRxQueue, &ch, pdMS_TO_TICKS(10)); /* check with timeout. After timeout, we will write and flush */
-            if (res==pdPASS) {
-              buf[bufIdx++] = ch;
-            } else { /* timeout */
-              break; /* leave loop */
-            }
-          } while(bufIdx<sizeof(buf));
-          for(int i=0; i<bufIdx; i++) {
-            McuESP32_UsbCdcIo->stdOut(buf[i]); /* forward to USB CDC and the programmer on the host */
-          }
-          if (McuESP32_UsbFlush!=NULL) {
-            McuESP32_UsbFlush();
-          }
-      } /* forward to USB CDC */
-  #endif
-  #if 0 /* \TODO */
-      if (   McuESP32_CopyUartToShell
-  #if McuESP32_CONFIG_USE_USB_CDC
-          && !McuESP32_IsProgramming
-  #endif
-         )
-      { /* only write to shell if not in programming mode. Programming mode might crash RTT */
-        McuShell_ConstStdIOType *io;
-        io = McuESP32_GetRxFromESPStdio();
-        if (io!=NULL) {
-          McuShell_SendCh(ch, io->stdOut); /* forward character */
-        }
-      }
-  #endif
-    } else {
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-      McuLog_fatal("ESP32 UartRxTask queue failed");
-#endif
-    }
-  }
-}
-#elif McuESP32_CONFIG_USE_STREAM_BUFFER
-
 static void sendData(const void *buffer, uint32_t size) {
-  #if 1
   uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* using private interface \todo */
 
   uint32_t nof = McuShellCdcDevice_Send(buffer, size);
   if (nof!=size) {
     for(;;) {}
   }
-  #else
-  for(int i=0; i<size; i++) {
-    McuESP32_UsbCdcIo->stdOut(buffer[i]); /* forward to USB CDC and the programmer on the host */
-  }
-  #endif
 }
 
 static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module */
@@ -628,38 +500,7 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
     }
   }
 }
-#endif
 
-#if McuESP32_CONFIG_USE_QUEUE
-static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 module */
-  unsigned char ch;
-  BaseType_t res;
- 
-  (void)pv; /* not used */
-  for(;;) {
-    res = xQueueReceive(uartTxQueue, &ch, portMAX_DELAY); /* something to send to the ESP? Unblock on first character */
-    if (res==pdPASS) { /* received something */
-        /* receive multiple characters into a buffer first, then send it */  
-        unsigned char buf[64];
-        size_t bufIdx = 0;
-        buf[bufIdx++] = ch;
-        do {
-          res = xQueueReceive(uartTxQueue, &ch, pdMS_TO_TICKS(10)); /* check with timeout. After timeout, we will write in any case */
-          if (res==pdPASS) {
-            buf[bufIdx++] = ch;
-          } else { /* timeout */
-            break; /* leave loop */
-          }
-        } while(bufIdx<sizeof(buf));
-        McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, buf, bufIdx); /* send to ESP */
-    } else {
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-      McuLog_fatal("ESP32 UartTxTask queue failed");
-#endif
-    }
-  }
-}
-#elif McuESP32_CONFIG_USE_STREAM_BUFFER
 static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 module */
   unsigned char buffer[64];
   size_t size;
@@ -672,68 +513,8 @@ static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 mo
     }
   }
 }
-#else
-static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 module */
-  unsigned char ch;
-  BaseType_t res;
-  bool workToDo;
-
-  (void)pv; /* not used */
-  for(;;) {
-#if McuESP32_CONFIG_USE_USB_CDC
-    if (McuESP32_ScheduleReset) {
-      McuESP32_ScheduleReset = false;
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-      McuLog_info("Performing reset");
-#endif
-      DoReset();
-    }
-#endif
-    workToDo = false;
-    do {
-      res = xQueueReceive(uartTxQueue, &ch, 0); /* poll queue */
-      if (res==pdPASS) { /* write data to ESP over UART */
-        workToDo = true;
-        McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, &ch, 1); /* send to ESP */
-      }
-    } while (res==pdPASS);
-#if McuESP32_CONFIG_USE_USB_CDC
-    while (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbCdcIo->keyPressed()) { /* check USB CDC data stream */
-      workToDo = true;
-      McuESP32_UsbCdcIo->stdIn(&ch); /* read byte */
-      McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, &ch, 1); /* send to ESP */
-      /* check if we can copy the USB CDC data to shell console too */
-      if (McuESP32_CopyUartToShell && !McuESP32_IsProgramming) {
-        McuShell_ConstStdIOTypePtr io = McuESP32_GetRxFromESPStdio();
-        if (io!=NULL) {
-          McuShell_SendCh(ch, io->stdOut); /* write to console */
-        }
-      }
-    }
-#endif
-    if (!workToDo) { /* only delay if we are not busy */
-      vTaskDelay(pdMS_TO_TICKS(5));
-    }
-  }
-}
-#endif
 
 static void InitQueues(void) {
-#if McuESP32_CONFIG_USE_QUEUE
-  uartRxQueue = xQueueCreate(McuESP32_UART_RX_QUEUE_LENGTH, sizeof(uint8_t));
-  if (uartRxQueue==NULL) {
-    McuLog_fatal("not able to create Rx queue");
-    for(;;){} /* out of memory? */
-  }
-  vQueueAddToRegistry(uartRxQueue, "ESP32UartRxQueue");
-
-  uartTxQueue = xQueueCreate(McuESP32_UART_TX_QUEUE_LENGTH, sizeof(uint8_t));
-  if (uartTxQueue==NULL) {
-    McuLog_fatal("not able to create Tx queue");
-    for(;;){} /* out of memory? */
-  }
-  vQueueAddToRegistry(uartTxQueue, "ESP32UartTxQueue");
-#elif McuESP32_CONFIG_USE_STREAM_BUFFER
   rxStreamBuffer = xStreamBufferCreate(McuESP32_UART_RX_QUEUE_LENGTH, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
   if (rxStreamBuffer==NULL) {
     for(;;) {}
@@ -742,23 +523,6 @@ static void InitQueues(void) {
   if (txStreamBuffer==NULL) {
     for(;;) {}
   }
-#else
-  McuRB_Config_t config;
-
-  McuRB_GetDefaultconfig(&config);
-  config.elementSize = sizeof(uint8_t);
-  config.nofElements = McuESP32_UART_RX_QUEUE_LENGTH;
-  rxRingBuffer = McuRB_InitRB(&config);
-  if (rxRingBuffer==NULL) {
-    for(;;) {/* error */}
-  }
-
-  config.nofElements = McuESP32_UART_TX_QUEUE_LENGTH;
-  txRingBuffer = McuRB_InitRB(&config);
-  if (txRingBuffer==NULL) {
-    for(;;) {/* error */}
-  }
-#endif
 }
 
 static void InitUart(void) {
@@ -805,20 +569,10 @@ void McuESP32_Deinit(void) {
   McuESP32_RF_EN_Pin = McuGPIO_DeinitGPIO(McuESP32_RF_EN_Pin);
   McuESP32_RF_IO0_Pin = McuGPIO_DeinitGPIO(McuESP32_RF_IO0_Pin);
 #endif
-#if McuESP32_CONFIG_USE_QUEUE
-  vQueueDelete(uartRxQueue);
-  uartRxQueue = NULL;
-  vQueueDelete(uartTxQueue);
-  uartTxQueue = NULL;
-#elif McuESP32_CONFIG_USE_STREAM_BUFFER
   vStreamBufferDelete(rxStreamBuffer);
   rxStreamBuffer = NULL;
   vStreamBufferDelete(txStreamBuffer);
   txStreamBuffer = NULL;
-#else
-  rxRingBuffer = McuRB_DeinitRB(rxRingBuffer);
-  txRingBuffer = McuRB_DeinitRB(txRingBuffer);
-#endif
 }
 
 void McuESP32_Init(void) {
