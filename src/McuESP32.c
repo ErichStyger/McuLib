@@ -40,7 +40,6 @@ static StreamBufferHandle_t txStreamBuffer;
   } McuESP32_USB_PrgMode_e;
   static McuESP32_USB_PrgMode_e McuESP32_UsbPrgMode = McuESP32_USB_PRG_MODE_AUTO;
   static bool McuESP32_IsProgramming = false; /* if we are currently programming the ESP32 */
-  //static bool McuESP32_ScheduleReset = true; /* do an initial reset at restart time */
   static McuShell_ConstStdIOType *McuESP32_UsbCdcIo = NULL; /* I/O handler to be used for USB CDC. Configure with McuESP32_SetUsbCdcStdio() */
   static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP32_SetUsbCdcIsConnectedCallback() */
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
@@ -79,8 +78,7 @@ static void DeassertReset(void) {
 #if McuESP32_CONFIG_USE_CTRL_PINS
 static void DoReset(void) {
   AssertReset();
-  //vTaskDelay(pdMS_TO_TICKS(1));
-  McuWait_Waitus(50);
+  McuWait_Waitus(50); /* give signal some time */
   DeassertReset();
 }
 #endif
@@ -98,25 +96,6 @@ static void DeassertBootloaderMode(void) {
 #endif
 
 #if McuESP32_CONFIG_USE_USB_CDC
-/* idf.py flash sequence:
- *
- * 00> State: 3, DtrRts: 3
-
- * 00> State: 2, DtrRts: 1
- * 00> State: 3, DtrRts: 3
- * 00> State: 1, DtrRts: 2
- * 00> State: 0, DtrRts: 0
-
- * 00> State: 2, DtrRts: 1
- * 00> State: 3, DtrRts: 3
- * 00> State: 1, DtrRts: 2
- * 00> State: 0, DtrRts: 0
- *
- * reset at the end:
- * 00> State: 2, DtrRts: 1
- * 00> State: 0, DtrRts: 0
- */
-
 void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and RTS lines */
   static uint8_t prevState = -1;
   static uint8_t prevPrevState = -1;
@@ -194,7 +173,6 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
       #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
         McuLog_info("Request Reset");
       #endif
-        //McuESP32_ScheduleReset = true; /* cannot do reset sequence here, as called from an interrupt, so we cannot block */
         DoReset(); /* with tinyusb we are not in the interrupt function */
         McuESP32_IsProgramming = false;
       }
@@ -297,9 +275,7 @@ static uint8_t McuESP32_PrintHelp(const McuShell_StdIOType *io) {
 }
 
 static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
-#if McuESP32_CONFIG_USE_CTRL_PINS || McuESP32_CONFIG_USE_USB_CDC
   uint8_t buf[64];
-#endif
 
   McuShell_SendStatusStr((unsigned char*)"esp32", (unsigned char*)"ESP32 status\r\n", io->stdOut);
 #if McuESP32_CONFIG_USE_CTRL_PINS
@@ -421,7 +397,7 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
  
   (void)pv; /* not used */
   for(;;) {
-    size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(50));
+    size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(50)); /* use longer timeout to prevent too much polling */
     if (size!=0) { /* received something */
   #if McuESP32_CONFIG_USE_USB_CDC
       if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
@@ -444,9 +420,12 @@ static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 mo
  
   (void)pv; /* not used */
   for(;;) {
-    size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(20));
+    size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(50)); /* use longer timeout to prevent too much CPU usage with polling */
     if (size!=0) { /* received something */
-      McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, buffer, size); /* send to ESP */
+      do {
+        McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, buffer, size); /* send to ESP */
+        size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use shorter timeout */
+      } while(size>0);
     }
   }
 }
