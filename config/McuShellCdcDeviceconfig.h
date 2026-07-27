@@ -51,8 +51,8 @@
 #endif
 
 #ifndef McuShellCdcDevice_CONFIG_PROCESS_PRIORITY
-  #define McuShellCdcDevice_CONFIG_PROCESS_PRIORITY    (configMAX_PRIORITIES-1)
-    /*!< FreeRTOS task priority for processing task */
+  #define McuShellCdcDevice_CONFIG_PROCESS_PRIORITY    (configMAX_PRIORITIES-2)
+    /*!< FreeRTOS task priority for processing task. By default one level below the TmrSrv task */
 #endif
 
 #endif

@@ -29,8 +29,8 @@
 #endif
 
 #ifndef McuESP32_CONFIG_PROCESS_PRIORITY
-  #define McuESP32_CONFIG_PROCESS_PRIORITY    (configMAX_PRIORITIES-1)
-    /*!< FreeRTOS task priority for RX and TX task */
+  #define McuESP32_CONFIG_PROCESS_PRIORITY    (configMAX_PRIORITIES-2)
+    /*!< FreeRTOS task priority for RX and TX task. By default one level below the TmrSrv task */
 #endif
 
 #if McuESP32_CONFIG_USE_CTRL_PINS
