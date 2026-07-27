@@ -327,6 +327,7 @@ static void UsbDeviceRestart(void) {
       McuLog_fatal("failed initializing tinyusb");
       for(;;) { /* error */}
     }
+    vTaskDelay(pdMS_TO_TICKS(2000)); /* give usb time to enumerate */
     for(;;) {
       tud_task(); /* tinyusb (CDC) device task */
       #if 0 /* no need to wait, as tinyUSB will block inside tud_task() and waits for data */
