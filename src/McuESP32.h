@@ -43,6 +43,12 @@ McuShell_ConstStdIOTypePtr McuESP32_GetTxToESPStdio(void);
 void McuESP32_SetUsbCdcIsConnectedCallback(bool (*callback)(void));
 
 /*!
+ * \brief Set optional callback to be called at start end end of programming, useful to silence high system load activities.
+ * \param callback Pointer to callback function.
+ */
+void McuESP32_SetProgrammingCallback(void (*callback)(bool isProgramming));
+
+/*!
  * \brief Used to deal with USB CDC flow control pins.
  * \param dtr State of DTR signal.
  * \param rts State of RTS signal.
