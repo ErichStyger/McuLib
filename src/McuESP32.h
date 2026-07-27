@@ -62,6 +62,14 @@ void McuESP32_SetUsbFlushCallback(void (*callback)(void));
 void McuESP32_SetUsbCdcStdio(McuShell_ConstStdIOTypePtr stdio);
 
 /*!
+ * \brief Function to send data to the ESP32 via UART.
+ * \param data Pointer to the data to be sent.
+ * \param nofBytes number of data bytes
+ * \return number of bytes sent.
+ */
+uint32_t McuESP32_SendTxData(const void *data, uint32_t nofBytes);
+
+/*!
  * \brief Module de-initialization
  */
 void McuESP32_Deinit(void);

@@ -40,10 +40,10 @@
 
 /* callbacks to deal with the CDC communication channel */
 static struct McuShellCdcDevice_s {
-  void (*buffer_rx_char)(char ch);   /* called for incoming characters from CDC device */
+  uint32_t (*buffer_rx_char)(const void *data, uint32_t nofBytes);   /* called for incoming characters from CDC device */
 } McuShellCdcDevice_callbacks;
 
-void McuShellCdcDevice_SetBufferRxCharCallback(void (*buffer_rx_char_cb)(char ch)) {
+void McuShellCdcDevice_SetBufferRxCharCallback(uint32_t (*buffer_rx_char_cb)(const void *data, uint32_t nofBytes)) {
   McuShellCdcDevice_callbacks.buffer_rx_char = buffer_rx_char_cb;
 }
 
@@ -228,17 +228,11 @@ void tud_cdc_rx_cb(uint8_t itf) {
   if (count>0) {
   #if McuShellCdcDevice_CONFIG_USE_FREERTOS
     if (McuShellCdcDevice_callbacks.buffer_rx_char!=NULL) {
-      #if 1
-      uint32_t McuESP32_SendTxData(const void *data, uint32_t nofBytes);
-
-      if (McuESP32_SendTxData(buf, count)!=count) {
-        for(;;){}
+      uint32_t sent;
+      sent = McuShellCdcDevice_callbacks.buffer_rx_char(buf, count);
+      if (sent!=count) {
+        McuLog_error("count was %d, but sent %d", count, sent);
       }
-      #else
-      for(int i=0; i<count; i++) {
-        McuShellCdcDevice_callbacks.buffer_rx_char(buf[i]);
-      }
-      #endif
     }
   #else
     McuRB_Putn(rxRingBuffer, buf, count);

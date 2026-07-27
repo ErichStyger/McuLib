@@ -99,7 +99,7 @@ bool McuShellCdcDevice_IsConnected(void); /* note: connection status might not b
  * \brief Set the callback for a character is received from the USB CDC channel.
  * \param buffer_rx_char_cb Callback to be used to store the character. Can be NULL.
  */
-void McuShellCdcDevice_SetBufferRxCharCallback(void (*buffer_rx_char_cb)(char ch));
+void McuShellCdcDevice_SetBufferRxCharCallback(uint32_t (*buffer_rx_char_cb)(const void *data, uint32_t nofBytes));
 
 /*!
  * \brief Set callback for RTS/CTS changes
