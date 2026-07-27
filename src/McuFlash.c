@@ -414,7 +414,7 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
   #endif
   /* erase */
 #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
-  status = FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflash0SectorSize, &pflashSectorSize);
+  status = FLASH_GetProperty(&s_flashDriver, kFLASH_PropertyPflashSectorSize, &pflashSectorSize);
   if (status!=kStatus_FLASH_Success) {
     return ERR_FAILED;
   }
@@ -433,7 +433,7 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
     uint32_t primask = DisableGlobalIRQ(); /* workaround: need to disable interrupts? */
   #endif
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
-    status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_ApiEraseKey);
+    status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFLASH_ApiEraseKey);
     if (status!=kStatus_FLASH_Success) {
   #else
     status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_ApiEraseKey);
@@ -450,7 +450,7 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
   #endif
     /* Verify sector if it's been erased. */
    #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
-     status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_MarginValueUser);
+     status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFLASH_MarginValueUser);
     if (status!=kStatus_FLASH_Success) {
    #else
     status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_MarginValueUser);
