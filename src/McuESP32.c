@@ -25,10 +25,10 @@
   static McuGPIO_Handle_t McuESP32_RF_IO0_Pin; /* pin pulled LOW to enable programming mode */
 #endif
 
-#define McuESP32_UART_RX_QUEUE_LENGTH                 (4096)
-#define McuESP32_UART_TX_QUEUE_LENGTH                 (4096)
+#define McuESP32_UART_RX_BUFFER_SIZE                 (256) /*!< rx streambuffer size*/
+#define McuESP32_UART_TX_BUFFER_SIZE                 (256) /*!< tx streambufer size */
 
-#define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16)
+#define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16) /*!< streambuffer trigger level */
 static StreamBufferHandle_t rxStreamBuffer;
 static StreamBufferHandle_t txStreamBuffer;
 
@@ -431,11 +431,11 @@ static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 mo
 }
 
 static void InitQueues(void) {
-  rxStreamBuffer = xStreamBufferCreate(McuESP32_UART_RX_QUEUE_LENGTH, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
+  rxStreamBuffer = xStreamBufferCreate(McuESP32_UART_RX_BUFFER_SIZE, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
   if (rxStreamBuffer==NULL) {
     for(;;) {}
   }
-  txStreamBuffer = xStreamBufferCreate(McuESP32_UART_TX_QUEUE_LENGTH, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
+  txStreamBuffer = xStreamBufferCreate(McuESP32_UART_TX_BUFFER_SIZE, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
   if (txStreamBuffer==NULL) {
     for(;;) {}
   }
