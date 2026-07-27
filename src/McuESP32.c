@@ -45,6 +45,13 @@ static StreamBufferHandle_t txStreamBuffer;
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
 #endif
 
+static void McuESP32_ProgrammingCallback(bool isProgramming) {
+  if (McuESP32_IsProgramming!=isProgramming) { /* state change? */
+    McuLog_trace("programming callback: %s", isProgramming?"start":"stop");
+    McuESP32_IsProgramming = isProgramming;
+  }
+}
+
 #if McuESP32_CONFIG_USE_USB_CDC
 void McuESP32_SetUsbCdcIsConnectedCallback(bool (*callback)(void)) {
   McuESP32_UsbIsConnected = callback;
@@ -143,10 +150,10 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
         case 2:
           if (McuGPIO_IsLow(McuESP32_RF_EN_Pin)) {
             if (McuGPIO_IsLow(McuESP32_RF_IO0_Pin)) {
-              McuESP32_IsProgramming = true; /* the DeassertReset() below will enter bootloader mode */
             #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
               McuLog_trace("Enter Bootloader Mode");
             #endif
+              McuESP32_ProgrammingCallback(true); /* start programming mode */
             } else {
               McuESP32_IsProgramming = false; /* the DeassertReset() below will do a reset without bootloader */
             #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
@@ -173,8 +180,8 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
       #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
         McuLog_info("Request Reset");
       #endif
-        DoReset(); /* with tinyusb we are not in the interrupt function */
-        McuESP32_IsProgramming = false;
+        DoReset();
+        McuESP32_ProgrammingCallback(false); /* start programming mode */
       }
     }
     prevPrevState = prevState;
@@ -317,8 +324,9 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
     DoReset();
     return ERR_OK;
   } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 prg start")==0) {
-    /* pulling prg pin low, followed by a reset */
     *handled = true;
+    McuESP32_ProgrammingCallback(true);
+    /* pulling prg pin low, followed by a reset */
     AssertBootloaderMode(); /* pull prg pin low: during reset, device will enter serial programming mode */
     vTaskDelay(pdMS_TO_TICKS(1));
     DoReset();
@@ -328,6 +336,7 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
   } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 prg stop")==0) {
     /* release prg pin, followed by a reset */
     *handled = true;
+    McuESP32_ProgrammingCallback(false);
     DeassertBootloaderMode(); /* return prg pin to high (normal) again */
     vTaskDelay(pdMS_TO_TICKS(1));
     DoReset();
