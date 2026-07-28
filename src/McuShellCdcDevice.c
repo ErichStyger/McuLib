@@ -130,6 +130,29 @@ void McuShellCdcDevice_QueueChar(char ch) {
 #endif
 }
 
+uint32_t McuShellCdcDevice_QueueData(const void *data, uint32_t nof) {
+  uint32_t count = 0;
+
+  for(int i=0; i<nof; i++) {
+    char ch = *(char*)data;
+  #if McuShellCdcDevice_CONFIG_USE_FREERTOS
+    if (xQueueSend(rxQueue, &ch, portMAX_DELAY)!=pdPASS) {
+      McuLog_fatal("failed adding to queue");
+    } else {
+      count++;
+    }
+  #else
+    if (McuRB_Put(rxRingBuffer, &ch)!=ERR_OK) {
+      McuLog_fatal("failed adding to queue");
+    } else {
+      count++;
+    }
+  #endif
+    data++;
+  } /* for */
+  return count;
+}
+
 McuShell_ConstStdIOType McuShellCdcDevice_stdio = {
     .stdIn = (McuShell_StdIO_In_FctType)McuShellCdcDevice_ReceiveChar,
     .stdOut = (McuShell_StdIO_OutErr_FctType)McuShellCdcDevice_SendChar,
