@@ -95,8 +95,18 @@
   #define McuESP32_CONFIG_UART_ENABLE_INTERRUPT_FLAGS   (kUART_RxDataRegFullInterruptEnable | kUART_RxOverrunInterruptEnable)
   #define McuESP32_CONFIG_UART_IRQ_NUMBER               UART1_RX_TX_IRQn
   #define McuESP32_CONFIG_UART_INIT                     UART_Init
-  #define McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT    kCLOCK_CoreSysClk
+  #ifndef McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT
+    #define McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT    kCLOCK_CoreSysClk
+  #endif
   #define McuESP32_CONFIG_UART_IRQ_HANDLER              UART1_RX_TX_IRQHandler
+  #define McuESP32_CONFIG_UART_CLEAR_STATUS_FLAGS       UART_ClearStatusFlags
+  #define McuESP32_CONFIG_UART_CLEAR_EXTRA_STATUS_FLAGS (kUART_RxOverrunFlag|kUART_RxFifoOverflowFlag)
+  #define McuESP32_CONFIG_UART_HAS_FIFO                 (0)
+  
+  #ifndef McuESP32_CONFIG_DO_CONFIGURE_CLOCKS
+    #define McuESP32_CONFIG_DO_CONFIGURE_CLOCKS            (0) 
+      /*!< if we configure the clocks for the UART or not */
+  #endif
 #elif McuESP32_CONFIG_SHELL_UART==McuShellUart_CONFIG_UART_K22FN512_UART2_D2_D3
  #include "fsl_uart.h"
   #include "fsl_port.h"
