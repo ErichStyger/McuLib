@@ -25,8 +25,8 @@
   static McuGPIO_Handle_t McuESP32_RF_IO0_Pin; /* pin pulled LOW to enable programming mode */
 #endif
 
-#define McuESP32_UART_RX_BUFFER_SIZE                 (256) /*!< rx streambuffer size*/
-#define McuESP32_UART_TX_BUFFER_SIZE                 (256) /*!< tx streambufer size */
+#define McuESP32_UART_RX_BUFFER_SIZE   (McuESP32_CONFIG_RX_BUFFER_SIZE) /*!< rx streambuffer size*/
+#define McuESP32_UART_TX_BUFFER_SIZE   (McuESP32_CONFIG_TX_BUFFER_SIZE) /*!< tx streambufer size */
 
 #define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16) /*!< streambuffer trigger level */
 static StreamBufferHandle_t rxStreamBuffer;
@@ -536,5 +536,6 @@ void McuESP32_Init(void) {
     McuLog_fatal("failed creating ESP32 Tx Task");
     for(;;){} /* error! probably out of memory */
   }
+  DoReset(); /* reset ESP */
 }
 #endif /* #if McuESP32_CONFIG_IS_ENABLED */

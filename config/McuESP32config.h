@@ -62,6 +62,14 @@
   #endif
 #endif
 
+#ifndef McuESP32_CONFIG_RX_BUFFER_SIZE
+  #define McuESP32_CONFIG_RX_BUFFER_SIZE    (1024) /*!< size of rx buffer from ESP */
+#endif
+
+#ifndef McuESP32_CONFIG_TX_BUFFER_SIZE
+  #define McuESP32_CONFIG_TX_BUFFER_SIZE    (1024) /*!< size of tx buffer to ESP */
+#endif
+
 #include "McuShellUartconfig.h"
 
 /* UART used with ESP32: assign one of the McuShell UART to enable it */
