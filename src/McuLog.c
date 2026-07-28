@@ -432,7 +432,9 @@ void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const c
 static void LockUnlockCallback(void *data, bool lock) {
   (void)data; /* unused */
   if (lock) {
-    (void)xSemaphoreTakeRecursive(McuLog_ConfigData.McuLog_Mutex, portMAX_DELAY);
+    if (xSemaphoreTakeRecursive(McuLog_ConfigData.McuLog_Mutex, portMAX_DELAY)!=pdPASS) {
+      for(;;) {}
+    }
   } else {
     (void)xSemaphoreGiveRecursive(McuLog_ConfigData.McuLog_Mutex);
   }
