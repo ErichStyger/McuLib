@@ -596,6 +596,7 @@ static void prvInitialiseNewQueue( const UBaseType_t uxQueueLength,
     #if ( configUSE_TRACE_FACILITY == 1 )
     {
         pxNewQueue->ucQueueType = ucQueueType;
+        pxNewQueue->uxQueueNumber = 0; /* << EST: always initialize it */
     }
     #endif /* configUSE_TRACE_FACILITY */
 
