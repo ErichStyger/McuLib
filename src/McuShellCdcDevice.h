@@ -56,21 +56,32 @@ uint32_t McuShellCdcDevice_WriteStr(const char *str);
  * \param ch Character to write.
  */
 void McuShellCdcDevice_WriteChar(char ch);
+
 /*!
  * \brief Reads one character from USB CDC input.
  * \param ch Pointer receiving the character.
  */
 void McuShellCdcDevice_ReadChar(char *ch);
+
 /*!
  * \brief Checks if at least one input character is available.
  * \return true if data is available.
  */
 bool McuShellCdcDevice_IsDataPresent(void);
+
 /*!
  * \brief Queues one received character into the shell buffer.
  * \param ch Character to enqueue.
  */
 void McuShellCdcDevice_QueueChar(char ch);
+
+/*!
+ * \brief Queues multiple character into the shell buffer.
+ * \param data data to be queued
+ * \param nof number of data bytes
+ * \return number of bytes queued
+ */
+uint32_t McuShellCdcDevice_QueueData(const void *data, uint32_t nof);
 
 /*!
  * \brief Writing a string to the USB CDC using printf() style.
