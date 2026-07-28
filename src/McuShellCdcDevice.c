@@ -26,6 +26,9 @@
 #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
   #include "MK22F51212.h"
   #include "clock_config.h"
+#elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+  #include "MK22F12.h"
+  #include "clock_config.h"
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   /* no other include needed */
 #else
@@ -274,7 +277,18 @@ static void usb_hardware_init(void) {
   #endif
   /* Set Clock for USB (is not enabled by default. */
   SystemCoreClockUpdate();
-  CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U);
+  #if 1
+  if (!CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U)) {
+    McuLog_fatal("failed configuring USB clock");
+    for(;;) {}
+  }
+  #endif
+  #if 0
+  if (!CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, 120000000U)) {
+    McuLog_fatal("failed configuring USB clock");
+    for(;;) {}
+  }
+  #endif
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   /* hardware setup done in SDK */
 #else
