@@ -4,7 +4,7 @@
 #if !defined(configUSE_HEAP_SCHEME) || (configUSE_HEAP_SCHEME==2 && configSUPPORT_DYNAMIC_ALLOCATION==1)
 
 /*
- * FreeRTOS Kernel V11.0.0
+ * FreeRTOS Kernel V11.3.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
@@ -128,6 +128,9 @@ PRIVILEGED_DATA static BlockLink_t xStart, xEnd;
  * fragmentation. */
 PRIVILEGED_DATA static size_t xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
 
+/* Indicates whether the heap has been initialised or not. */
+PRIVILEGED_DATA static BaseType_t xHeapHasBeenInitialised = pdFALSE;
+
 /*-----------------------------------------------------------*/
 
 /*
@@ -164,16 +167,15 @@ static void prvHeapInit( void ) PRIVILEGED_FUNCTION;
         pxIterator->pxNextFreeBlock = pxBlockToInsert;                                                                              \
     }
 /*-----------------------------------------------------------*/
-static BaseType_t xHeapHasBeenInitialised = pdFALSE; /* << EST: make it global, so it can be re-initialized */
 
 void * pvPortMallocExt( size_t xWantedSize, unsigned int heapTag) /* << EST */
 {
     BlockLink_t * pxBlock;
     BlockLink_t * pxPreviousBlock;
     BlockLink_t * pxNewBlockLink;
-//  PRIVILEGED_DATA static BaseType_t xHeapHasBeenInitialised = pdFALSE; /* << EST: make it global so it can be re-initialized */
     void * pvReturn = NULL;
     size_t xAdditionalRequiredSize;
+    size_t xAllocatedBlockSize = 0;
 
     if( xWantedSize > 0 )
     {
@@ -275,6 +277,8 @@ void * pvPortMallocExt( size_t xWantedSize, unsigned int heapTag) /* << EST */
 
                     xFreeBytesRemaining -= pxBlock->xBlockSize;
 
+                    xAllocatedBlockSize = pxBlock->xBlockSize;
+
                     /* The block is being returned - it is allocated and owned
                      * by the application and has no "next" block. */
                     heapALLOCATE_BLOCK( pxBlock );
@@ -284,12 +288,12 @@ void * pvPortMallocExt( size_t xWantedSize, unsigned int heapTag) /* << EST */
         }
 #if configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && configUSE_SEGGER_SYSTEM_VIEWER_HEAP_EVENTS /* << EST */
         if (heapTag!=(unsigned)-1) {
-            SEGGER_SYSVIEW_HeapAllocEx(ucHeap, pvReturn, xWantedSize, heapTag);
+            SEGGER_SYSVIEW_HeapAllocEx(ucHeap, pvReturn, xAllocatedBlockSize, heapTag);
         } else {
-            SEGGER_SYSVIEW_HeapAlloc(ucHeap, pvReturn, xWantedSize);
+            SEGGER_SYSVIEW_HeapAlloc(ucHeap, pvReturn, xAllocatedBlockSize);
         }
 #else
-        traceMALLOC( pvReturn, xWantedSize );
+        traceMALLOC( pvReturn, xAllocatedBlockSize );
 #endif
     }
     ( void ) xTaskResumeAll();
@@ -425,14 +429,26 @@ static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
 #endif
 }
 /*-----------------------------------------------------------*/
+
+/*
+ * Reset the state in this file. This state is normally initialized at start up.
+ * This function must be called by the application before restarting the
+ * scheduler.
+ */
+void vPortHeapResetState( void )
+{
+    xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
+
+    xHeapHasBeenInitialised = pdFALSE;
+}
+
 #if 1 /* << EST */
 void vPortInitializeHeap(void) {
   xStart.pxNextFreeBlock = NULL;
   xStart.xBlockSize = 0;
   xEnd.pxNextFreeBlock = NULL;
   xEnd.xBlockSize = 0;
-  xFreeBytesRemaining = configADJUSTED_HEAP_SIZE;
-  xHeapHasBeenInitialised = pdFALSE;
+  vPortHeapResetState();
 }
 #endif
 #endif /* configUSE_HEAP_SCHEME==2 */ /* << EST */

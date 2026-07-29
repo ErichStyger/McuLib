@@ -6,7 +6,7 @@
 #error "Do *not* use configUSE_HEAP_SCHEME 3, because this implementation from FreeRTOS is not reeantrant. Use configUSE_HEAP_SCHEME 6 instead!"
 
 /*
- * FreeRTOS Kernel V11.0.0
+ * FreeRTOS Kernel V11.3.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
@@ -136,14 +136,26 @@ void vPortFree( void * pv )
     }
 }
 /*-----------------------------------------------------------*/
+
+/*
+ * Reset the state in this file. This state is normally initialized at start up.
+ * This function must be called by the application before restarting the
+ * scheduler.
+ */
+void vPortHeapResetState( void )
+{
+    /* No state needs to be re-initialised in heap_3. */
+}
+/*-----------------------------------------------------------*/
+
 #if 1 /* << EST */
 void vPortInitializeHeap(void) {
 #if 0 && configUSE_SEGGER_SYSTEM_VIEWER_HOOKS && configUSE_SEGGER_SYSTEM_VIEWER_HEAP_EVENTS /* << EST */
   firstMalloc = true;
 #endif
+  vPortHeapResetState();
 }
 #endif
 
 #endif /* configUSE_HEAP_SCHEME==3 */ /* << EST */
-
 
