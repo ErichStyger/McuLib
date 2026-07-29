@@ -194,7 +194,7 @@ void McuHardFault_HardFaultHandler(void)
     " ldr r3,=0xBEAB              \n"  /* load constant 0xBEAB (BKPT 0xAB) into R3" */
     " cmp r2,r3                   \n"  /* is it the BKPT 0xAB? */
     " beq _SemihostReturn         \n"  /* if yes, return from semihosting */
-    " b McuHardFault_HandlerC   \n"  /* if no, dump the register values and halt the system */
+    " b McuHardFault_HandlerC     \n"  /* if no, dump the register values and halt the system */
   "_SemihostReturn:               \n"  /* returning from semihosting fault */
     " adds r1,#2                  \n"  /* r1 points to the semihosting BKPT instruction. Adjust the PC to skip it (2 bytes) */
     " str r1,[r0,#24]             \n"  /* store back the adjusted PC value to the interrupt stack frame */
