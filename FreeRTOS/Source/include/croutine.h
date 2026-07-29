@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V11.0.0
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V11.3.0
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,7 +246,10 @@ void vCoRoutineSchedule( void );
  * \defgroup crSTART crSTART
  * \ingroup Tasks
  */
+
+/* *INDENT-OFF* */
 #define crEND()    }
+/* *INDENT-ON* */
 
 /*
  * These macros are intended for internal use by the co-routine implementation
@@ -746,6 +749,13 @@ void vCoRoutineAddToDelayedList( TickType_t xTicksToDelay,
  */
 BaseType_t xCoRoutineRemoveFromEventList( const List_t * pxEventList );
 
+
+/*
+ * This function resets the internal state of the coroutine module. It must be
+ * called by the application before restarting the scheduler.
+ */
+void vCoRoutineResetState( void ) PRIVILEGED_FUNCTION;
+
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     }
@@ -753,4 +763,3 @@ BaseType_t xCoRoutineRemoveFromEventList( const List_t * pxEventList );
 /* *INDENT-ON* */
 
 #endif /* CO_ROUTINE_H */
-

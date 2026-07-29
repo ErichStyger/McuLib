@@ -44,7 +44,7 @@
  */
 
 /*-----------------------------------------------------------*/
-
+void configCHECK_FOR_STACK_OVERFLOW_NAME(TaskHandle_t pxTask, char *pcTaskName); /* << EST prototype */
 /*
  * portSTACK_LIMIT_PADDING is a number of extra words to consider to be in
  * use on the stack.

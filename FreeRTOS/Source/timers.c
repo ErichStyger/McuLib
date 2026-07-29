@@ -597,7 +597,7 @@
         traceENTER_xTimerGetReloadMode( xTimer );
 
         configASSERT( xTimer );
-        taskENTER_CRITICAL();
+        portBASE_TYPE_ENTER_CRITICAL();
         {
             if( ( pxTimer->ucStatus & tmrSTATUS_IS_AUTORELOAD ) == 0U )
             {
@@ -610,7 +610,7 @@
                 xReturn = pdTRUE;
             }
         }
-        taskEXIT_CRITICAL();
+        portBASE_TYPE_EXIT_CRITICAL();
 
         traceRETURN_xTimerGetReloadMode( xReturn );
 
@@ -1172,7 +1172,7 @@
         configASSERT( xTimer );
 
         /* Is the timer in the list of active timers? */
-        taskENTER_CRITICAL();
+        portBASE_TYPE_ENTER_CRITICAL();
         {
             if( ( pxTimer->ucStatus & tmrSTATUS_IS_ACTIVE ) == 0U )
             {
@@ -1183,7 +1183,7 @@
                 xReturn = pdTRUE;
             }
         }
-        taskEXIT_CRITICAL();
+        portBASE_TYPE_EXIT_CRITICAL();
 
         traceRETURN_xTimerIsTimerActive( xReturn );
 
