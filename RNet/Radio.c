@@ -1096,7 +1096,7 @@ static void InitIRQPin(void) {
     for(;;) {}
   }
   res = gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-  if (res!=ESP_OK) {
+  if (res!=ESP_OK && res!=ESP_ERR_INVALID_STATE) { /* invalid state if service is already installed */
     McuLog_fatal("Failed installing interrupt service");
     for(;;) {}
   }
