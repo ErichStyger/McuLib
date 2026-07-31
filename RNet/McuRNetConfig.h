@@ -89,12 +89,12 @@
 
 /* Configuration for Rx and Tx queues */
 #ifndef RNET_CONFIG_MSG_QUEUE_NOF_RX_ITEMS
-  #define RNET_CONFIG_MSG_QUEUE_NOF_RX_ITEMS        (15)
+  #define RNET_CONFIG_MSG_QUEUE_NOF_RX_ITEMS        (16)
     /*!< Number items in the Rx message queue. The higher, the more items can be buffered. */
 #endif
 
 #ifndef RNET_CONFIG_MSG_QUEUE_NOF_TX_ITEMS
-  #define RNET_CONFIG_MSG_QUEUE_NOF_TX_ITEMS        (15)
+  #define RNET_CONFIG_MSG_QUEUE_NOF_TX_ITEMS        (16)
     /*!< Number items in the Tx message queue. The higher, the more items can be buffered. */
 #endif
 
