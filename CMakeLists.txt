@@ -57,6 +57,7 @@ else ()
               "src/McuButton.c"
               "src/McuCriticalSection.c"
               "src/McuDebounce.c"
+              "src/McuESP32.c"
               "src/McuFXOS8700.c"
               "src/McuFontDisplay.c"
               "src/McuFlash.c"
