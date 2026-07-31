@@ -32,7 +32,7 @@
 #endif
 
 #ifndef RSTDIO_CONFIG_QUEUE_LENGTH
-  #define RSTDIO_CONFIG_QUEUE_LENGTH    (48)
+  #define RSTDIO_CONFIG_QUEUE_LENGTH    (64)
     /*!< Size in bytes for the different RStdIO queues: RxStdOut, RxStdIn, RxStdErr, TxStdIn, TxStdErr */
 #endif
 
