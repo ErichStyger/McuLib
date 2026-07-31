@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuSemihost module.
+ */
+
 #include "McuSemihost.h"
 #include "McuUtility.h"
 #include "McuTimeDate.h"

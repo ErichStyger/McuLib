@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Flash memory access interface.
+ */
+
 #ifndef MININI_MCUFLASH_H_
 #define MININI_MCUFLASH_H_
 
@@ -18,8 +23,16 @@ extern "C" {
 #endif
 
 #if McuLib_CONFIG_CPU_IS_ESP32
+/*!
+ * \brief Returns the configured ESP32 flash partition size in bytes.
+ * \return Partition size in bytes.
+ */
 uint32_t McuFlash_GetEsp32PartitionSize(void);
 
+/*!
+ * \brief Returns the configured ESP32 flash partition base address.
+ * \return Partition base address.
+ */
 uint32_t McuFlash_GetEsp32PartitionAddress(void);
 #endif
 

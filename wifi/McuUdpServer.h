@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief UDP server interface.
+ */
+
 #ifndef SRC_UDP_SERVER_H_
 #define SRC_UDP_SERVER_H_
 

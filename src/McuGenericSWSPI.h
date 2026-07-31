@@ -51,6 +51,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuGenericSWSPI module.
+ */
+
+/*!
 ** @file McuGenericSWSPI.h
 ** @version 01.15
 ** @brief

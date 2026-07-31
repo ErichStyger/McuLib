@@ -64,6 +64,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuPidInt module.
+ */
+
+/*!
 ** @file McuPidInt.h
 ** @version 01.00
 ** @brief

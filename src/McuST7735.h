@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief ST7735 display driver interface.
+ */
+
 #ifndef MCUST7735_H_
 #define MCUST7735_H_
 
@@ -19,7 +24,15 @@
 #define McuST7735_COLOR_color565(r, g, b) ((((b)&0xF8)<<8) | (((g)&0xFC)<<3) | (((r)&0xF8)>>3))
 
 /* width and height based on orientation of display: */
+/*!
+ * \brief Returns display width based on current orientation.
+ * \return Display width in pixels.
+ */
 uint16_t McuST7735_GetWidth(void);
+/*!
+ * \brief Returns display height based on current orientation.
+ * \return Display height in pixels.
+ */
 uint16_t McuST7735_GetHeight(void);
 
 /* width and height based on hardware pixels */
@@ -34,10 +47,27 @@ uint16_t McuST7735_GetHeight(void);
   #define McuST7735_GetHwHeight()     128
 #endif
 
+/*!
+ * \brief Draws one pixel at the specified position.
+ * \param x X coordinate.
+ * \param y Y coordinate.
+ * \param color RGB565 color value.
+ */
 void McuST7735_DrawPixel(uint16_t x, uint16_t y, uint16_t color);
 
+/*!
+ * \brief Fills a rectangular area with a color.
+ * \param x X coordinate of top-left corner.
+ * \param y Y coordinate of top-left corner.
+ * \param w Rectangle width in pixels.
+ * \param h Rectangle height in pixels.
+ * \param color RGB565 color value.
+ */
 void McuST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 
+/*!
+ * \brief Initializes the ST7735 display module.
+ */
 void McuST7735_Init(void);
 
 #endif /* MCUST7735_H_ */

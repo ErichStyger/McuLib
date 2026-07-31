@@ -7,6 +7,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuLC709203F module.
+ */
+
 #include "McuLib.h"
 #if McuLib_CONFIG_CPU_IS_STM
   #include "libIIC.h"

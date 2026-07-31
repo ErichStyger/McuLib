@@ -147,10 +147,15 @@ static uint8_t RMSG_PrintStatus(const McuShell_StdIOType *io) {
   McuShell_SendStatusStr((unsigned char*)"rmsg", (unsigned char*)"\r\n", io->stdOut);
 
   McuUtility_Num32uToStr(buf, sizeof(buf), RMSG_RxQueueNofItems());
-  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" items\r\n");
+  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" items, size ");
+  McuUtility_strcatNum16u(buf, sizeof(buf), RNET_CONFIG_MSG_QUEUE_NOF_RX_ITEMS);
+  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  rx", buf, io->stdOut);
+
   McuUtility_Num32uToStr(buf, sizeof(buf), RMSG_TxQueueNofItems());
-  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" items\r\n");
+  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)" items, size ");
+  McuUtility_strcatNum16u(buf, sizeof(buf), RNET_CONFIG_MSG_QUEUE_NOF_TX_ITEMS);
+  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  tx", buf, io->stdOut);
   return ERR_OK;
 }

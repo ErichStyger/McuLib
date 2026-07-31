@@ -55,6 +55,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for InputRB1 module.
+ */
+
+/*!
 ** @file InputRB1.h
 ** @version 01.00
 ** @brief

@@ -6,6 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuPCF85063A module.
+ */
+
 #ifndef MCUPCF85063A_H_
 #define MCUPCF85063A_H_
 

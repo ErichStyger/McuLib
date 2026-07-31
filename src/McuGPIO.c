@@ -6,6 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuGPIO module.
+ */
+
 #include "McuLibconfig.h"
 #include "McuGPIO.h"
 #include "McuUtility.h"

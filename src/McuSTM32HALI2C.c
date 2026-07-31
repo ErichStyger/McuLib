@@ -55,6 +55,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuSTM32HALI2C module.
+ */
+
+/*!
 ** @file McuSTM32HALI2C.h
 ** @version 01.00
 ** @brief

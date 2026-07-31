@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief TCP server interface.
+ */
+
 #ifndef MCU_TCP_SERVER_H_
 #define MCU_TCP_SERVER_H_
 
@@ -27,10 +32,19 @@ extern "C" {
   uint8_t McuTcpServer_ParseCommand(const unsigned char* cmd, bool *handled, const McuShell_StdIOType *io);
 #endif
 
+/*!
+ * \brief Suspends the TCP server task.
+ */
 void McuTcpServer_Suspend(void);
 
+/*!
+ * \brief Resumes the TCP server task.
+ */
 void McuTcpServer_Resume(void);
 
+/*!
+ * \brief Initializes the TCP server module.
+ */
 void McuTcpServer_Init(void);
 
 #endif /* MCU_TCP_SERVER_CONFIG_ENABLED */

@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuSPI module.
+ */
+
 #include "McuSPI.h"
 #if MCUSPI_CONFIG_HW_TEMPLATE!=MCUSPI_CONFIG_HW_TEMPLATE_NONE
 #include "McuLib.h"

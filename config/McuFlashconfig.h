@@ -26,8 +26,12 @@
     #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (0x400)
   #elif McuLib_CONFIG_CPU_IS_LPC55xx
     #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (0x200)
+  #elif McuLib_CONFIG_CPU_IS_KINETIS && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
+    #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (2048)
+  #elif McuLib_CONFIG_CPU_IS_KINETIS && McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+    #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (4096)
   #elif McuLib_CONFIG_CPU_IS_KINETIS
-    #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (0x800)
+    #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (2048)
   #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_RP2040
     #include "hardware/flash.h"
     #define McuFlash_CONFIG_FLASH_BLOCK_SIZE         (0x1000) /* size of block which can be erased, 4K on RP2040 */

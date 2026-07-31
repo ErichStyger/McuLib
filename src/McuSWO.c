@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuSWO module.
+ */
+
 #include "McuSWO.h"
 #if McuSWO_CONFIG_HAS_SWO
 #include "McuLib.h"

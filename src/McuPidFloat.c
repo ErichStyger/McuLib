@@ -26,6 +26,11 @@
 **  * All rights reserved.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuPidFloat module.
+ */
+
+/*!
 ** @file McuPidFloat.h
 ** @version 01.00
 ** @brief

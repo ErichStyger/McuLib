@@ -117,6 +117,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuUtility module.
+ */
+
+/*!
 ** @file McuUtility.h
 ** @version 01.00
 ** @brief

@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Unity test-runner integration helpers.
+ */
+
 #ifndef MCU_UNITY_H_
 #define MCU_UNITY_H_
 
@@ -15,9 +20,22 @@
 extern "C" {
 #endif
 
+/*!
+ * \brief Writes one character to Unity output.
+ * \param c Character to write.
+ */
 void McuUnity_putc(int c);
+/*!
+ * \brief Flushes pending Unity output.
+ */
 void McuUnity_flush(void);
+/*!
+ * \brief Called before starting Unity tests.
+ */
 void McuUnity_start(void);
+/*!
+ * \brief Called after completing Unity tests.
+ */
 void McuUnity_complete(void);
 
 /*!

@@ -6,6 +6,11 @@
  * (see https://learn.adafruit.com/introducing-the-adafruit-bluefruit-spi-breakout/sdep-spi-data-transport)
  */
 
+/*!
+ * \file
+ * \brief Simple Data Exchange Protocol (SDEP) interface.
+ */
+
 #ifndef _MCUSDEP_H_
 #define _MCUSDEP_H_
 
@@ -21,31 +26,43 @@ extern "C" {
 #endif
 
 typedef struct McuSDEPmessage_t {
-  uint8_t type;         /* message type, e.g. McuSDEP_MSG_TYPE_COMMAND */
-  uint16_t cmdId;       /* command ID, e.g. McuSDEP_CMD_TYPE_PING */
-  uint8_t payloadSize;  /* number of payload bytes */
-  uint8_t *payload;     /* payload of data */
-  uint8_t crc;          /* CRC8 of the message */
+  uint8_t type;         /*!< Message type, e.g. McuSDEP_MSG_TYPE_COMMAND */
+  uint16_t cmdId;       /*!< Command ID, e.g. McuSDEP_CMD_TYPE_PING */
+  uint8_t payloadSize;  /*!< Number of payload bytes */
+  uint8_t *payload;     /*!< Payload data */
+  uint8_t crc;          /*!< CRC8 of the message */
 } McuSDEPmessage_t;
 
-#define McuSDEP_MESSAGE_MAX_NOF_BYTES        131
-#define McuSDEP_MESSAGE_MAX_PAYLOAD_BYTES    127
-#define McuSDEP_PAYLOADBYTE_MORE_DATA_BIT    0x80
+#define McuSDEP_MESSAGE_MAX_NOF_BYTES        131   /*!< Maximum number of bytes in one serialized SDEP message */
+#define McuSDEP_MESSAGE_MAX_PAYLOAD_BYTES    127   /*!< Maximum payload size in bytes */
+#define McuSDEP_PAYLOADBYTE_MORE_DATA_BIT    0x80  /*!< Continuation bit in payload size byte */
 
 /* message types (U8) */
-#define McuSDEP_MSG_TYPE_COMMAND  		   0x10
-#define McuSDEP_MSG_TYPE_RESPONSE  	     0x20
-#define McuSDEP_MSG_TYPE_ALERT  		     0x40
-#define McuSDEP_MSG_TYPE_ERROR  		     0x80
+#define McuSDEP_MSG_TYPE_COMMAND  		   0x10   /*!< Command message */
+#define McuSDEP_MSG_TYPE_RESPONSE  	     0x20   /*!< Response message */
+#define McuSDEP_MSG_TYPE_ALERT  		     0x40   /*!< Alert/notification message */
+#define McuSDEP_MSG_TYPE_ERROR  		     0x80   /*!< Error message */
 
 #include "McuSDEP_IDs.h" /* application specific SDEP IDs */
 
 /* --------------------------------------------------------------------------------- */
 /* optional buffer incoming rx data for SDEP */
 /* --------------------------------------------------------------------------------- */
+/*!
+ * \brief Sets the I/O descriptor used for SDEP communication.
+ * \param io I/O descriptor to use.
+ */
 void McuSDEP_SetSdepIO(McuIO_Desc_t *io);
+/*!
+ * \brief Gets the current I/O descriptor used for SDEP communication.
+ * \return Pointer to SDEP I/O descriptor.
+ */
 McuIO_Desc_t *McuSDEP_GetSdepIO(void);
 
+/*!
+ * \brief Stores one received character into the SDEP receive buffer.
+ * \param ch Character to store.
+ */
 void McuSDEP_StoreCharInSdepBuffer(char ch);
 /* --------------------------------------------------------------------------------- */
 /*!

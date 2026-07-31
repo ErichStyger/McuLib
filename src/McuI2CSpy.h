@@ -57,6 +57,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuI2CSpy module.
+ */
+
+/*!
 ** @file McuI2CSpy.h
 ** @version 01.00
 ** @brief

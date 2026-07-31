@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Shell interface for the UDP client module.
+ */
+
 #ifndef MCU_UDP_CLIENT_SHELL_H_
 #define MCU_UDP_CLIENT_SHELL_H_
 

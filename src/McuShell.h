@@ -98,6 +98,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuShell module.
+ */
+
+/*!
 ** @file McuShell.h
 ** @version 01.00
 ** @brief

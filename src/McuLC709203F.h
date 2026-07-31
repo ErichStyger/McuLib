@@ -6,6 +6,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuLC709203F module.
+ */
+
 #ifndef SOURCES_MCULC709203F_H_
 #define SOURCES_MCULC709203F_H_
 

@@ -53,6 +53,11 @@ Triggers are callbacks with a time when they should be executed.
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuTrigger module.
+ */
+
+/*!
 ** @file McuTrigger.h
 ** @version 01.00
 ** @brief

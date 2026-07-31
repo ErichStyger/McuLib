@@ -61,6 +61,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of Input1 module.
+ */
+
+/*!
 ** @file Input1.h
 ** @version 01.00
 ** @brief

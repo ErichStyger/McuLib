@@ -9,6 +9,11 @@
  * McuLib integration and extensions: Copyright (c) 2020 Erich Styger
  */
 
+/*!
+ * \file
+ * \brief Logging interface with configurable output channels and levels.
+ */
+
 #ifndef MCULOG_H
 #define MCULOG_H
 
@@ -31,7 +36,14 @@ extern "C" {
 
 #define McuLog_RTT_DATA_LOGGER_CHANNEL   (1) /* channel used for the RTT data logger */
 
-typedef enum { McuLog_TRACE, McuLog_DEBUG, McuLog_INFO, McuLog_WARN, McuLog_ERROR, McuLog_FATAL } McuLog_Levels_e;
+typedef enum {
+  McuLog_TRACE, /*!< Trace level */
+  McuLog_DEBUG, /*!< Debug level */
+  McuLog_INFO,  /*!< Informational level */
+  McuLog_WARN,  /*!< Warning level */
+  McuLog_ERROR, /*!< Error level */
+  McuLog_FATAL  /*!< Fatal level */
+} McuLog_Levels_e;
 
 #define McuLog_trace(...) McuLog_log(McuLog_TRACE, McuLog_CONFIG_USE_FILE_MACRO, __LINE__, __VA_ARGS__)
 #define McuLog_debug(...) McuLog_log(McuLog_DEBUG, McuLog_CONFIG_USE_FILE_MACRO, __LINE__, __VA_ARGS__)
@@ -47,20 +59,54 @@ typedef enum { McuLog_TRACE, McuLog_DEBUG, McuLog_INFO, McuLog_WARN, McuLog_ERRO
 #define McuLog_errorString(str) McuLog_logString(McuLog_ERROR, McuLog_CONFIG_USE_FILE_MACRO, __LINE__, str)
 #define McuLog_fatalString(str) McuLog_logString(McuLog_FATAL, McuLog_CONFIG_USE_FILE_MACRO, __LINE__, str)
 
+/*!
+ * \brief Sets the console output descriptor for a given channel.
+ * \param io Pointer to stdio descriptor.
+ * \param index Channel index.
+ */
 void McuLog_set_console(McuShell_ConstStdIOType *io, uint8_t index);
 
 #if McuLog_CONFIG_USE_MUTEX
   typedef void (*log_LockFn)(void *udata, bool lock);
+  /*!
+   * \brief Sets the lock callback used for thread-safe logging.
+   * \param fn Lock callback.
+   */
   void McuLog_set_lock(log_LockFn fn);
+  /*!
+   * \brief Sets user data pointer passed to the lock callback.
+   * \param udata User data pointer.
+   */
   void McuLog_set_udata(void *udata);
 #endif
 
   #if McuLog_CONFIG_USE_FILE
+  /*!
+   * \brief Sets the file handle used as log file destination.
+   * \param fp Pointer to FatFS file object.
+   */
   void McuLog_set_fp(McuFatFS_FIL *fp);
+  /*!
+   * \brief Opens the log file.
+   * \param logFileName Log file path.
+   * \return 0 on success.
+   */
   int McuLog_open_logfile(const unsigned char *logFileName); /* returns 0 on success */
+  /*!
+   * \brief Closes the log file.
+   * \return 0 on success.
+   */
   int McuLog_close_logfile(void); /* returns 0 on success */
 #endif
+/*!
+ * \brief Sets the minimum log level to print.
+ * \param level Minimum log level.
+ */
 void McuLog_set_level(McuLog_Levels_e level);
+/*!
+ * \brief Enables or disables quiet mode.
+ * \param enable true to suppress console output.
+ */
 void McuLog_set_quiet(bool enable);
 
 #if McuLog_CONFIG_USE_COLOR
@@ -73,13 +119,26 @@ void McuLog_set_channel_color(uint8_t channelIdx, bool enable); /* enable/disabl
   void McuLog_ChannelLog(uint8_t channel, McuLog_Levels_e level, const char *file, int line, const char *fmt, ...);
 #endif
 
+/*!
+ * \brief Logs a plain string (non-printf style) at the given level.
+ * \param level Log level.
+ * \param file Source file information.
+ * \param line Source line number.
+ * \param str String to log.
+ */
 void McuLog_logString(McuLog_Levels_e level, const char *file, int line, const char *str);
 
 #if McuLog_CONFIG_PARSE_COMMAND_ENABLED
 uint8_t McuLog_ParseCommand(const unsigned char *cmd, bool *handled, const McuShell_StdIOType *io);
 #endif
 
+/*!
+ * \brief Initializes the logging module.
+ */
 void McuLog_Init(void);
+/*!
+ * \brief Deinitializes the logging module.
+ */
 void McuLog_Deinit(void);
 
 #else /* not enabled: do not add anything to the code */
@@ -117,5 +176,4 @@ void McuLog_Deinit(void);
 #endif
 
 #endif /* MCULOG_H */
-
 

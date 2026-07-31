@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Task/activity watchdog monitoring interface.
+ */
+
 #ifndef SRC_MCUWATCHDOG_H_
 #define SRC_MCUWATCHDOG_H_
 
@@ -21,10 +26,10 @@ extern "C" {
 /* list of IDs to identify items monitored by the watchdog task */
 typedef enum McuWatchdog_ReportID_e {
   #include McuWatchdog_CONFIG_REPORT_ID_INCLUDE_FILE
-  McuWatchdog_REPORT_ID_NOF /* sentinel, must be last! */
+  McuWatchdog_REPORT_ID_NOF /*!< Sentinel, must be last */
 } McuWatchdog_ReportID_e;
 
-#define McuWatchdog_REPORT_ID_CURR_TASK (McuWatchdog_REPORT_ID_NOF) /* special id to report time for the current task, which has been registered earlier with McuWatchdog_SetTaskHandle()  */
+#define McuWatchdog_REPORT_ID_CURR_TASK (McuWatchdog_REPORT_ID_NOF) /*!< Special ID for current task previously registered with McuWatchdog_SetTaskHandle() */
 
 /*!
  * \brief Initialize the report structure

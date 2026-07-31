@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief WiFi connection management interface.
+ */
+
 #ifndef MCU_WIFI_H_
 #define MCU_WIFI_H_
 
@@ -28,18 +33,18 @@ extern "C" {
 #endif
 
 typedef enum {
-  McuWiFi_EAP_PEAP = EAP_PEAP, /* WPA2 Enterprise with password and no certificate */
-  McuWiFi_EAP_TTLS = EAP_TTLS, /* TLS method with SSID and password */
+  McuWiFi_EAP_PEAP = EAP_PEAP, /*!< WPA2 Enterprise with password and no certificate */
+  McuWiFi_EAP_TTLS = EAP_TTLS, /*!< TLS method with SSID and password */
 } McuWiFi_EAP_e;
 
 typedef struct McuWiFi_Autentification_t {
-  McuWiFi_EAP_e type; /* either McuWiFi_EAP_PEAP or McuWiFi_EAP_TTLS */
-  unsigned char ssid[32]; /* SSID of AP */
-  unsigned char pass[64]; /* password for AP */
+  McuWiFi_EAP_e type; /*!< Authentication type */
+  unsigned char ssid[32]; /*!< SSID of access point */
+  unsigned char pass[64]; /*!< Password for access point */
 #if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  unsigned char id[32]; /* additional id/user name for enterprise/McuWiFi_EAP_PEAP login */
+  unsigned char id[32]; /*!< Additional identity/user name for enterprise login */
 #endif
-  unsigned char hostname[32]; /* name of the host */
+  unsigned char hostname[32]; /*!< Host name to use */
 } McuWiFi_Autentification_t;
 
 /*!
@@ -62,6 +67,7 @@ bool McuWiFi_canReconnect(void);
 
 /*!
  * \brief return the host name
+ * \return Host name string.
  */
 const char *McuWifi_GetHostName(void);
 

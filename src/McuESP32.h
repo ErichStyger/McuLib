@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuESP32 module.
+ */
+
 #ifndef McuESP32_H_
 #define McuESP32_H_
 
@@ -14,9 +19,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* used to deal with USB CDC flow control pins */
-void McuESP32_UartState_Callback(uint8_t state);
 
 #include "McuShell.h"
 /*!
@@ -29,22 +31,49 @@ void McuESP32_UartState_Callback(uint8_t state);
 uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const McuShell_StdIOType *io);
 
 /*!
- * \brief Set a standard I/O receiving from ESP
- * \param stdio Standard I/O to be used
- */
-void McuESP32_SetRxFromESPStdio(McuShell_ConstStdIOTypePtr stdio);
-
-/*!
- * \brief Return the current receiving from ESP standard I/O
- * \return I/O handler
- */
-McuShell_ConstStdIOTypePtr McuESP32_GetRxFromESPStdio(void);
-
-/*!
  * \brief Returns the standard I/O handler for sending data (only sending) to the ESP32
  * \return standard I/O handler
  */
 McuShell_ConstStdIOTypePtr McuESP32_GetTxToESPStdio(void);
+
+/*!
+ * \brief Set the callback which decides if USB CDC is connected or not.
+ * \param callback Function pointer to callback
+ */
+void McuESP32_SetUsbCdcIsConnectedCallback(bool (*callback)(void));
+
+/*!
+ * \brief Set optional callback to be called at start end end of programming, useful to silence high system load activities.
+ * \param callback Pointer to callback function.
+ */
+void McuESP32_SetProgrammingCallback(void (*callback)(bool isProgramming));
+
+/*!
+ * \brief Used to deal with USB CDC flow control pins.
+ * \param dtr State of DTR signal.
+ * \param rts State of RTS signal.
+ */
+void McuESP32_UartState_Callback(bool dtr, bool rts);
+
+/*!
+ * \brief Sets the USB flush callback, required for idf.py flash operations.
+ * \param callback Callback to be called for a flush operation.
+ */
+void McuESP32_SetUsbFlushCallback(void (*callback)(void));
+
+/*!
+ * \brief Set the standard I/O handler to be used for sending ESP32 Rx traffic to.
+ * \param stdio Standard I/O handler to be used.
+ */
+void McuESP32_SetUsbCdcStdio(McuShell_ConstStdIOTypePtr stdio);
+
+/*!
+ * \brief Function to send data to the ESP32 via UART.
+ * \param data Pointer to the data to be sent.
+ * \param nofBytes number of data bytes
+ * \return number of bytes sent.
+ */
+uint32_t McuESP32_SendTxData(const void *data, uint32_t nofBytes);
 
 /*!
  * \brief Module de-initialization

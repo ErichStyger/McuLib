@@ -7,6 +7,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Interface for McuSHT40 module.
+ */
+
 #ifndef SOURCES_MCUSHT40_H_
 #define SOURCES_MCUSHT40_H_
 

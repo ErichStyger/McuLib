@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuUart485 module.
+ */
+
 #include "McuUart485.h"
 #if McuUart485_CONFIG_USE_RS_485
 #include "McuShell.h"

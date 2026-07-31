@@ -8,6 +8,11 @@
  *   Output  <- McuSDEP_callbacks.send_char()         <-/    \-> McuSDEP_callbacks.forward_char()  (e.g. to shell)
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuSDEP module.
+ */
+
 #include "McuSDEP.h"
 #if McuSDEP_CONFIG_IS_ENABLED
 #include "McuLib.h"

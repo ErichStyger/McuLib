@@ -80,6 +80,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Interface for McuGDisplaySSD1306 module.
+ */
+
+/*!
 ** @file McuGDisplaySSD1306.h
 ** @version 01.00
 ** @brief

@@ -2,7 +2,8 @@
  * Copyright (c) 2023, Erich Styger
  *
  * SPDX-License-Identifier: BSD-3-Clause
- * 
+ *
+ * \file
  * \brief Driver for the TI INA260 current/voltage sensor.
  */
 
@@ -18,14 +19,14 @@ extern "C" {
 
 /* TI INA260 device registers: */
 typedef enum INA260_REG_e {
-  McuINA260_ADDR_CONFIGURATION_REGISTER           = 0x00,
-  McuINA260_ADDR_CURRENT_REGISTER                 = 0x01,
-  McuINA260_ADDR_BUS_VOLTAGE_REGISTER             = 0x02,
-  McuINA260_ADDR_POWER_REGISTER                   = 0x03,
-  McuINA260_ADDR_MASK_ENABLE_REGISTER             = 0x06,
-  McuINA260_ADDR_ALERT_LIMIT_REGISTER             = 0x07,
-  McuINA260_ADDR_MANUFACTURER_ID_REGISTER         = 0xFE,
-  McuINA260_ADDR_DIE_ID_REGISTER                  = 0xFF,
+  McuINA260_ADDR_CONFIGURATION_REGISTER           = 0x00, /*!< Configuration register */
+  McuINA260_ADDR_CURRENT_REGISTER                 = 0x01, /*!< Current register */
+  McuINA260_ADDR_BUS_VOLTAGE_REGISTER             = 0x02, /*!< Bus voltage register */
+  McuINA260_ADDR_POWER_REGISTER                   = 0x03, /*!< Power register */
+  McuINA260_ADDR_MASK_ENABLE_REGISTER             = 0x06, /*!< Mask/enable register */
+  McuINA260_ADDR_ALERT_LIMIT_REGISTER             = 0x07, /*!< Alert limit register */
+  McuINA260_ADDR_MANUFACTURER_ID_REGISTER         = 0xFE, /*!< Manufacturer ID register */
+  McuINA260_ADDR_DIE_ID_REGISTER                  = 0xFF, /*!< Die ID register */
 } INA260_REG_e;
 
 /*!

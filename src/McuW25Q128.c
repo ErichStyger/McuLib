@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuW25Q128 module.
+ */
+
 #include "McuW25Q128.h"
 #if MCUW25Q128_CONFIG_ENABLED
 #include "McuUtility.h"

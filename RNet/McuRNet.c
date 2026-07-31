@@ -187,14 +187,6 @@ uint8_t McuRNet_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
   return McuShell_IterateTable(cmd, handled, io, CmdParserTable);
 }
 
-#if PL_HAS_RADIO
-void McuRNet_OnRadioEvent(McuRNet_RadioEvent event)
-{
-  (void)event;
-  /* Write your code here ... */
-}
-#endif
-
 #endif /* McuRNET_CONFIG_IS_ENABLED */
 
 /* END McuRNet. */

@@ -89,6 +89,11 @@
 **  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** ###################################################################*/
 /*!
+ * \file
+ * \brief Implementation of McuSSD1306 module.
+ */
+
+/*!
 ** @file McuSSD1306.h
 ** @version 01.00
 ** @brief

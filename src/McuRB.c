@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief Implementation of McuRB module.
+ */
+
 #include "McuRBconfig.h"
 #include "McuRB.h"
 #include <string.h> /* for memcpy() */

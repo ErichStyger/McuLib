@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/*!
+ * \file
+ * \brief NTP client interface.
+ */
+
 #ifndef MCU_NTP_CLIENT_H_
 #define MCU_NTP_CLIENT_H_
 
