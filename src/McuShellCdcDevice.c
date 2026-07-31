@@ -29,6 +29,7 @@
 #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
   #include "MK22F12.h"
   #include "clock_config.h"
+  #include "fsl_sysmpu.h"
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   /* no other include needed */
 #else
@@ -277,17 +278,19 @@ static void usb_hardware_init(void) {
   #endif
   /* Set Clock for USB (is not enabled by default. */
   SystemCoreClockUpdate();
-  #if 1
+#if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
   if (!CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000U)) {
     McuLog_fatal("failed configuring USB clock");
     for(;;) {}
   }
-  #endif
-  #if 0
+#elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+  SYSMPU_Enable(SYSMPU, 0); /* have to disable MPU for some Kinetis devices */
   if (!CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, 120000000U)) {
     McuLog_fatal("failed configuring USB clock");
     for(;;) {}
   }
+  #else
+    #error "not supported device"
   #endif
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   /* hardware setup done in SDK */
