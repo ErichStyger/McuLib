@@ -353,7 +353,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  dest addr", buf, io->stdOut);
 
-  McuUtility_Num8uToStr(buf, sizeof(buf), RSTDIO_QUEUE_LENGTH);
+  McuUtility_Num16uToStr(buf, sizeof(buf), RSTDIO_QUEUE_LENGTH);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  queue size", buf, io->stdOut);
  
