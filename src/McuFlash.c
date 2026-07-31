@@ -160,7 +160,7 @@ static uint8_t McuFlash_ProgramPage(void *addr, const void *data, size_t dataSiz
 #endif
   /* program */
 #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN
-    uint32_t primask = DisableGlobalIRQ(); /* workaround: need to disable interrupts? */
+  uint32_t primask = DisableGlobalIRQ(); /* workaround: need to disable interrupts? */
 #endif
   for(;;) { /* breaks, switch back to HSRUN if things fail */
     #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
@@ -433,39 +433,42 @@ uint8_t McuFlash_Erase(void *addr, size_t nofBytes) {
     return ERR_FAILED;
   }
 
-  for(;;) { /* breaks, switch back to HSRUN on Kinetis if things fail */
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
     uint32_t primask = DisableGlobalIRQ(); /* workaround: need to disable interrupts? */
   #endif
+  for(;;) { /* breaks, switch back to HSRUN on Kinetis if things fail */
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
     status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFLASH_ApiEraseKey);
     if (status!=kStatus_FLASH_Success) {
+      res = ERR_FAILED;
+      break; /* error, leave for(;;) loop */
+    }
   #else
     status = FLASH_Erase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_ApiEraseKey);
     if (status!=kStatus_FTFx_Success) {
-  #endif
       res = ERR_FAILED;
-    #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
-      EnableGlobalIRQ(primask); /* workaround: need to disable interrupts? */
-    #endif
       break; /* error, leave for(;;) loop */
     }
-  #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
-    EnableGlobalIRQ(primask); /* workaround: need to disable interrupts? */
   #endif
     /* Verify sector if it's been erased. */
    #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
-     status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFLASH_MarginValueUser);
+    status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFLASH_MarginValueUser);
     if (status!=kStatus_FLASH_Success) {
-   #else
-    status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_MarginValueUser);
-    if (status!=kStatus_FTFx_Success) {
-   #endif
       res = ERR_FAILED;
       break;
     }
+   #else
+    status = FLASH_VerifyErase(&s_flashDriver, (uint32_t)addr, nofBytes, kFTFx_MarginValueUser);
+    if (status!=kStatus_FTFx_Success) {
+      res = ERR_FAILED;
+      break;
+    }
+   #endif
     break; /* leave loop */
   } /* for */
+  #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+    EnableGlobalIRQ(primask); /* workaround: need to disable interrupts? reenable them here again */
+  #endif
   #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K02FN || McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
   status = SMC_SetPowerModeHsrun(SMC);
   if (status!=kStatus_Success) {
