@@ -28,6 +28,11 @@
     /*!< if status of control signals shall be printed on McuLog channel */
 #endif
 
+#ifndef McuESP32_CONFIG_VERBOSE_TRAFFIC
+  #define McuESP32_CONFIG_VERBOSE_TRAFFIC   (0)
+    /*!< if buffer and traffic status shall be printed on McuLog channel */
+#endif
+
 #ifndef McuESP32_CONFIG_PROCESS_PRIORITY
   #define McuESP32_CONFIG_PROCESS_PRIORITY    (configMAX_PRIORITIES-2)
     /*!< FreeRTOS task priority for RX and TX task. By default one level below the TmrSrv task */
