@@ -113,6 +113,12 @@ bool McuShellCdcDevice_IsConnected(void); /* note: connection status might not b
 void McuShellCdcDevice_SetBufferRxCharCallback(uint32_t (*buffer_rx_char_cb)(const void *data, uint32_t nofBytes));
 
 /*!
+ * \brief Set the callback baud rate change request from the USB CDC channel.
+ * \param changeBaude_cb Callback to be used to change the baud rate. Can be NULL.
+ */
+void McuShellCdcDevice_SetChangeBaudCallback(void (*changeBaude_cb)(uint32_t baud));
+
+/*!
  * \brief Set callback for RTS/CTS changes
  * \param callback Callback indicating RTS and CTS settings
  */

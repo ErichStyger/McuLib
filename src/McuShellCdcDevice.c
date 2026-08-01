@@ -45,10 +45,15 @@
 /* callbacks to deal with the CDC communication channel */
 static struct McuShellCdcDevice_s {
   uint32_t (*buffer_rx_char)(const void *data, uint32_t nofBytes);   /* called for incoming characters from CDC device */
+  void (*changeBaud)(uint32_t baud); /* optional callback to be called from USB CDC to request a baud rate change */
 } McuShellCdcDevice_callbacks;
 
 void McuShellCdcDevice_SetBufferRxCharCallback(uint32_t (*buffer_rx_char_cb)(const void *data, uint32_t nofBytes)) {
   McuShellCdcDevice_callbacks.buffer_rx_char = buffer_rx_char_cb;
+}
+
+void McuShellCdcDevice_SetChangeBaudCallback(void (*changeBaude_cb)(uint32_t baud)) {
+  McuShellCdcDevice_callbacks.changeBaud = changeBaude_cb;
 }
 
 /*********************************************************************************************************/
@@ -350,10 +355,10 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
 }
 
 void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding) {
-  extern void McuESP32_SetUartBaud(uint32_t baud);
-
-  //McuLog_info("tinyusb: request for %d baud", coding->bit_rate);
-  McuESP32_SetUartBaud(coding->bit_rate);
+  if (McuShellCdcDevice_callbacks.changeBaud!=NULL) {
+    /* McuLog_info("tinyusb: request for %d baud", coding->bit_rate); */
+    McuShellCdcDevice_callbacks.changeBaud(coding->bit_rate);
+  }
 }
 
 static void UsbDeviceRestart(void) {

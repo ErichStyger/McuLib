@@ -111,7 +111,7 @@ static void DeassertBootloaderMode(void) {
 #endif
 
 #if McuESP32_CONFIG_USE_USB_CDC
-void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and RTS lines */
+void McuESP32_UartStateCallback(bool dtr, bool rts) { /* callback for DTR and RTS lines */
   /*
    * DTR  RTS->EN  GPIO0
    * 1    1    1   1
@@ -404,7 +404,7 @@ static void InitQueues(void) {
   }
 }
 
-void McuESP32_SetUartBaud(uint32_t baud) {
+void McuESP32_ChangeUartBaudCallback(uint32_t baud) {
   static uint32_t currBaud = McuESP32_CONFIG_UART_BAUDRATE;
   if (baud!=currBaud) {
     #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS

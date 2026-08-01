@@ -53,7 +53,13 @@ void McuESP32_SetProgrammingCallback(void (*callback)(bool isProgramming));
  * \param dtr State of DTR signal.
  * \param rts State of RTS signal.
  */
-void McuESP32_UartState_Callback(bool dtr, bool rts);
+void McuESP32_UartStateCallback(bool dtr, bool rts);
+
+/*!
+ * \brief Callback to change the UART baud rate.
+ * \param baud New baud or bitrate.
+ */
+void McuESP32_ChangeUartBaudCallback(uint32_t baud);
 
 /*!
  * \brief Sets the USB flush callback, required for idf.py flash operations.
