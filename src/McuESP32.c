@@ -25,8 +25,8 @@
   static McuGPIO_Handle_t McuESP32_RF_IO0_Pin; /* pin pulled LOW to enable programming mode */
 #endif
 
-#define McuESP32_UART_RX_BUFFER_SIZE   (McuESP32_CONFIG_RX_BUFFER_SIZE) /*!< rx streambuffer size*/
-#define McuESP32_UART_TX_BUFFER_SIZE   (McuESP32_CONFIG_TX_BUFFER_SIZE) /*!< tx streambufer size */
+#define McuESP32_UART_RX_BUFFER_SIZE   (2*McuESP32_CONFIG_RX_BUFFER_SIZE) /*!< rx streambuffer size*/
+#define McuESP32_UART_TX_BUFFER_SIZE   (2*McuESP32_CONFIG_TX_BUFFER_SIZE) /*!< tx streambufer size */
 
 #define MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL  (16) /*!< streambuffer trigger level */
 static StreamBufferHandle_t rxStreamBuffer;
@@ -117,9 +117,6 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
   uint8_t DtrRts;
 
   uint8_t state = (rts<<1)|dtr; /* map it to set of bits */
-#if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-  McuLog_trace("dtr:%d rts:%d, state: %d, prev: %d, prevprev: %d", dtr, rts, state, prevState, prevPrevState);
-#endif
   if (state != prevState) {
     if (McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_AUTO || McuESP32_UsbPrgMode==McuESP32_USB_PRG_MODE_ON) {
       /*
@@ -137,20 +134,23 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
         DtrRts |= 1; /* RTS set */
       }
     #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-      McuLog_trace("State: %d, DtrRts: %d", state, DtrRts);
+      McuLog_trace("dtr:%d rts:%d, state: %d, prev: %d, prevprev: %d", dtr, rts, state, prevState, prevPrevState);
+      //McuLog_trace("State: %d, DtrRts: %d", state, DtrRts);
     #endif
       switch(DtrRts) {
         default:
         case 0:
           DeassertReset();
-          McuWait_Waitus(100); /* block for a short time (in the ISR!!!) ==> should have a 100 uF added to the reset line */
+         // McuWait_Waitus(1000); /* block for a short time (in the ISR!!!) ==> should have a 100 uF added to the reset line */
           DeassertBootloaderMode();
+         // McuWait_Waitus(1000);
         #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
          McuLog_trace("Release both: %d", DtrRts);
         #endif
           break;
         case 1:
           AssertBootloaderMode();
+         // McuWait_Waitus(1000);
         #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
           McuLog_trace("assert BL: %d", DtrRts);
         #endif
@@ -170,7 +170,7 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
             }
           }
           DeassertReset();
-          McuWait_Waitus(100); /* block for a short time (in the ISR!!!) ==> should have a 100 uF added to the reset line */
+          //McuWait_Waitus(100); /* block for a short time (in the ISR!!!) ==> should have a 100 uF added to the reset line */
         #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
           McuLog_trace("release reset: %d", DtrRts);
         #endif
@@ -189,7 +189,7 @@ void McuESP32_UartState_Callback(bool dtr, bool rts) { /* callback for DTR and R
         McuLog_info("Request Reset");
       #endif
         DoReset();
-        McuESP32_Programming(false); /* start programming mode */
+        McuESP32_Programming(false); /* stop programming mode */
       }
     }
     prevPrevState = prevState;
@@ -402,25 +402,26 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
 static void sendData(const void *buffer, uint32_t size) {
   uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* using private interface \todo */
 
+  McuLog_trace("tx USB: %d", size);
   uint32_t nof = McuShellCdcDevice_Send(buffer, size);
   if (nof!=size) {
-    for(;;) {}
+    McuLog_fatal("wanted to send %d, but did %d", size, nof);
   }
 }
 
 static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32 module */
   size_t size;
-  unsigned char buffer[128];
+  static unsigned char buffer[256];
  
   (void)pv; /* not used */
   for(;;) {
-    size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(50)); /* use longer timeout to prevent too much polling */
+    size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use longer timeout to prevent too much polling */
     if (size!=0) { /* received something */
   #if McuESP32_CONFIG_USE_USB_CDC
       if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
         do {
           sendData(buffer, size);
-          size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use shorter timeout */
+          size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(1)); /* use shorter timeout */
         } while(size>0);
         if (McuESP32_UsbFlush!=NULL) {
           McuESP32_UsbFlush();
@@ -432,16 +433,18 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
 }
 
 static void UartTxTask(void *pv) { /* task handling sending data to the ESP32 module */
-  unsigned char buffer[64];
+  static unsigned char buffer[1024];
   size_t size;
  
   (void)pv; /* not used */
   for(;;) {
-    size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(50)); /* use longer timeout to prevent too much CPU usage with polling */
+    size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use longer timeout to prevent too much CPU usage with polling */
     if (size!=0) { /* received something */
       do {
+        McuLog_trace("tx->esp: %d", size);
         McuESP32_CONFIG_UART_WRITE_BLOCKING(McuESP32_CONFIG_UART_DEVICE, buffer, size); /* send to ESP */
-        size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use shorter timeout */
+        taskYIELD();
+        size = xStreamBufferReceive(txStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(1)); /* use shorter timeout */
       } while(size>0);
     }
   }
@@ -455,6 +458,15 @@ static void InitQueues(void) {
   txStreamBuffer = xStreamBufferCreate(McuESP32_UART_TX_BUFFER_SIZE, MCUESP32_CONFIG_STREAM_BUFFER_TRIGGER_LEVEL);
   if (txStreamBuffer==NULL) {
     for(;;) {}
+  }
+}
+
+void McuESP32_SetUartBaud(uint32_t baud) {
+  static uint32_t currBaud = McuESP32_CONFIG_UART_BAUDRATE;
+  if (baud!=currBaud) {
+    McuLog_trace("changing baud from %d to %d", currBaud, baud);
+    UART_SetBaudRate(McuESP32_CONFIG_UART_DEVICE, baud, CLOCK_GetFreq(McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT));
+    currBaud = baud;
   }
 }
 
