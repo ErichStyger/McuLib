@@ -350,8 +350,10 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
 }
 
 void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *coding) {
+  extern void McuESP32_SetUartBaud(uint32_t baud);
+
   //McuLog_info("tinyusb: request for %d baud", coding->bit_rate);
-  //uart_set_baudrate(coding->bit_rate);
+  McuESP32_SetUartBaud(coding->bit_rate);
 }
 
 static void UsbDeviceRestart(void) {
