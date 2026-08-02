@@ -45,6 +45,11 @@
     /*!< 1: the shell implements its own StdIO which is returned by GetStdio(); 0: The shell does not implement its own standard I/O */
 #endif
 
+#ifndef McuShell_CONFIG_HAS_WRITE_DATA
+  #define McuShell_CONFIG_HAS_WRITE_DATA                   (0)
+    /*!< 1: stdIO implements a function to write a number of data bytes; 0: writing a number of data bytes is not available */
+#endif
+
 #if McuShell_CONFIG_DEFAULT_SERIAL
   #ifndef McuShell_CONFIG_DEFAULT_SERIAL_INCLUDE
     #define McuShell_CONFIG_DEFAULT_SERIAL_INCLUDE         "McuSerial.h"

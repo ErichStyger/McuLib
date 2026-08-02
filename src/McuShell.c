@@ -152,10 +152,16 @@ uint8_t McuShell_DefaultShellBuffer[McuShell_DEFAULT_SHELL_BUFFER_SIZE]; /* defa
 #if McuShell_DEFAULT_SERIAL
   McuShell_ConstStdIOType McuShell_stdio =
   {
-    (McuShell_StdIO_In_FctType)McuShell_ReadChar, /* stdin */
-    (McuShell_StdIO_OutErr_FctType)McuShell_SendChar, /* stdout */
-    (McuShell_StdIO_OutErr_FctType)McuShell_SendChar, /* stderr */
-    McuShell_KeyPressed /* if input is not empty */
+    .stdIn = (McuShell_StdIO_In_FctType)McuShell_ReadChar, /* stdin */
+    .stdOut = (McuShell_StdIO_OutErr_FctType)McuShell_SendChar, /* stdout */
+    .stdErr = (McuShell_StdIO_OutErr_FctType)McuShell_SendChar, /* stderr */
+    .keyPressed = McuShell_KeyPressed /* if input is not empty */
+  #if McuShell_CONFIG_ECHO_ENABLED
+    .echoEnabled = false,
+  #endif
+  #if McuShell_CONFIG_HAS_WRITE_DATA
+    .writeData = McuShell_WriteData,
+  #endif
   };
   static McuShell_ConstStdIOType *McuShell_currStdIO = &McuShell_stdio;
 #else

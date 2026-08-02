@@ -9,12 +9,14 @@
 #ifndef MCUSHELLUART_H_
 #define MCUSHELLUART_H_
 
-#include "McuShellUartconfig.h"
-#include "McuShell.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "McuShellUartconfig.h"
+#if McuShellUart_CONFIG_IS_ENABLED
+
+#include "McuShell.h"
 
 /*! Default McuShell buffer */
 extern uint8_t McuShellUart_DefaultShellBuffer[McuShell_DEFAULT_SHELL_BUFFER_SIZE]; /* default buffer which can be used by the application */
@@ -27,6 +29,18 @@ extern McuShell_ConstStdIOType McuShellUart_stdio;
  * \return Pointer to stdio descriptor.
  */
 McuShell_ConstStdIOTypePtr McuShellUart_GetStdio(void);
+
+/*!
+ * \brief Writes a number of data bytes to the UART.
+ * \return The number of bytes written.
+ */
+int McuShellUart_WriteBytes(const void *src, size_t size);
+
+/*!
+ * \brief Writes a string to the UART.
+ * \return The number of character written.
+ */
+int McuShellUart_WriteString(const char *str);
 
 /*!
  * \brief Polls for a UART character, might be blocking
@@ -49,6 +63,8 @@ void McuShellUart_Deinit(void);
  * \brief Module initialization
  */
 void McuShellUart_Init(void);
+
+#endif /* McuShellUart_CONFIG_IS_ENABLED */
 
 #ifdef __cplusplus
 }  /* extern "C" */

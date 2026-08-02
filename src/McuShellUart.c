@@ -7,9 +7,10 @@
  */
 
 #include "McuShellUartconfig.h"
-#if McuShellUart_CONFIG_UART!=McuShellUart_CONFIG_UART_NONE
+#if McuShellUart_CONFIG_IS_ENABLED && McuShellUart_CONFIG_UART!=McuShellUart_CONFIG_UART_NONE
 #include "McuShellUart.h"
 #include "McuShell.h"
+#include "McuUtility.h"
 #if McuShellUart_CONFIG_USE_FREERTOS
   #include "McuRTOS.h"
 #else
@@ -19,6 +20,10 @@
   #include "hardware/uart.h"
   #include "hardware/irq.h"
   #include "hardware/gpio.h"
+#endif
+#if McuLib_CONFIG_CPU_IS_ESP32
+  #include "driver/uart.h"
+  #include "driver/gpio.h"
 #endif
 #include "McuLog.h"
 
@@ -35,16 +40,37 @@ static void McuShellUart_SendChar(unsigned char ch) {
   McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, &ch, 1);
 }
 
-static void McuShellUart_ReadChar(uint8_t *c) {
-  uint8_t ch;
+#if McuLib_CONFIG_CPU_IS_ESP32
+static void EspUart_ReadChar(uint8_t *c) {
+  unsigned char ch;
+  int len = 0;
 
-#if McuShellUart_CONFIG_USE_FREERTOS
-  if (xQueueReceive(uartRxQueue, &ch, 0)==pdPASS ) {
-    *c = ch; /* return received character */
+ // if (xSemaphoreTakeRecursive(SHELL_stdioMutex, portMAX_DELAY)==pdPASS) { /* take mutex */
+    len = uart_read_bytes(McuShellUart_CONFIG_UART_DEVICE, &ch, 1, 0);
+ //   (void)xSemaphoreGiveRecursive(SHELL_stdioMutex); /* give back mutex */
+ // }
+  if (len==0) {
+    *c = '\0';
   } else {
-    *c = '\0'; /* nothing received */
+    *c = ch;
   }
+}
+#endif /* McuLib_CONFIG_CPU_IS_ESP32 */
+
+static void McuShellUart_ReadChar(uint8_t *c) {
+#if McuShellUart_CONFIG_USE_FREERTOS
+  #if McuLib_CONFIG_CPU_IS_ESP32
+    EspUart_ReadChar(c);
+  #else
+    uint8_t ch;
+    if (xQueueReceive(uartRxQueue, &ch, 0)==pdPASS ) {
+      *c = ch; /* return received character */
+    } else {
+      *c = '\0'; /* nothing received */
+    }
+  #endif
 #else
+  uint8_t ch;
   if (McuRB_Get(rxRingBuffer, &ch)!=ERR_OK) {
     *c = '\0'; /* nothing received */
   } else {
@@ -53,13 +79,35 @@ static void McuShellUart_ReadChar(uint8_t *c) {
 #endif
 }
 
+#if McuLib_CONFIG_CPU_IS_ESP32
+static bool EspUart_CharPresent(void) {
+  size_t size=0;
+
+ // if (xSemaphoreTakeRecursive(SHELL_stdioMutex, portMAX_DELAY)==pdPASS) { /* take mutex */
+    uart_get_buffered_data_len(McuShellUart_CONFIG_UART_DEVICE, &size);
+   // (void)xSemaphoreGiveRecursive(SHELL_stdioMutex); /* give back mutex */
+ // }
+  return size!=0;
+}
+#endif /* McuLib_CONFIG_CPU_IS_ESP32 */
+
 static bool McuShellUart_CharPresent(void) {
 #if McuShellUart_CONFIG_USE_FREERTOS
+  #if McuLib_CONFIG_CPU_IS_ESP32
+    return EspUart_CharPresent();
+  #else
   return uxQueueMessagesWaiting(uartRxQueue)!=0;
+  #endif
 #else
   return McuRB_NofElements(rxRingBuffer)!=0;
 #endif
 }
+
+#if McuShell_CONFIG_HAS_WRITE_DATA
+int McuShellUart_WriteData(const void *data, int nof) {
+  return McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, data, nof);
+}
+#endif
 
 McuShell_ConstStdIOType McuShellUart_stdio = {
     .stdIn = (McuShell_StdIO_In_FctType)McuShellUart_ReadChar,
@@ -67,7 +115,10 @@ McuShell_ConstStdIOType McuShellUart_stdio = {
     .stdErr = (McuShell_StdIO_OutErr_FctType)McuShellUart_SendChar,
     .keyPressed = McuShellUart_CharPresent, /* if input is not empty */
   #if McuShell_CONFIG_ECHO_ENABLED
-    .echoEnabled = false,
+    .echoEnabled = McuShellUart_CONFIG_ECHO_ENABLED,
+  #endif
+  #if McuShell_CONFIG_HAS_WRITE_DATA
+    .writeData = McuShellUart_WriteData,
   #endif
 };
 
@@ -79,6 +130,8 @@ uint8_t McuShellUart_DefaultShellBuffer[McuShell_DEFAULT_SHELL_BUFFER_SIZE]; /* 
 /*********************************************************************************************************/
 
 #if McuLib_CONFIG_CPU_IS_RPxxxx
+  /* nothing needed */
+#elif McuLib_CONFIG_CPU_IS_ESP32
   /* nothing needed */
 #else
 void McuShellUart_CONFIG_UART_IRQ_HANDLER(void) {
@@ -614,9 +667,32 @@ static void InitUartMuxing(void) {
 }
 #endif /* McuShellUart_CONFIG_DO_PIN_MUXING */
 
+#if McuLib_CONFIG_CPU_IS_ESP32
+static void IniEspUart(void) {
+  uart_config_t uart_config = {
+      .baud_rate = McuShellUart_CONFIG_UART_BAUDRATE,
+      .data_bits = McuShellUart_CONFIG_DATA_BITS,
+      .parity = UART_PARITY_DISABLE,
+      .stop_bits = McuShellUart_CONFIG_STOP_BITS,
+      .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+      .rx_flow_ctrl_thresh = 0,
+  };
+
+  /* Configure UART parameters */
+  uart_param_config(McuShellUart_CONFIG_UART_DEVICE, &uart_config);
+  uart_set_pin(McuShellUart_CONFIG_UART_DEVICE, McuShellUart_CONFIG_UART_TX_PIN, McuShellUart_CONFIG_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
+  /* Install UART driver (we don't need an event queue here) */
+  uart_driver_install(McuShellUart_CONFIG_UART_DEVICE, McuShellUart_CONFIG_ESP_UART_RX_BUF_SIZE, McuShellUart_CONFIG_ESP_UART_TX_BUF_SIZE, 0, NULL, 0);
+  uart_set_mode(McuShellUart_CONFIG_UART_DEVICE, UART_MODE_UART);
+}
+#endif/* McuLib_CONFIG_CPU_IS_ESP32 */
+
 static void InitUart(void) {
 #if McuLib_CONFIG_CPU_IS_RPxxxx
-  /* nothing needed */ 
+  /* nothing needed */
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  IniEspUart();
 #else
   McuShellUart_CONFIG_UART_CONFIG_STRUCT config;
   status_t status;
@@ -644,6 +720,42 @@ static void InitUart(void) {
   NVIC_SetPriority(McuShellUart_CONFIG_UART_IRQ_NUMBER, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY);
 #endif
   EnableIRQ(McuShellUart_CONFIG_UART_IRQ_NUMBER);
+#endif
+}
+
+#if McuLib_CONFIG_CPU_IS_ESP32
+static unsigned char McuShellUart_ESP_ReadByte(uart_port_t uart_num) {
+  unsigned char ch;
+  int len =  uart_read_bytes(uart_num, &ch, 1, 0);
+  if (len==0) {
+    ch = '\0';
+  } else {
+    ch = ch;
+  }
+  return ch;
+}
+#endif
+
+int McuShellUart_WriteBytes(const void *data, size_t size) {
+#if McuLib_CONFIG_CPU_IS_ESP32
+  int written = uart_write_bytes(McuShellUart_CONFIG_UART_DEVICE, data, size);
+  return written;
+#else
+  /* other APIs do not return the number of characters written */
+  McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, data, size);
+  return size;
+#endif
+}
+
+int McuShellUart_WriteString(const char *str) {
+  size_t len = McuUtility_strlen(str);
+#if McuLib_CONFIG_CPU_IS_ESP32
+  int written = uart_write_bytes(McuShellUart_CONFIG_UART_DEVICE, (const char*)str, len);
+  return written;
+#else
+  /* other APIs do not return the number of characters written */
+  McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, str, len);
+  return len;
 #endif
 }
 
@@ -683,4 +795,4 @@ void McuShellUart_Init(void) {
   InitUart();
 }
 
-#endif /* McuShellUart_CONFIG_UART!=McuShellUart_CONFIG_UART_NONE*/
+#endif /* McuShellUart_CONFIG_IS_ENABLED && McuShellUart_CONFIG_UART!=McuShellUart_CONFIG_UART_NONE*/

@@ -146,6 +146,9 @@
   #if McuShell_CONFIG_ECHO_ENABLED
     bool echoEnabled;                  /* true if I/O shall echo characters */
   #endif
+  #if McuShell_CONFIG_HAS_WRITE_DATA
+    int (*writeData)(const void *data, int nofBytes);
+  #endif
   } McuShell_StdIOType;
 #endif
 #ifndef __BWUserType_McuShell_ConstStdIOType
