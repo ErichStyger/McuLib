@@ -386,7 +386,6 @@ static void InitWiFiHardware(void) {
     }
   #endif
   LoadWifiSettings();
-  SetNetworkHostname();
 #if MCU_WIFI_CONFIG_USE_WATCHDOG
   McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 10, 100);
 #else
@@ -434,6 +433,9 @@ static bool ConnectWiFiWithCredentials(void) {
     int failedCount = 0;
   #endif
 
+  if (SetNetworkHostname()!=ERR_OK) {
+    McuLog_error("failed setting hostname");
+  }
   for(;;) { /* retries connection if failed, breaks loop if successful */
     if (!wifi.isEnabled) {
       break;
