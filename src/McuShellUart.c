@@ -105,7 +105,8 @@ static bool McuShellUart_CharPresent(void) {
 
 #if McuShell_CONFIG_HAS_WRITE_DATA
 int McuShellUart_WriteData(const void *data, int nof) {
-  return McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, data, nof);
+  (void)McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, data, nof);
+  return nof;
 }
 #endif
 
@@ -754,7 +755,7 @@ int McuShellUart_WriteString(const char *str) {
   return written;
 #else
   /* other APIs do not return the number of characters written */
-  McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, str, len);
+  McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, (const uint8_t*)str, len);
   return len;
 #endif
 }
