@@ -177,7 +177,7 @@ uint8_t McuMqttClient_PublishSwitch(const char *topic, bool isOn, bool asJSON);
  * \param logMsg Log message used for printing, or NULL
  * \param setter Function point to be called for the switch value, or NULL
  */
-void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(bool));
+void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(bool), bool asJSON);
 
 /*!
  * \brief Publish time value to a topic

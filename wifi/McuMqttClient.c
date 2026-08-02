@@ -21,6 +21,7 @@
 #if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   #include "minIni/McuMinINI.h"
 #endif
+#include "cJSON.h"
 
 #if !MCU_DNS_RESOLVER_CONFIG_ENABLED
   #error "This module currently depends on DNS resolver available, please enable it."
@@ -125,20 +126,38 @@ uint8_t McuMqttClient_PublishSwitch(const char *topic, bool isOn, bool asJSON) {
   return McuMqttClient_PublishText(topic, (char*)buf);
 }
 
-void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(bool)) {
+void McuMqttClient_IncomingSwitch(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(bool), bool asJSON) {
   unsigned char buf[32];
 
   McuMqttClient_GetDataString((char*)buf, sizeof(buf), data, len);
   if (logMsg!=NULL && McuMqttClient_doLogging()) {
     McuLog_trace("Rx: %s: %s", logMsg, buf);
   }
-  if (McuUtility_strcmp((char*)buf, "ON")==0) {
-    if (setter!=NULL) {
-      setter(true);
+  if (asJSON) {
+    cJSON *json = cJSON_Parse((char*)buf);
+    if (json==NULL) {
+      McuLog_error("Failed to parse JSON: %s", buf);
+      return;
     }
-  } else if(McuUtility_strcmp((char*)buf, "OFF")==0) {
-    if (setter!=NULL) {
-      setter(false);
+    const cJSON *state = cJSON_GetObjectItemCaseSensitive(json, "state");
+    if (cJSON_IsString(state) && (state->valuestring != NULL))  {
+      McuLog_info("Checking state \"%s\"", state->valuestring);
+      if (McuUtility_strcmp((char*)state->valuestring, (char*)"ON")==0) {
+        setter(true);
+      } else if(McuUtility_strcmp((char*)state->valuestring, (char*)"OFF")==0) {
+        setter(false);
+      }
+    }
+    cJSON_Delete(json); /* free object */
+  } else {
+    if (McuUtility_strcmp((char*)buf, "ON")==0) {
+      if (setter!=NULL) {
+        setter(true);
+      }
+    } else if(McuUtility_strcmp((char*)buf, "OFF")==0) {
+      if (setter!=NULL) {
+        setter(false);
+      }
     }
   }
 }
