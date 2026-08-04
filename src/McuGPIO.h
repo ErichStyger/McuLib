@@ -58,8 +58,8 @@ typedef struct McuGPIO_HwPin_t {
 #elif McuLib_CONFIG_CPU_IS_STM32
   GPIO_TypeDef *gpio;
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-  struct gpiod_chip *chip; /* must be retrieved once, e.g.e with gpiod_chip_open_by_name("gpiochip0") */
-  const char *name; /* assigned name for the pin */
+  const char *name; /* user name for the pin, e.g. "led" */
+  const char *chipName; /* hardware chip device name, e.g. "/dev/gpiochip0" */
 #endif
 #if McuLib_CONFIG_CPU_IS_KINETIS
   PORT_Type *port; /* pointer to port, e.g. PORTA, for KE this is PORT */
