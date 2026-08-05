@@ -84,6 +84,9 @@ McuLED_Handle_t McuLED_InitLed(McuLED_Config_t *config) {
     gpio_config.isHighOnInit = config->isOnInit;
   }
   gpio = McuGPIO_InitGPIO(&gpio_config); /* create gpio handle */
+  if (gpio==NULL) {
+    return NULL; /* error */
+  }
 #if MCULED_CONFIG_USE_FREERTOS_HEAP
   handle = (McuLED_t*)pvPortMalloc(sizeof(McuLED_t)); /* get a new device descriptor */
 #else
