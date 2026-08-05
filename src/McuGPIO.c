@@ -82,7 +82,7 @@ static const McuGPIO_Config_t defaultConfig =
         .gpio = NULL,
       #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
         .name = "",
-        .chipName = "/dev/gpiochip0",
+        .chipName = "",
       #endif
     #if McuLib_CONFIG_CPU_IS_KINETIS
       .port = 0,
@@ -256,9 +256,9 @@ static void McuGPIO_ConfigurePin(McuGPIO_t *pin, bool isInput, bool isHighOnInit
   }
   gpiod_request_config_set_consumer(pin->gpiod.req_cfg, pin->hw.name);
   pin->gpiod.request = gpiod_chip_request_lines(pin->gpiod.chip, pin->gpiod.req_cfg, pin->gpiod.line_cfg);
-  if (!pin->gpiod.request) {
-    McuLog_fatal("gpiod_chip_request_lines");
-    for(;;) {}
+  if (pin->gpiod.request==NULL) {
+    McuLog_fatal("failed gpiod_chip_request_lines, pin already used?");
+    return;
   }
   if (!isInput) {
     gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, isHighOnInit?GPIOD_LINE_VALUE_ACTIVE:GPIOD_LINE_VALUE_INACTIVE);
@@ -323,6 +323,11 @@ McuGPIO_Handle_t McuGPIO_InitGPIO(McuGPIO_Config_t *config) {
   gpio_init(config->hw.pin);
 #endif
   McuGPIO_ConfigurePin(handle, config->isInput, config->isHighOnInit);
+  #if McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
+  if (handle->gpiod.request==NULL) {
+    return McuGPIO_DeinitGPIO((McuGPIO_Handle_t)handle);
+  }
+  #endif
   McuGPIO_SetPullResistor((McuGPIO_Handle_t)handle, config->hw.pull); /* GPIO muxing might be done with setting the pull registers, e.g. for LPC845 */
 
   /* do the pin muxing */
@@ -402,12 +407,22 @@ McuGPIO_Handle_t McuGPIO_DeinitGPIO(McuGPIO_Handle_t gpio) {
   assert(gpio!=NULL);
 #if McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
   McuGPIO_t *pin = (McuGPIO_t*)gpio;
-  gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
-  gpiod_line_request_release(pin->gpiod.request);
-  gpiod_request_config_free(pin->gpiod.req_cfg);
-  gpiod_line_config_free(pin->gpiod.line_cfg);
-  gpiod_line_settings_free(pin->gpiod.settings);
-  gpiod_chip_close(pin->gpiod.chip);
+  if (pin->gpiod.request!=NULL) {
+    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
+    gpiod_line_request_release(pin->gpiod.request);
+  }
+  if (pin->gpiod.req_cfg!=NULL) {
+    gpiod_request_config_free(pin->gpiod.req_cfg);
+  }
+  if (pin->gpiod.line_cfg!=NULL) {
+    gpiod_line_config_free(pin->gpiod.line_cfg);
+  }
+  if (pin->gpiod.settings!=NULL) {
+    gpiod_line_settings_free(pin->gpiod.settings);
+  }
+  if (pin->gpiod.chip!=NULL) {
+    gpiod_chip_close(pin->gpiod.chip);
+  }
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   McuGPIO_t *pin = (McuGPIO_t*)gpio;
   gpio_deinit(pin->hw.pin);
@@ -444,8 +459,10 @@ void McuGPIO_SetLow(McuGPIO_Handle_t gpio) {
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   gpio_put(pin->hw.pin, 0);
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-  gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
-  pin->isHigh = false;
+  if (pin->gpiod.request!=NULL) {
+    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
+    pin->isHigh = false;
+  }
 #elif McuLib_CONFIG_CPU_IS_MCX
   GPIO_PinWrite(pin->hw.gpio, pin->hw.pin, 0);
 #endif
@@ -475,7 +492,9 @@ void McuGPIO_SetHigh(McuGPIO_Handle_t gpio) {
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   gpio_put(pin->hw.pin, 1);
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-  gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_ACTIVE);
+  if (pin->gpiod.request!=NULL) {
+    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_ACTIVE);
+  }
   pin->isHigh = true;
 #elif McuLib_CONFIG_CPU_IS_MCX
   GPIO_PinWrite(pin->hw.gpio, pin->hw.pin, 1);
@@ -511,12 +530,14 @@ void McuGPIO_Toggle(McuGPIO_Handle_t gpio) {
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   gpio_xor_mask(1<<pin->hw.pin);
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-  if (pin->isHigh) {
-    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
-    pin->isHigh = false;
-  } else {
-    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_ACTIVE);
-    pin->isHigh = true;
+  if (pin->gpiod.request!=NULL) {
+    if (pin->isHigh) {
+      gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
+      pin->isHigh = false;
+    } else {
+      gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_ACTIVE);
+      pin->isHigh = true;
+    }
   }
 #elif McuLib_CONFIG_CPU_IS_MCX
   GPIO_PortToggle(pin->hw.gpio, 1<<pin->hw.pin);
@@ -548,8 +569,10 @@ void McuGPIO_SetValue(McuGPIO_Handle_t gpio, bool val) {
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
     gpio_put(pin->hw.pin, 1);
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_ACTIVE);
-    pin->isHigh = true;
+    if (pin->gpiod.request!=NULL) {
+      gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_ACTIVE);
+      pin->isHigh = true;
+    }
 #elif McuLib_CONFIG_CPU_IS_MCX
     GPIO_PinWrite(pin->hw.gpio, pin->hw.pin, 1);
 #endif
@@ -574,8 +597,10 @@ void McuGPIO_SetValue(McuGPIO_Handle_t gpio, bool val) {
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
     gpio_put(pin->hw.pin, 0);
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-    gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
-    pin->isHigh = false;
+    if (pin->gpiod.request!=NULL) {
+      gpiod_line_request_set_value(pin->gpiod.request, pin->hw.pin, GPIOD_LINE_VALUE_INACTIVE);
+      pin->isHigh = false;
+    }
 #elif McuLib_CONFIG_CPU_IS_MCX
     GPIO_PinWrite(pin->hw.gpio, pin->hw.pin, 0);
 #endif
@@ -613,7 +638,11 @@ bool McuGPIO_IsHigh(McuGPIO_Handle_t gpio) {
 #elif McuLib_CONFIG_CPU_IS_RPxxxx
   return gpio_get(pin->hw.pin)!=0;
 #elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_LINUX
-  return gpiod_line_request_get_value(pin->gpiod.request, pin->hw.pin)==GPIOD_LINE_VALUE_ACTIVE;
+  if (pin->gpiod.request!=NULL) {
+    return gpiod_line_request_get_value(pin->gpiod.request, pin->hw.pin)==GPIOD_LINE_VALUE_ACTIVE;
+  } else {
+    return false;
+  }
 #elif McuLib_CONFIG_CPU_IS_MCX
   return GPIO_PinRead(pin->hw.gpio, pin->hw.pin);
 #endif
