@@ -31,6 +31,18 @@ extern "C" {
 uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const McuShell_StdIOType *io);
 
 /*!
+ * \brief Set a standard I/O receiving from ESP
+ * \param stdio Standard I/O to be used
+ */
+void McuESP32_SetRxFromESPStdio(McuShell_ConstStdIOTypePtr stdio);
+
+/*!
+ * \brief Return the current receiving from ESP standard I/O
+ * \return I/O handler
+ */
+McuShell_ConstStdIOTypePtr McuESP32_GetRxFromESPStdio(void);
+
+/*!
  * \brief Returns the standard I/O handler for sending data (only sending) to the ESP32
  * \return standard I/O handler
  */

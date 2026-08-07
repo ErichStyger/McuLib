@@ -45,6 +45,19 @@ static StreamBufferHandle_t txStreamBuffer;
   static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP32_SetUsbCdcIsConnectedCallback() */
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
 #endif
+static bool McuESP32_CopyUartToShell = false; /* if we copy the ESP32 UART to the Shell */ /* \TODO fails USB enumeration if McuESP32_CopyUartToShell enabled by default? */
+
+/* Below is the I/O handler for the console: data from the ESP is sent optionally to that stdout (e.g. shell console).
+ */
+static McuShell_ConstStdIOType *McuESP32_RxFromESPStdIO = NULL; /* can be overwritten with McuESP32_SetRxFromESPStdio(); */
+
+void McuESP32_SetRxFromESPStdio(McuShell_ConstStdIOTypePtr stdio) {
+  McuESP32_RxFromESPStdIO = stdio;
+}
+
+McuShell_ConstStdIOTypePtr McuESP32_GetRxFromESPStdio(void) {
+  return McuESP32_RxFromESPStdIO;
+}
 
 void McuESP32_SetProgrammingCallback(void (*callback)(bool isProgramming)) {
   McuESP32_ProgrammingCallback = callback;
@@ -253,6 +266,7 @@ static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
   }
   McuShell_SendStatusStr((unsigned char*)"  usbprg", buf, io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  programming", McuESP32_IsProgramming?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
+  McuShell_SendStatusStr((unsigned char*)"  uarttoshell", McuESP32_CopyUartToShell?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   return ERR_OK;
 }
 
@@ -323,6 +337,14 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
     McuESP32_IsProgramming = false;
     return ERR_OK;
 #endif
+  } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 uarttoshell on")==0) {
+    *handled = true;
+    McuESP32_CopyUartToShell = true;
+    return ERR_OK;
+  } else if (McuUtility_strcmp((char*)cmd, (char*)"esp32 uarttoshell off")==0) {
+    *handled = true;
+    McuESP32_CopyUartToShell = false;
+    return ERR_OK;
   } else if (McuUtility_strncmp((char*)cmd, (char*)"esp32 send ", sizeof("esp32 send ")-1)==0) {
     *handled = true;
     p = cmd+sizeof("esp32 send ")-1;
@@ -348,6 +370,19 @@ static void sendData(const void *buffer, uint32_t size) {
   uint32_t nof = McuShellCdcDevice_Send(buffer, size);
   if (nof!=size) {
     McuLog_fatal("wanted to send %d, but did %d", size, nof);
+  }
+  if (   McuESP32_CopyUartToShell
+#if McuESP32_CONFIG_USE_USB_CDC
+      && !McuESP32_IsProgramming
+#endif
+     )
+  { /* only write to shell if not in programming mode. Programming mode might crash RTT */
+    McuShell_ConstStdIOTypePtr io = McuESP32_GetRxFromESPStdio();
+    if (io!=NULL) {
+      for(int i=0; i<size; i++) {
+        McuShell_SendCh(((char*)buffer)[i], io->stdOut); /* forward character */ /* \TODO use buffer send instead of char by char */
+      }
+    }
   }
 }
 
