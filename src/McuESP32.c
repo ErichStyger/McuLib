@@ -362,7 +362,7 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
 }
 
 static void sendData(const void *buffer, uint32_t size) {
-  uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* using private interface \todo */
+  uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* \TODO using private interface, change to callback */
 
   #if McuESP32_CONFIG_VERBOSE_TRAFFIC
     McuLog_trace("tx USB: %d", size);
@@ -378,10 +378,8 @@ static void sendData(const void *buffer, uint32_t size) {
      )
   { /* only write to shell if not in programming mode. Programming mode might crash RTT */
     McuShell_ConstStdIOTypePtr io = McuESP32_GetRxFromESPStdio();
-    if (io!=NULL) {
-      for(int i=0; i<size; i++) {
-        McuShell_SendCh(((char*)buffer)[i], io->stdOut); /* forward character */ /* \TODO use buffer send instead of char by char */
-      }
+    if (io!=NULL && io->writeData) {
+      io->writeData(buffer, size);
     }
   }
 }

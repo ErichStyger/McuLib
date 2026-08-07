@@ -104,9 +104,9 @@ static bool McuShellUart_CharPresent(void) {
 }
 
 #if McuShell_CONFIG_HAS_WRITE_DATA
-int McuShellUart_WriteData(const void *data, int nof) {
-  (void)McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, data, nof);
-  return nof;
+int McuShellUart_WriteData(const void *data, size_t size) {
+  (void)McuShellUart_CONFIG_UART_WRITE_BLOCKING(McuShellUart_CONFIG_UART_DEVICE, data, size);
+  return size;
 }
 #endif
 

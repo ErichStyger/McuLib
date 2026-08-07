@@ -122,7 +122,7 @@
 #include "McuShellconfig.h" /* configuration */
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <stdio.h>
 
 #ifndef __BWUserType_McuShell_StdIO_OutErr_FctType
 #define __BWUserType_McuShell_StdIO_OutErr_FctType
@@ -147,7 +147,7 @@
     bool echoEnabled;                  /* true if I/O shall echo characters */
   #endif
   #if McuShell_CONFIG_HAS_WRITE_DATA
-    int (*writeData)(const void *data, int nofBytes);
+    int (*writeData)(const void *data, size_t size);
   #endif
   } McuShell_StdIOType;
 #endif
