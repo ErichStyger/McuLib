@@ -44,6 +44,7 @@ static StreamBufferHandle_t txStreamBuffer;
   static McuShell_ConstStdIOType *McuESP32_UsbCdcIo = NULL; /* I/O handler to be used for USB CDC. Configure with McuESP32_SetUsbCdcStdio() */
   static bool (*McuESP32_UsbIsConnected)(void) = NULL; /* callback which decides if USB CDC is connected or not. Configure with McuESP32_SetUsbCdcIsConnectedCallback() */
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
+  static uint32_t McuESP32_currBaud = McuESP32_CONFIG_UART_BAUDRATE;
 #endif
 static bool McuESP32_CopyUartToShell = false; /* if we copy the ESP32 UART to the Shell */ /* \TODO fails USB enumeration if McuESP32_CopyUartToShell enabled by default? */
 
@@ -245,7 +246,7 @@ static uint8_t McuESP32_PrintHelp(const McuShell_StdIOType *io) {
 static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
   uint8_t buf[64];
 
-  McuShell_SendStatusStr((unsigned char*)"esp32", (unsigned char*)"ESP32 status\r\n", io->stdOut);
+  McuShell_SendStatusStr((unsigned char*)"esp32", (unsigned char*)"ESP32 gateway status\r\n", io->stdOut);
 #if McuESP32_CONFIG_USE_CTRL_PINS
   McuGPIO_GetPinStatusString(McuESP32_RF_EN_Pin, buf, sizeof(buf));
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
@@ -265,6 +266,11 @@ static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
     McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"ERROR\r\n");
   }
   McuShell_SendStatusStr((unsigned char*)"  usbprg", buf, io->stdOut);
+
+  McuUtility_Num32uToStr(buf, sizeof(buf), McuESP32_currBaud);
+  McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"\r\n");
+  McuShell_SendStatusStr((unsigned char*)"  baud", buf, io->stdOut);
+  
   McuShell_SendStatusStr((unsigned char*)"  programming", McuESP32_IsProgramming?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  uarttoshell", McuESP32_CopyUartToShell?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   return ERR_OK;
@@ -438,16 +444,15 @@ static void InitQueues(void) {
 }
 
 void McuESP32_ChangeUartBaudCallback(uint32_t baud) {
-  static uint32_t currBaud = McuESP32_CONFIG_UART_BAUDRATE;
-  if (baud!=currBaud) {
+  if (baud!=McuESP32_currBaud) {
     #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
-      McuLog_trace("changing baud from %d to %d", currBaud, baud);
+      McuLog_trace("changing baud from %d to %d", McuESP32_currBaud, baud);
     #endif
     status_t res = UART_SetBaudRate(McuESP32_CONFIG_UART_DEVICE, baud, CLOCK_GetFreq(McuESP32_CONFIG_UART_GET_CLOCK_FREQ_SELECT));
     if (res!=kStatus_Success) {
       McuLog_error("failed to set baud rate %d", baud);
     }
-    currBaud = baud;
+    McuESP32_currBaud = baud;
   }
 }
 
