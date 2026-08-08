@@ -46,7 +46,7 @@ static StreamBufferHandle_t txStreamBuffer;
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
   static uint32_t McuESP32_currBaud = McuESP32_CONFIG_UART_BAUDRATE;
 #endif
-static bool McuESP32_CopyUartToShell = false; /* if we copy the ESP32 UART to the Shell */ /* \TODO fails USB enumeration if McuESP32_CopyUartToShell enabled by default? */
+static bool McuESP32_CopyUartToShell = true; /* if we copy the ESP32 UART to the Shell */ /* \TODO fails USB enumeration if McuESP32_CopyUartToShell enabled by default? */
 
 /* Below is the I/O handler for the console: data from the ESP is sent optionally to that stdout (e.g. shell console).
  */
@@ -268,9 +268,9 @@ static uint8_t McuESP32_PrintStatus(const McuShell_StdIOType *io) {
   McuShell_SendStatusStr((unsigned char*)"  usbprg", buf, io->stdOut);
 
   McuUtility_Num32uToStr(buf, sizeof(buf), McuESP32_currBaud);
-  McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"\r\n");
+  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  baud", buf, io->stdOut);
-  
+
   McuShell_SendStatusStr((unsigned char*)"  programming", McuESP32_IsProgramming?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  uarttoshell", McuESP32_CopyUartToShell?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   return ERR_OK;
