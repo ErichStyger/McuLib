@@ -33,7 +33,7 @@
 #endif
 
 #ifndef MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE
-  #define MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE           (1024)  /*!< Default UDP server task stack size, in bytes */
+  #define MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE           (8*1024)  /*!< Default UDP server task stack size, in bytes */
 #endif
 
 #ifndef MCU_UDP_SERVER_CONFIG_TASK_PRIORITY
