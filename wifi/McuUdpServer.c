@@ -33,7 +33,11 @@ static void HandleIncomingUdpMessage(const char *rxBuffer, int rxLen, int sock, 
     responseLen = McuUtility_strlen(responseBuf);
   }
   if (responseLen>0) {
-    McuLog_info("Sending back response, %d bytes", responseLen);
+    if (responseBuf[responseLen]=='\0') { /* can use as string? */
+      McuLog_info("Sending back response string, %d bytes, \"%s\"", responseLen, responseBuf);
+    } else {
+      McuLog_info("Sending back response, %d bytes", responseLen);
+    }
     int err = sendto(sock, responseBuf, responseLen, 0, source_addr_p, source_addr_len);
     if (err < 0) {
       McuLog_error("Error occurred during sending response: errno %d", errno);
