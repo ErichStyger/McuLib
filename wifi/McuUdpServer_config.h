@@ -17,11 +17,27 @@
 #endif
 
 #ifndef MCU_UDP_SERVER_CONFIG_USE_SHELL
-  #define MCU_UDP_SERVER_CONFIG_USE_SHELL     (1 && MCU_UDP_SERVER_CONFIG_ENABLED) /*!< 1: enable shell command support */
+  #define MCU_UDP_SERVER_CONFIG_USE_SHELL                 (1 && MCU_UDP_SERVER_CONFIG_ENABLED) /*!< 1: enable shell command support */
 #endif
 
 #ifndef MCU_UDP_SERVER_CONFIG_PORT
-  #define MCU_UDP_SERVER_CONFIG_PORT          (1234) /*!< Default UDP server port */
+  #define MCU_UDP_SERVER_CONFIG_PORT                      (1234) /*!< Default UDP server port */
+#endif
+
+#ifndef MCU_UDP_SERVER_CONFIG_RX_BUF_SIZE
+  #define MCU_UDP_SERVER_CONFIG_RX_BUF_SIZE               (256)  /*!< Size of UDP message receive buffer, statically allocated */
+#endif
+
+#ifndef MCU_UDP_SERVER_CONFIG_RESPONSE_BUF_SIZE
+  #define MCU_UDP_SERVER_CONFIG_RESPONSE_BUF_SIZE         (128)  /*!< Default buffer size for UDP response, allocated on the stack */
+#endif
+
+#ifndef MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE
+  #define MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE           (1024)  /*!< Default UDP server task stack size, in bytes */
+#endif
+
+#ifndef MCU_UDP_SERVER_CONFIG_TASK_PRIORITY
+  #define MCU_UDP_SERVER_CONFIG_TASK_PRIORITY             (tskIDLE_PRIORITY+3)  /*!< Default UDP server task priority */
 #endif
 
 #endif /* MCU_UDP_SERVER_CONFIG_H_ */

@@ -16,56 +16,33 @@
 #define CONFIG_EXAMPLE_IPV4  (1) /* 0: use IPV6; 1: use IPV4 */
 
 static TaskHandle_t taskHandle = NULL; /* udp server task handle */
+static void (*McuUdpServer_IncomingCallback)(const char *rxBuffer, int rxLen, char *responseBuf, size_t responseBufLen, size_t *responseSize); /* optional application callback for incoming data */
 
-static int SendToSocket(int sock, const char *msg, const struct sockaddr *to, socklen_t tolen) {
-  return sendto(sock, msg, McuUtility_strlen((char*)msg), 0, to, tolen);
+void McuUdpServer_SetIncomingCallback(void (*callback)(const char *rxBuffer, int rxLen, char *responseBuf, size_t responseBufLen, size_t *responseSize)) {
+  McuUdpServer_IncomingCallback = callback;
 }
 
-#if 0 && McuLib_CONFIG_CPU_IS_ESP32  /* example how to handle messages */
-static void HandleIncomingUdpMessage(const char *rxMsg, int sock, struct sockaddr *source_addr_p, socklen_t source_addr_len) {
-#if 0
-  unsigned char response[128];
-#else
-  static unsigned char response[10*1024] = ""; /* larger buffer for response */
-  unsigned char msg[McuShell_DEFAULT_SHELL_BUFFER_SIZE]; /* buffer for message */
-  #define MSG_ESP_PREFIX_STR   "@esp:"
-#endif
-  int err;
+static void HandleIncomingUdpMessage(const char *rxBuffer, int rxLen, int sock, struct sockaddr *source_addr_p, socklen_t source_addr_len) {
+  char responseBuf[MCU_UDP_SERVER_CONFIG_RESPONSE_BUF_SIZE] = ""; /* buffer for response */
+  size_t responseLen = 0;
 
-  McuLog_info("handling incoming udp message '%s'", rxMsg);
-  McuUtility_strcpy(response, sizeof(response), (unsigned char*)"OK"); /* default response */
-  /* check framing */
-  if (McuUtility_strncmp(rxMsg, MSG_ESP_PREFIX_STR, sizeof(MSG_ESP_PREFIX_STR)-1)==0) { /* check prefix */
-    size_t strLen = McuUtility_strlen(rxMsg);
-    if (rxMsg[strLen-1]=='!') {
-      /* send to ESP32 shell */
-#if 0
-      SHELL_SendToESPAndGetResponse((unsigned char*)"led status", response, sizeof(response));
-#else
-      /* copy first command */
-      McuUtility_strcpy(msg, sizeof(msg), (unsigned char*)(rxMsg+strlen(MSG_ESP_PREFIX_STR)));
-      msg[McuUtility_strlen((char*)msg)-1] = '\0'; /* replace '!' at the end */
-      SHELL_SendToESPAndGetResponse(msg, response, sizeof(response));
-#endif
-    } else {
-      McuUtility_strcpy(response, sizeof(response), (unsigned char*)"'!' missing!");
+  if (McuUdpServer_IncomingCallback!=NULL) { /* only if we have a user callback */
+    McuUdpServer_IncomingCallback(rxBuffer, rxLen, responseBuf, sizeof(responseBuf), &responseLen); /* call user callback */
+  } else {
+    McuUtility_strcpy((unsigned char*)responseBuf, sizeof(responseBuf), (unsigned char*)"OK"); /* default response */
+    responseLen = McuUtility_strlen(responseBuf);
+  }
+  if (responseLen>0) {
+    McuLog_info("Sending back response, %d bytes", responseLen);
+    int err = sendto(sock, responseBuf, responseLen, 0, source_addr_p, source_addr_len);
+    if (err < 0) {
+      McuLog_error("Error occurred during sending response: errno %d", errno);
     }
   }
-  /* send back response */
-  McuLog_info("Sending back response");
-  err = SendToSocket(sock, (const char*)response, source_addr_p, source_addr_len);
-  if (err < 0) {
-    McuLog_error("Error occurred during sending: errno %d", errno);
-  }
 }
-#endif
 
 static void udp_server_task(void *pvParameters) {
-#if 0
-  char rx_buffer[128];
-#else
-  static char rx_buffer[10*1024];
-#endif
+  static char rx_buffer[MCU_UDP_SERVER_CONFIG_RX_BUF_SIZE];
   char addr_str[128];
   int addr_family;
   int ip_protocol;
@@ -81,7 +58,7 @@ static void udp_server_task(void *pvParameters) {
     addr_family = AF_INET;
     ip_protocol = IPPROTO_IP;
     inet_ntoa_r(dest_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
-#else // IPV6
+#else /* IPV6 */
     struct sockaddr_in6 dest_addr;
     bzero(&dest_addr.sin6_addr.un, sizeof(dest_addr.sin6_addr.un));
     dest_addr.sin6_family = AF_INET6;
@@ -97,7 +74,7 @@ static void udp_server_task(void *pvParameters) {
       break;
     }
     McuLog_info("Socket created");
-#if 0
+#if 0 /* optional timeout */
     /* set a timeout for the socket */
     struct timeval to;
 
@@ -142,25 +119,8 @@ static void udp_server_task(void *pvParameters) {
           inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
         }
       #endif
-        rx_buffer[len] = '\0'; /* Null-terminate whatever we received and treat like a string... */
-        McuLog_info("Received %d bytes from %s:\n%s", len, addr_str, rx_buffer);
-
-        /*! \TODO handle messages */
-
-        /* send back response */
-        unsigned char test_response[128];
-
-        McuLog_info("Sending back response");
-        McuUtility_strcpy(test_response, sizeof(test_response), (unsigned char*)"OK"); /* default response */
-        if (McuUtility_strncmp(rx_buffer, "test", sizeof("test")-1)==0) { /* hard-coded command */
-          McuUtility_strcpy(test_response, sizeof(test_response), (unsigned char*)"test_response");
-        }
-        int err;
-        err = SendToSocket(sock, (const char*)test_response, (struct sockaddr *)&source_addr, sizeof(source_addr));
-        if (err < 0) {
-          McuLog_error("Error occurred during sending: errno %d", errno);
-        }
-
+        McuLog_info("Received %d bytes from %s:\n", len, addr_str);
+        HandleIncomingUdpMessage(rx_buffer, len, sock, (struct sockaddr *)&source_addr, sizeof(source_addr));
       } /* if */
     } /* while */
     if (sock != -1) {
@@ -188,9 +148,9 @@ void McuUdpServer_Init(void) {
   if (xTaskCreate(
       udp_server_task,  /* pointer to the task */
       "UdpServer", /* task name for kernel awareness debugging */
-      (8*1024)/sizeof(StackType_t), /* task stack size */
+      (MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE)/sizeof(StackType_t), /* task stack size */
       (void*)NULL, /* optional task startup argument */
-      tskIDLE_PRIORITY+3,  /* initial priority */
+      (MCU_UDP_SERVER_CONFIG_TASK_PRIORITY),  /* initial priority */
       &taskHandle /* optional task handle to create */
     ) != pdPASS)
   {
