@@ -20,6 +20,33 @@
   #define MCU_WIFI_CONFIG_USE_SHELL     (1 && MCU_WIFI_CONFIG_ENABLED) /*!< 1: enable shell command support */
 #endif
 
+#define EAP_PEAP 1 /*!< PEAP: Protected Extensible Authentication Protocol, WPA2 Enterprise with password and no certificate */
+#define EAP_TTLS 2 /*!< PSK: Pre-Shared Key, TLS method with SSID and password, WPA2-PSK */
+
+#ifndef CONFIG_WIFI_EAP_METHOD
+  #define CONFIG_WIFI_EAP_METHOD    EAP_TTLS /*!< Default EAP method */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_USE_PSK_SECURITY
+  #define MCU_WIFI_CONFIG_USE_PSK_SECURITY      (CONFIG_WIFI_EAP_METHOD==EAP_TTLS) /* using Pre-shared-Key security (ssid plus password) */
+#endif
+#ifndef MCU_WIFI_CONFIG_USE_PEAP_SECURITY
+  #define MCU_WIFI_CONFIG_USE_PEAP_SECURITY     (CONFIG_WIFI_EAP_METHOD==EAP_PEAP) /* using Protected Extensible Authentication Protocol security (ssid plus usenname and password) */
+#endif
+
+#ifndef CONFIG_WIFI_DEFAULT_HOSTNAME
+  #define CONFIG_WIFI_DEFAULT_HOSTNAME        "host" /*!< Default host name */
+#endif
+#ifndef CONFIG_WIFI_DEFAULT_SSID
+  #define CONFIG_WIFI_DEFAULT_SSID            "ssid" /*!< Default SSID */
+#endif
+#ifndef WIFI_DEFAULT_PASS
+  #define CONFIG_WIFI_DEFAULT_PASS            "password" /*!< Default WiFi password */
+#endif
+#ifndef WIFI_DEFAULT_USER
+  #define CONFIG_WIFI_DEFAULT_USER            "user" /*!< Default enterprise identity or user */
+#endif
+
 #ifndef MCU_WIFI_CONFIG_USE_MININI
   #define MCU_WIFI_CONFIG_USE_MININI     (1 && MCU_WIFI_CONFIG_ENABLED) /*!< 1: use MinINI for settings */
 #endif
@@ -32,12 +59,32 @@
   #define MCU_WIFI_CONFIG_MININI_SECTION_WIFI              "WiFi" /*!< MinINI section name */
 #endif
 
-#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID
-  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID                "ssid" /*!< String key: SSID of network */
+#ifndef WIFI_DEFAULT_PASS_AUTH_EAP
+  #define WIFI_DEFAULT_PASS_AUTH_EAP                          "psk" /*!< String key: default for MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP */
 #endif
 
-#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS
-  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS                "pass" /*!< String key: password */
+#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP
+  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP            "EAP" /*!< String key: "peap" or "psk" */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID_PEAP
+  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID_PEAP           "PEAP_ssid" /*!< String key: SSID of network */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_USER_PEAP
+  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_USER_PEAP           "PEAP_user" /*!< String key: user name */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS_PEAP
+  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS_PEAP           "PEAP_pass" /*!< String key: user password */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID_PSK
+  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID_PSK            "PSK_ssid" /*!< String key: SSID of network */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS_PSK
+  #define MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS_PSK            "PSK_pass" /*!< String key: password for SSID */
 #endif
 
 #ifndef MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME
@@ -58,30 +105,6 @@
 
 #ifndef MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT
   #define MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT    true /*!< Default auto-reconnect state */
-#endif
-
-#define EAP_PEAP 1 /*!< WPA2 Enterprise with password and no certificate */
-#define EAP_TTLS 2 /*!< TLS method with SSID and password */
-
-#ifndef CONFIG_WIFI_EAP_METHOD
-  #define CONFIG_WIFI_EAP_METHOD    EAP_TTLS /*!< Default EAP method */
-#endif
-
-#ifndef CONFIG_WIFI_DEFAULT_HOSTNAME
-  #define CONFIG_WIFI_DEFAULT_HOSTNAME        "host" /*!< Default host name */
-#endif
-#ifndef CONFIG_WIFI_DEFAULT_SSID
-  #define CONFIG_WIFI_DEFAULT_SSID            "ssid" /*!< Default SSID */
-#endif
-#ifndef WIFI_DEFAULT_PASS
-  #define CONFIG_WIFI_DEFAULT_PASS            "password" /*!< Default WiFi password */
-#endif
-#ifndef WIFI_DEFAULT_ID
-  #define CONFIG_WIFI_DEFAULT_ID              "id" /*!< Default enterprise identity */
-#endif
-
-#ifndef MCU_WIFI_CONFIG_USE_MININI
-  #define MCU_WIFI_CONFIG_USE_MININI    (1) /*!< 1: use MinINI for settings */
 #endif
 
 #ifndef MCU_WIFI_CONFIG_USE_PING

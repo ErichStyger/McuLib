@@ -33,18 +33,26 @@ extern "C" {
 #endif
 
 typedef enum {
-  McuWiFi_EAP_PEAP = EAP_PEAP, /*!< WPA2 Enterprise with password and no certificate */
-  McuWiFi_EAP_TTLS = EAP_TTLS, /*!< TLS method with SSID and password */
+  McuWiFi_EAP_PEAP = EAP_PEAP, /*!< PEAP: WPA2 Enterprise with password and no certificate */
+  McuWiFi_EAP_TTLS = EAP_TTLS, /*!< PSK: TLS method with SSID and password */
 } McuWiFi_EAP_e;
 
 typedef struct McuWiFi_Autentification_t {
   McuWiFi_EAP_e type; /*!< Authentication type */
-  unsigned char ssid[32]; /*!< SSID of access point */
-  unsigned char pass[64]; /*!< Password for access point */
-#if CONFIG_WIFI_EAP_METHOD==EAP_PEAP
-  unsigned char id[32]; /*!< Additional identity/user name for enterprise login */
+#if MCU_WIFI_CONFIG_USE_PSK_SECURITY
+  struct psk {
+    char ssid[32]; /*!< SSID of access point */
+    char pass[64]; /*!< Password for access point */
+  } psk;
 #endif
-  unsigned char hostname[32]; /*!< Host name to use */
+#if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
+  struct {
+    char ssid[32]; /*!< SSID of access point */
+    char pass[64]; /*!< Password for access point */
+    char user[32]; /*!< Additional identity/user name for enterprise login */
+  } peap;
+#endif
+  char hostname[32]; /*!< Host name to use */
 } McuWiFi_Autentification_t;
 
 /*!
