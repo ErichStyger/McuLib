@@ -238,18 +238,6 @@ static void SetPasswordMode(void) {
   ESP_ERROR_CHECK( esp_eap_client_set_username((uint8_t *)wifi.auth.peap.user, strlen((char*)wifi.auth.peap.user)) );
   ESP_ERROR_CHECK( esp_eap_client_set_password((uint8_t *)wifi.auth.peap.pass, strlen((char*)wifi.auth.peap.pass)) );
   ESP_ERROR_CHECK( esp_wifi_sta_enterprise_enable() );
-#elif 0
-    const ESP32_Device_t *device;
-
-    device = ESP32_GetDeviceConfig();
-    McuLog_info("EAP_ID: %s", device->eee_id);
-    ESP_ERROR_CHECK( esp_eap_client_set_identity((uint8_t *)device->eee_id, strlen(device->eee_id)) );
-    if (CONFIG_WIFI_EAP_METHOD == EAP_PEAP || CONFIG_WIFI_EAP_METHOD == EAP_TTLS) {
-      McuLog_info("EAP_USERNAME: %s", device->eee_id);
-      ESP_ERROR_CHECK( esp_eap_client_set_username((uint8_t *)device->eee_id, strlen(device->eee_id)) );
-      ESP_ERROR_CHECK( esp_eap_client_set_password((uint8_t *)device->eee_pwd, strlen(device->eee_pwd)) );
-    }
-    ESP_ERROR_CHECK( esp_wifi_sta_enterprise_enable() );
 #endif
 }
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
