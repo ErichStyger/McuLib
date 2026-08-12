@@ -23,11 +23,12 @@ extern "C" {
  * \param buf buffer where to store the string
  * \param bufSize size of buffer
  */
-void McuEsp32Mac_MacToString(uint8_t mac[MCU_ESP32_MAC_ADDR_SIZE], uint8_t *buf, size_t bufSize);
+void McuEsp32Mac_MacToString(uint8_t mac[MCU_ESP32_MAC_ADDR_SIZE], char *buf, size_t bufSize);
 
 /*!
  * \brief Read the MAC address into buffer
  * \param mac buffer where to store the MAC address
+ * \return error code, ERR_OK if ok
  */
 uint8_t McuEsp32Mac_ReadMac(uint8_t mac[MCU_ESP32_MAC_ADDR_SIZE]);
 

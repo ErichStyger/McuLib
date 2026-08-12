@@ -36,7 +36,7 @@ bool McuEsp32Mac_MacAreSame(const uint8_t macA[6], const uint8_t macB[6]) {
   return true; /* match! */
 }
 
-void McuEsp32Mac_MacToString(uint8_t mac[MCU_ESP32_MAC_ADDR_SIZE], uint8_t *buf, size_t bufSize) {
+void McuEsp32Mac_MacToString(uint8_t mac[MCU_ESP32_MAC_ADDR_SIZE], char *buf, size_t bufSize) {
   McuXFormat_xsnprintf((char*)buf, bufSize, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
