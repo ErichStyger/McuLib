@@ -23,6 +23,7 @@ else ()
               "McuDnsResolver.c"
               "McuPing.c"
               "McuPingShell.c"
+              "McuEsp32Mac.c"
               "cJSON.c"
           INCLUDE_DIRS
               "./"

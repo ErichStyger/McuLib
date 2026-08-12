@@ -23,7 +23,7 @@
   #include "esp_system.h"
   #include "nvs_flash.h"
   #include "esp_netif.h"
-  #include "esp32_mac.h"
+  #include "McuEsp32Mac.h"
 #endif
 #include "McuRTOS.h"
 #include "McuUtility.h"
@@ -172,7 +172,7 @@ static uint8_t GetMAC(uint8_t mac[6], uint8_t *macStr, size_t macStrSize) {
     return ERR_FAILED;
   }
 #elif McuLib_CONFIG_CPU_IS_ESP32
-  if (ESP32_MacRead(mac)!=ERR_OK) {
+  if (McuEsp32Mac_ReadMac(mac)!=ERR_OK) {
     return ERR_FAILED;
   }
 #endif
