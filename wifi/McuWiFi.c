@@ -427,7 +427,7 @@ static void resumeNetworkServices(void) {
     McuLog_error("failed connecting to MQTT broker");
     McuMqttClient_Disconnect(); /* make sure it is disconnected */
   }
-  App_MqttTaskResume();
+  Application_MqttTaskResume();
 #endif
 }
 
@@ -439,7 +439,7 @@ static void suspendNetworkServices(void) {
   McuNtpClient_TaskSuspend();
 #endif
 #if MCU_MQTT_CLIENT_CONFIG_ENABLED
-  App_MqttTaskSuspend();
+  Application_MqttTaskSuspend();
   McuMqttClient_Disconnect();
 #endif
 }
