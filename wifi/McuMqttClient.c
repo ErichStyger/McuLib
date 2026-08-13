@@ -32,7 +32,7 @@
 typedef struct mqtt_t {
   mqtt_client_t *mqtt_client;       /* lwIP MQTT client handle */
   bool isConnected;                 /* if we are connected or not */
-  McuDnsResolver_info_t addr;          /* broker lwip address, resolved by DNS if hostname is used */
+  McuDnsResolver_info_t addr;       /* broker lwip address, resolved by DNS if hostname is used */
   unsigned char broker[32];         /* broker IP or hostname string. For hostname, DNS will be used */
   unsigned char client_id[32];      /* client ID used for connection: each client should have a unique ID */
   unsigned char client_user[32];    /* client user name used for connection */
@@ -522,6 +522,8 @@ static uint8_t SetPassword(const unsigned char *pass) {
 }
 
 static uint8_t PrintStatus(const McuShell_StdIOType *io) {
+  char buf[36];
+
   McuShell_SendStatusStr((unsigned char*)"mqttclient", (unsigned char*)"mqttclient status\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  minINI", MCU_MQTT_CLIENT_CONFIG_USE_MININI?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  log", mqtt.doLogging?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
@@ -534,7 +536,9 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  client user", mqtt.client_user, io->stdOut);
   McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
-  McuShell_SendStatusStr((unsigned char*)"  client password", mqtt.client_pass, io->stdOut);
+  McuUtility_HideText(buf, sizeof(buf), (char*)mqtt.client_pass, 3);
+  McuUtility_strcat((unsigned char*)buf, sizeof(buf), (unsigned char*)"\r\n");
+  McuShell_SendStatusStr((unsigned char*)"  client password", (unsigned char*)buf, io->stdOut);
   McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
   return ERR_OK;
 }
