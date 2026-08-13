@@ -48,7 +48,7 @@
 #endif
 
 #ifndef MCU_WIFI_CONFIG_USE_MININI
-  #define MCU_WIFI_CONFIG_USE_MININI     (1 && MCU_WIFI_CONFIG_ENABLED) /*!< 1: use MinINI for settings */
+  #define MCU_WIFI_CONFIG_USE_MININI            (1 && MCU_WIFI_CONFIG_ENABLED) /*!< 1: use MinINI for settings */
 #endif
 
 #ifndef MCU_WIFI_CONFIG_MININI_FILE_NAME
@@ -100,19 +100,15 @@
 #endif
 
 #ifndef MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE
-  #define MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE       true /*!< Default WiFi enabled state */
+  #define MCU_WIFI_CONFIG_WIFI_DEFAULT_ENABLE                 false /*!< Default WiFi enabled state */
 #endif
 
 #ifndef MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT
-  #define MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT    true /*!< Default auto-reconnect state */
-#endif
-
-#ifndef MCU_WIFI_CONFIG_USE_PING
-  #define MCU_WIFI_CONFIG_USE_PING      (0) /*!< 1: enable ping integration */
+  #define MCU_WIFI_CONFIG_WIFI_DEFAULT_RECONNECT              true /*!< Default auto-reconnect state */
 #endif
 
 #ifndef MCU_WIFI_CONFIG_USE_WATCHDOG
-  #define MCU_WIFI_CONFIG_USE_WATCHDOG  (0) /*!< 1: enable watchdog integration */
+  #define MCU_WIFI_CONFIG_USE_WATCHDOG                        (0) /*!< 1: enable watchdog integration */
 #endif
 
 #endif /* MCU_WIFI_CONFIG_H_ */
