@@ -47,7 +47,6 @@
 #if MCU_WIFI_CONFIG_USE_WATCHDOG
   #include "McuWatchdog.h"
 #endif
-#include "application.h"
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t s_wifi_event_group;
@@ -58,7 +57,6 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_EVENT_HANDLER_FAIL_BIT      (1<<1) /* set by the handler */
 #define WIFI_IS_CONNECTED_BIT            (1<<2) /* used for connection status: if set, we are connected */
 #define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
-
 
 #if McuLib_CONFIG_CPU_IS_ESP32
   #ifndef CONFIG_ESP_MAXIMUM_RETRY
@@ -74,7 +72,44 @@ static struct wifi {
   McuWiFi_Autentification_t auth; /* authentification information */
   TaskHandle_t taskHandle; /* the WiFi task handle */
   void (*getCustomConfig)(McuWiFi_Autentification_t *);
+  void (*suspendResumeNetworkServices)(bool isSuspend); /* optional callback to suspend/resume network services, see example in McuWiFi_SuspendResumeNetworkServices() */
 } wifi;
+
+void McuWiFi_SuspendResumeNetworkServices(bool isSuspend) {
+  /* example and template for a suspend/resume callback */
+  if (isSuspend) {
+  #if MCU_UDP_SERVER_CONFIG_ENABLED
+    McuUdpServer_Suspend();
+  #endif
+  #if MCU_NTP_CLIENT_CONFIG_ENABLED
+    McuNtpClient_TaskSuspend();
+  #endif
+  #if MCU_MQTT_CLIENT_CONFIG_ENABLED
+    McuMqttClient_Disconnect();
+  #endif
+  } else {
+  #if MCU_UDP_SERVER_CONFIG_ENABLED
+    McuLog_info("resuming UDP server.");
+    McuUdpServer_Resume();
+  #endif
+  #if MCU_NTP_CLIENT_CONFIG_ENABLED
+    if (McuNtpClient_GetDefaultStart()) {
+      McuLog_info("resuming NTP client.");
+      McuNtpClient_TaskResume();
+    }
+  #endif
+  #if MCU_MQTT_CLIENT_CONFIG_ENABLED
+    if (McuMqttClient_Connect()!=ERR_OK) {
+      McuLog_error("failed connecting to MQTT broker");
+      McuMqttClient_Disconnect(); /* make sure it is disconnected */
+    }
+  #endif
+  }
+}
+
+void McuWiFi_SetSuspendResumeCallback(void (*callback)(bool isSuspend)) {
+  wifi.suspendResumeNetworkServices = callback;
+}
 
 void McuWiFi_SetCustomConfigCallback(void (*customConfig)(McuWiFi_Autentification_t *)) {
   wifi.getCustomConfig = customConfig;
@@ -411,39 +446,6 @@ static void InitWiFiHardware(void) {
 #endif
 }
 
-static void resumeNetworkServices(void) {
-#if MCU_UDP_SERVER_CONFIG_ENABLED
-  McuLog_info("resuming UDP server.");
-  McuUdpServer_Resume();
-#endif
-#if MCU_NTP_CLIENT_CONFIG_ENABLED
-  if (McuNtpClient_GetDefaultStart()) {
-    McuLog_info("resuming NTP client.");
-    McuNtpClient_TaskResume();
-  }
-#endif
-#if MCU_MQTT_CLIENT_CONFIG_ENABLED
-  if (McuMqttClient_Connect()!=ERR_OK) {
-    McuLog_error("failed connecting to MQTT broker");
-    McuMqttClient_Disconnect(); /* make sure it is disconnected */
-  }
-  Application_MqttTaskResume();
-#endif
-}
-
-static void suspendNetworkServices(void) {
-#if MCU_UDP_SERVER_CONFIG_ENABLED
-  McuUdpServer_Suspend();
-#endif
-#if MCU_NTP_CLIENT_CONFIG_ENABLED
-  McuNtpClient_TaskSuspend();
-#endif
-#if MCU_MQTT_CLIENT_CONFIG_ENABLED
-  Application_MqttTaskSuspend();
-  McuMqttClient_Disconnect();
-#endif
-}
-
 static bool ConnectWiFiWithCredentials(void) {
   bool isConnected = false;
   #if MCU_WIFI_CONFIG_USE_WATCHDOG
@@ -498,7 +500,9 @@ static bool ConnectWiFiWithCredentials(void) {
       #endif
     } else {
       McuLog_info("success!");
-      resumeNetworkServices();
+      if (wifi.suspendResumeNetworkServices!=NULL) {
+        wifi.suspendResumeNetworkServices(false); /* resume */
+      }
       isConnected = true;
       break; /* break for loop */
     }
@@ -516,7 +520,9 @@ static int ConnectWiFi(void) {
     #if McuLib_CONFIG_CPU_IS_ESP32
     ESP_ERROR_CHECK(esp_wifi_connect());
     #endif
-    resumeNetworkServices();
+    if (wifi.suspendResumeNetworkServices!=NULL) {
+      wifi.suspendResumeNetworkServices(false); /* resume */
+    }
     return ERR_OK; /* connected */
   } else { /* need to initialize first with all the credentials and then connect */
     McuLog_info("connecting with credentials");
@@ -534,7 +540,9 @@ static bool DisconnectWiFi(void) {
     McuLog_error("WiFi not connected");
     return false; /* not connected */
   } else {
-    suspendNetworkServices();
+    if (wifi.suspendResumeNetworkServices!=NULL) {
+      wifi.suspendResumeNetworkServices(true); /* suspend */
+    }
     #if McuLib_CONFIG_CPU_IS_RPxxxx
     if (cyw43_wifi_leave(&cyw43_state, CYW43_ITF_STA )!=0) {
       McuLog_fatal("leaving WiFi failed");

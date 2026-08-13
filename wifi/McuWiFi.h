@@ -56,6 +56,12 @@ typedef struct McuWiFi_Autentification_t {
 } McuWiFi_Autentification_t;
 
 /*!
+ * \brief Callback for suspend/resume network services
+ * \param callback Function getting called for suspending and resuming
+ */
+void McuWiFi_SetSuspendResumeCallback(void (*callback)(bool isSuspend));
+
+/*!
  * \brief Callback which can set custom authentification settings
  * \param customConfig Pointer to data to configure
  */
