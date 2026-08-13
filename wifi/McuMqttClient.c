@@ -539,7 +539,6 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   McuUtility_HideText(buf, sizeof(buf), (char*)mqtt.client_pass, 3);
   McuUtility_strcat((unsigned char*)buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((unsigned char*)"  client password", (unsigned char*)buf, io->stdOut);
-  McuShell_SendStr((unsigned char*)"\r\n", io->stdOut);
   return ERR_OK;
 }
 
