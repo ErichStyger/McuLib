@@ -350,8 +350,8 @@ static void LoadWifiSettings(void) {
   McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME, CONFIG_WIFI_DEFAULT_HOSTNAME, (char*)wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_FILE_NAME);
   #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
     McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID_PEAP, CONFIG_WIFI_DEFAULT_SSID, (char*)wifi.auth.peap.ssid, sizeof(wifi.auth.peap.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
+    McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_USER_PEAP, CONFIG_WIFI_DEFAULT_USER, (char*)wifi.auth.peap.user, sizeof(wifi.auth.peap.user), MCU_WIFI_CONFIG_MININI_FILE_NAME);
     McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS_PEAP, CONFIG_WIFI_DEFAULT_PASS, (char*)wifi.auth.peap.pass, sizeof(wifi.auth.peap.pass), MCU_WIFI_CONFIG_MININI_FILE_NAME);
-    McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_PASS_PEAP, CONFIG_WIFI_DEFAULT_USER, (char*)wifi.auth.peap.user, sizeof(wifi.auth.peap.user), MCU_WIFI_CONFIG_MININI_FILE_NAME);
   #endif
   #if MCU_WIFI_CONFIG_USE_PSK_SECURITY
     McuMinINI_ini_gets(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_SSID_PSK, CONFIG_WIFI_DEFAULT_SSID,     (char*)wifi.auth.psk.ssid, sizeof(wifi.auth.psk.ssid), MCU_WIFI_CONFIG_MININI_FILE_NAME);
@@ -748,9 +748,9 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), McuWiFi_canReconnect()?(unsigned char*)"can reconnect: yes, ":(unsigned char*)"can reconnect: no, ");
   McuUtility_strcat(buf, sizeof(buf), GetWifiReconnect()?(unsigned char*)"reconnect: yes\r\n":(unsigned char*)"reconnect: no\r\n");
   McuShell_SendStatusStr((uint8_t*)"  connection", buf, io->stdOut);
-  if (wifi.auth.type==MCU_WIFI_CONFIG_USE_PEAP_SECURITY) {
+  if (wifi.auth.type==McuWiFi_EAP_PEAP) {
     McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_PEAP, WPA2 Enterprise with SSID, username and password\r\n", io->stdOut);
-  } else if (wifi.auth.type==MCU_WIFI_CONFIG_USE_PEAP_SECURITY) {
+  } else if (wifi.auth.type==McuWiFi_EAP_TTLS) {
     McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_TTLS, PSK, SSID + password\r\n", io->stdOut);
   } else {
     McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"** ERROR ***\r\n", io->stdOut);
@@ -759,9 +759,11 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)wifi.auth.peap.ssid);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((uint8_t*)"  SSID PEAP", buf, io->stdOut);
+  
   McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)wifi.auth.peap.user);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((uint8_t*)"  user PEAP", buf, io->stdOut);
+
   McuUtility_HideText((char*)buf, sizeof(buf), wifi.auth.peap.pass, 3);
   McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
   McuShell_SendStatusStr((uint8_t*)"  pass PEAP", buf, io->stdOut);
@@ -847,8 +849,8 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
   #endif
   #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
     McuShell_SendHelpStr((unsigned char*)"  set peap ssid \"<ssid>\"", (const unsigned char*)"Set the PEAP SSID\n", io->stdOut);
-    McuShell_SendHelpStr((unsigned char*)"  set peap pwd \"<pwd>\"", (const unsigned char*)"Set the PEAP password\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  set peap user \"<id>\"", (const unsigned char*)"Set the PEAP user ID\r\n", io->stdOut);
+    McuShell_SendHelpStr((unsigned char*)"  set peap pwd \"<pwd>\"", (const unsigned char*)"Set the PEAP password\r\n", io->stdOut);
   #endif
   #if MCU_WIFI_CONFIG_USE_PSK_SECURITY && MCU_WIFI_CONFIG_USE_PEAP_SECURITY
     McuShell_SendHelpStr((unsigned char*)"  set auth peap|psk", (const unsigned char*)"Set the authentification to PSK or PEAP\r\n", io->stdOut);
