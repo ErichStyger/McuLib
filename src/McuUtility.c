@@ -2961,6 +2961,20 @@ void McuUtility_SkipSpaces(const unsigned char **str)
   }
 }
 
+void McuUtility_HideText(char *buf, size_t bufSize, const char *text, unsigned int nofVisisble) {
+  int i = 0;
+  buf[0] = '\0';
+  while (*text!='\0') {
+    if (i<nofVisisble) { /* only show first characters */
+      McuUtility_chcat((unsigned char*)buf, bufSize, *text);
+    } else { /* hide password */
+      McuUtility_chcat((unsigned char*)buf, bufSize, '*');
+    }
+    i++;
+    text++;
+  }
+}
+
 /* END McuUtility. */
 
 /*!

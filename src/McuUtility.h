@@ -1531,6 +1531,15 @@ uint8_t McuUtility_ScanWRGB(const unsigned char **str, uint8_t *w, uint8_t *r, u
 ** ===================================================================
 */
 
+/*!
+ * \brief Function to convert and hide a text (e.g. a password) with asterisks.
+ * \param buf Pointer to buffer where to store the convert the text.
+ * \param bufSize Size of buffer in bytes.
+ * \param char Pointer to the source text.
+ * \param nofVisible Number of characters at the beginning which are copied unchanged and are visible. Everything else gets copied as '*'.
+ */
+void McuUtility_HideText(char *buf, size_t bufSize, const char *text, unsigned int nofVisisble);
+
 /* END McuUtility. */
 
 #ifdef __cplusplus
