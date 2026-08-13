@@ -208,7 +208,6 @@ bool McuWiFi_canReconnect(void) {
 static void SetPasswordMode(void) {
   wifi_config_t wifi_config;
 
-  McuLog_info("SetPasswordMode()");
   ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
   memset(&wifi_config, 0, sizeof(wifi_config_t)); /* initialize all fields */
 #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
@@ -227,14 +226,15 @@ static void SetPasswordMode(void) {
 #endif
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-
 #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
-  McuLog_info("PEAP_ID: %s", wifi.auth.peap.user);
-  ESP_ERROR_CHECK( esp_eap_client_set_identity((uint8_t *)wifi.auth.peap.user, strlen((char*)wifi.auth.peap.user)) );
-  McuLog_info("PEAP_USERNAME: %s", wifi.auth.peap.user);
-  ESP_ERROR_CHECK( esp_eap_client_set_username((uint8_t *)wifi.auth.peap.user, strlen((char*)wifi.auth.peap.user)) );
-  ESP_ERROR_CHECK( esp_eap_client_set_password((uint8_t *)wifi.auth.peap.pass, strlen((char*)wifi.auth.peap.pass)) );
-  ESP_ERROR_CHECK( esp_wifi_sta_enterprise_enable() );
+  if (wifi.auth.type==McuWiFi_EAP_PEAP) {
+    McuLog_info("PEAP_ID: %s", wifi.auth.peap.user);
+    ESP_ERROR_CHECK( esp_eap_client_set_identity((uint8_t *)wifi.auth.peap.user, strlen((char*)wifi.auth.peap.user)) );
+    McuLog_info("PEAP_USERNAME: %s", wifi.auth.peap.user);
+    ESP_ERROR_CHECK( esp_eap_client_set_username((uint8_t *)wifi.auth.peap.user, strlen((char*)wifi.auth.peap.user)) );
+    ESP_ERROR_CHECK( esp_eap_client_set_password((uint8_t *)wifi.auth.peap.pass, strlen((char*)wifi.auth.peap.pass)) );
+    ESP_ERROR_CHECK( esp_wifi_sta_enterprise_enable() );
+  }
 #endif
 }
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
