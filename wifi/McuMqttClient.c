@@ -479,8 +479,12 @@ uint8_t McuMqttClient_Disconnect(void) {
 
 static uint8_t SetBroker(const unsigned char *broker) {
   unsigned char buf[64];
+  uint8_t res;
 
-  McuUtility_ScanDoubleQuotedString(&broker, buf, sizeof(buf));
+  res = McuUtility_ScanDoubleQuotedString(&broker, buf, sizeof(buf));
+  if (res!=ERR_OK) {
+    return res;
+  }
   McuUtility_strcpy(mqtt.broker, sizeof(mqtt.broker), buf);
 #if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_BROKER, (char*)mqtt.broker, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
@@ -490,8 +494,12 @@ static uint8_t SetBroker(const unsigned char *broker) {
 
 static uint8_t SetID(const unsigned char *id) {
   unsigned char buf[64];
+  uint8_t res;
 
-  McuUtility_ScanDoubleQuotedString(&id, buf, sizeof(buf));
+  res = McuUtility_ScanDoubleQuotedString(&id, buf, sizeof(buf));
+  if (res!=ERR_OK) {
+    return res;
+  }
   McuUtility_strcpy(mqtt.client_id, sizeof(mqtt.client_id), buf);
 #if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_CLIENT, (char*)mqtt.client_id, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
@@ -501,8 +509,12 @@ static uint8_t SetID(const unsigned char *id) {
 
 static uint8_t SetUser(const unsigned char *user) {
   unsigned char buf[64];
+  uint8_t res;
 
-  McuUtility_ScanDoubleQuotedString(&user, buf, sizeof(buf));
+  res = McuUtility_ScanDoubleQuotedString(&user, buf, sizeof(buf));
+  if (res!=ERR_OK) {
+    return res;
+  }
   McuUtility_strcpy(mqtt.client_user, sizeof(mqtt.client_user), buf);
 #if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_USER, (char*)mqtt.client_user, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
@@ -512,8 +524,12 @@ static uint8_t SetUser(const unsigned char *user) {
 
 static uint8_t SetPassword(const unsigned char *pass) {
   unsigned char buf[96];
+  uint8_t res;
 
-  McuUtility_ScanDoubleQuotedString(&pass, buf, sizeof(buf));
+  res = McuUtility_ScanDoubleQuotedString(&pass, buf, sizeof(buf));
+  if (res!=ERR_OK) {
+    return res;
+  }
   McuUtility_strcpy(mqtt.client_pass, sizeof(mqtt.client_pass), buf);
 #if MCU_MQTT_CLIENT_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_PASS, (char*)mqtt.client_pass, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);

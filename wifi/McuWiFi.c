@@ -652,8 +652,12 @@ static void WiFiTask(void *pv) {
 
 static uint8_t SetStringSetting(const char *value, char *target, size_t targetSize, const char *iniKey) {
   unsigned char buf[64];
+  uint8_t res;
 
-  McuUtility_ScanDoubleQuotedString((const uint8_t **)&value, buf, sizeof(buf));
+  res = McuUtility_ScanDoubleQuotedString((const uint8_t **)&value, buf, sizeof(buf));
+  if (res!=ERR_OK) {
+    return res;
+  }
   McuUtility_strcpy((unsigned char*)target, targetSize, buf);
 #if MCU_WIFI_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, iniKey, (char*)target, MCU_WIFI_CONFIG_MININI_FILE_NAME);
