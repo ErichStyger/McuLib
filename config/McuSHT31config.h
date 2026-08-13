@@ -20,7 +20,7 @@
 #endif
 
 #ifndef McuSHT31_CONFIG_READ_WAIT_MS
-  #define McuSHT31_CONFIG_READ_WAIT_MS  (25) 
+  #define McuSHT31_CONFIG_READ_WAIT_MS  (50) 
   /*!< SHT31 needs a wait time for sampling the data */
 #endif
 
