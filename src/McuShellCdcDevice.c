@@ -376,8 +376,11 @@ static void UsbDeviceRestart(void) {
     }
     for(;;) {
       tud_task(); /* tinyusb (CDC) device task */
-      #if 0 /* no need to wait, as tinyUSB will block inside tud_task() and waits for data */
+      #if McuLib_CONFIG_CPU_IS_RPxxxx
+        /* RPxxxx is using internal queue and is non-blocking, so have to give back some CPU time here */
         vTaskDelay(pdMS_TO_TICKS(pdMS_TO_TICKS(McuShellCdcDevice_CONFIG_PROCESS_WAIT_TIME_MS)));
+      #else
+        /* no need to wait, as tinyUSB will block inside tud_task() and waits for data. For example the case with the tinyUSB for Kinetis using FreeRTOS */
       #endif
     }
   }
