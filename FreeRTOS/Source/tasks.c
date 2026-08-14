@@ -587,7 +587,7 @@ PRIVILEGED_DATA static volatile UBaseType_t uxSchedulerSuspended = ( UBaseType_t
 /* Do not move these variables to function scope as doing so prevents the
  * code working with debuggers that need to remove the static qualifier. */
 PRIVILEGED_DATA static configRUN_TIME_COUNTER_TYPE ulTaskSwitchedInTime[ configNUMBER_OF_CORES ] = { 0U };    /**< Holds the value of a timer/counter the last time a task was switched in. */
-#if USE_RUNTIME_COUNTER_ARRAY  /* << EST */
+#if 1 || USE_RUNTIME_COUNTER_ARRAY  /* << EST */
 PRIVILEGED_DATA static volatile configRUN_TIME_COUNTER_TYPE ulTotalRunTime[ configNUMBER_OF_CORES ] = { 0U }; /**< Holds the total amount of execution time as defined by the run time counter clock. */
 #else
 PRIVILEGED_DATA static volatile configRUN_TIME_COUNTER_TYPE ulTotalRunTime = 0U; /**< Holds the total amount of execution time as defined by the run time counter clock. */
