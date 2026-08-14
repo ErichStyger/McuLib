@@ -4966,6 +4966,7 @@ BaseType_t xTaskIncrementTick( void )
             {
       #if 1
               /* << EST: using configuration name macro */
+              extern void configUSE_TICK_HOOK_NAME(void); /* prototype */
               configUSE_TICK_HOOK_NAME();
       #else
                 vApplicationTickHook();
@@ -5035,6 +5036,7 @@ BaseType_t xTaskIncrementTick( void )
         {
 #if 1
         /* << EST: using configuration name macro */
+        extern void configUSE_TICK_HOOK_NAME(void); /* prototype */
         configUSE_TICK_HOOK_NAME();
 #else
             vApplicationTickHook();
