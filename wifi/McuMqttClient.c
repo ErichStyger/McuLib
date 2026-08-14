@@ -642,6 +642,7 @@ static TaskHandle_t taskHandle = NULL;
 
 void mqttClientTask(void *pv) {
   /* tasks which periodically checks if we are disconnected and then reconnects */
+  reloadSettings(); /* load settings */
   for(;;) {
     vTaskDelay(pdMS_TO_TICKS(5000));
     if (!mqtt.isConnected && MqttClient_GetReconnect()) {
