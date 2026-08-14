@@ -384,7 +384,7 @@ static void sendData(const void *buffer, uint32_t size) {
      )
   { /* only write to shell if not in programming mode. Programming mode might crash RTT */
     McuShell_ConstStdIOTypePtr io = McuESP32_GetRxFromESPStdio();
-    if (io!=NULL && io->writeData) {
+    if (io!=NULL && io->writeData!=NULL) {
       io->writeData(buffer, size);
     }
   }

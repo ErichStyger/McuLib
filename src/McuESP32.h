@@ -31,13 +31,13 @@ extern "C" {
 uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const McuShell_StdIOType *io);
 
 /*!
- * \brief Set a standard I/O receiving from ESP
+ * \brief Set an optional standard I/O used for forwarding ESP Rx data
  * \param stdio Standard I/O to be used
  */
 void McuESP32_SetRxFromESPStdio(McuShell_ConstStdIOTypePtr stdio);
 
 /*!
- * \brief Return the current receiving from ESP standard I/O
+ * \brief Return the current standard I/O assigned for forwarding ESP Rx data
  * \return I/O handler
  */
 McuShell_ConstStdIOTypePtr McuESP32_GetRxFromESPStdio(void);
