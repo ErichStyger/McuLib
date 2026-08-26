@@ -46,7 +46,7 @@ static StreamBufferHandle_t txStreamBuffer;
   static void (*McuESP32_UsbFlush)(void) = NULL; /* callback to flush the outgoing data. Required for ESP idf.py flash usage. Configure McuESP_SetUsbFlushCallback() */
   static uint32_t McuESP32_currBaud = McuESP32_CONFIG_UART_BAUDRATE;
 #endif
-static bool McuESP32_CopyUartToShell = true; /* if we copy the ESP32 UART to the Shell */ /* \TODO fails USB enumeration if McuESP32_CopyUartToShell enabled by default? */
+static bool McuESP32_CopyUartToShell = false; /* if we copy the ESP32 UART to the Shell */
 
 /* Below is the I/O handler for the console: data from the ESP is sent optionally to that stdout (e.g. shell console).
  */
