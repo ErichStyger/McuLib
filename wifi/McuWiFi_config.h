@@ -20,6 +20,18 @@
   #define MCU_WIFI_CONFIG_USE_SHELL     (1 && MCU_WIFI_CONFIG_ENABLED) /*!< 1: enable shell command support */
 #endif
 
+#ifndef MCU_WIFI_CONFIG_TASK_PRIORITY
+  #define MCU_WIFI_CONFIG_TASK_PRIORITY         (tskIDLE_PRIORITY+1)  /*!< FreeRTOS WiFi task priority */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_TASK_STACK_SIZE
+  #if McuLib_CONFIG_CPU_IS_RPxxxx
+    #define MCU_WIFI_CONFIG_TASK_STACK_SIZE     (4096/sizeof(StackType_t)) /* task stack size */
+  #elif McuLib_CONFIG_CPU_IS_ESP32
+    #define MCU_WIFI_CONFIG_TASK_STACK_SIZE     ((20*1024)/sizeof(StackType_t)) /* task stack size */
+  #endif      
+#endif
+
 #define EAP_PEAP 1 /*!< PEAP: Protected Extensible Authentication Protocol, WPA2 Enterprise with password and no certificate */
 #define EAP_TTLS 2 /*!< PSK: Pre-Shared Key, TLS method with SSID and password, WPA2-PSK */
 

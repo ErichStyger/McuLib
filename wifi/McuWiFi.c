@@ -351,25 +351,25 @@ static int connect_esp_wifi_with_credentials(void) {
   if (bits&WIFI_EVENT_HANDLER_CONNECTED_BIT) {
   #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
     if (wifi.auth.type==McuWiFi_EAP_PEAP) {
-      McuLog_info("connected to AP SSID with PEAP: %s",  wifi.auth.peap.ssid);
+      McuLog_info("connected to AP SSID '%s' with PEAP",  wifi.auth.peap.ssid);
     }
   #endif
   #if MCU_WIFI_CONFIG_USE_PSK_SECURITY
     if (wifi.auth.type==McuWiFi_EAP_TTLS) {
-      McuLog_info("connected to AP SSID with PSK: %s",  wifi.auth.psk.ssid);
+      McuLog_info("connected to AP SSID '%s' with PSK",  wifi.auth.psk.ssid);
     }
   #endif
     xEventGroupSetBits(s_wifi_event_group, WIFI_IS_CONNECTED_BIT|WIFI_CAN_RECONNECT_BIT); /* set connection status */
-    return 0;
+    return 0; /* OK */
   } else if (bits & WIFI_EVENT_HANDLER_FAIL_BIT) {
   #if MCU_WIFI_CONFIG_USE_PSK_SECURITY
     if (wifi.auth.type==McuWiFi_EAP_TTLS) {
-      McuLog_info("Failed to connect to SSID with PSK: %s", wifi.auth.psk.ssid);
+      McuLog_info("Failed to connect to SSID '%s' with PSK", wifi.auth.psk.ssid);
     }
   #endif
   #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
     if (wifi.auth.type==McuWiFi_EAP_PEAP) {
-      McuLog_info("Failed to connect to SSID with PEAP: %s", wifi.auth.peap.ssid);
+      McuLog_info("Failed to connect to SSID '%s' with PEAP", wifi.auth.peap.ssid);
     }
   #endif
     return -5;
@@ -488,7 +488,7 @@ static bool ConnectWiFiWithCredentials(void) {
       #if MCU_WIFI_CONFIG_USE_WATCHDOG
         failedCount++;
         if (failedCount<CONFIG_NOF_WIFI_CONNECTION) {
-          McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 50, 100);
+          McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 10, 100);
         } else {
           for(;;) {
             McuLog_fatal("reached max %d connection tries, waiting for watchdog to restart", CONFIG_NOF_WIFI_CONNECTION);
@@ -496,7 +496,7 @@ static bool ConnectWiFiWithCredentials(void) {
           }
         }
       #else
-        vTaskDelay(pdMS_TO_TICKS(50*100)); /* limit message output */
+        vTaskDelay(pdMS_TO_TICKS(1000)); /* limit message output */
       #endif
     } else {
       McuLog_info("success!");
@@ -761,7 +761,7 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
   McuUtility_strcat(buf, sizeof(buf), GetWifiReconnect()?(unsigned char*)"reconnect: yes\r\n":(unsigned char*)"reconnect: no\r\n");
   McuShell_SendStatusStr((uint8_t*)"  connection", buf, io->stdOut);
   if (wifi.auth.type==McuWiFi_EAP_PEAP) {
-    McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_PEAP, WPA2 Enterprise with SSID, username and password\r\n", io->stdOut);
+    McuShell_SendStatusStr((uint8_t*)"  auth", (unsigned char*)"EAP_PEAP, WPA2 Enterprise with SSID, username and password\r\n", io->stdOut);
   } else if (wifi.auth.type==McuWiFi_EAP_TTLS) {
     McuShell_SendStatusStr((uint8_t*)"  mode", (unsigned char*)"EAP_TTLS, PSK, SSID + password\r\n", io->stdOut);
   } else {
@@ -954,13 +954,9 @@ void McuWiFi_Init(void) {
   if (xTaskCreate(
       WiFiTask,  /* pointer to the task */
       "WiFi", /* task name for kernel awareness debugging */
-#if McuLib_CONFIG_CPU_IS_RPxxxx
-      4096/sizeof(StackType_t), /* task stack size */
-#elif McuLib_CONFIG_CPU_IS_ESP32
-      20*1024/sizeof(StackType_t), /* task stack size */
-#endif
+      MCU_WIFI_CONFIG_TASK_STACK_SIZE,
       (void*)NULL, /* optional task startup argument */
-      tskIDLE_PRIORITY+2,  /* initial priority */
+      MCU_WIFI_CONFIG_TASK_PRIORITY,  /* initial priority */
       &wifi.taskHandle
     ) != pdPASS)
   {
