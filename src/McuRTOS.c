@@ -320,17 +320,15 @@
 #if configUSE_SHELL
 static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
 #if tskKERNEL_VERSION_MAJOR>=10 && !McuLib_CONFIG_CPU_IS_ESP32
-  #define SHELL_MAX_NOF_TASKS 16 /* maximum number of tasks, as specified in the properties */
   UBaseType_t nofTasks, i;
-  TaskHandle_t taskHandles[SHELL_MAX_NOF_TASKS];
+  TaskHandle_t taskHandles[McuShell_CONFIG_MAX_NOF_TASKS];
   StackType_t *stackBeg, *stackEnd, *topOfStack;
   uint8_t staticallyAllocated;
   uint8_t tmpBuf[32];
   uint16_t stackSize;
 #elif McuLib_CONFIG_CPU_IS_ESP32
-  #define SHELL_MAX_NOF_TASKS 16
   UBaseType_t nofTasks, i;
-  TaskStatus_t taskStatusArray[SHELL_MAX_NOF_TASKS];
+  TaskStatus_t taskStatusArray[McuShell_CONFIG_MAX_NOF_TASKS];
   uint8_t tmpBuf[32];
 #endif
 #if configUSE_TRACE_FACILITY && !((tskKERNEL_VERSION_MAJOR<10) || McuLib_CONFIG_CPU_IS_ESP32)
@@ -437,9 +435,9 @@ static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
    * use uxTaskGetSystemState() instead. Stack End/Top/Static columns are
    * not available from the IDF port and are shown as N/A. 
    * Note that for uxTaskGetSystemState() you have to enable CONFIG_FREERTOS_USE_TRACE_FACILITY (e.g. with idf.py menuconfig) */
-  nofTasks = uxTaskGetSystemState(taskStatusArray, SHELL_MAX_NOF_TASKS, NULL);
+  nofTasks = uxTaskGetSystemState(taskStatusArray, McuShell_CONFIG_MAX_NOF_TASKS, NULL);
   if (nofTasks == 0) {
-    McuShell_SendStr((unsigned char*)"WARNING: uxTaskGetSystemState() returned 0 — array too small?\r\n", io->stdErr);
+    McuShell_SendStr((unsigned char*)"WARNING: uxTaskGetSystemState() returned 0 — array too small? Try increasing McuShell_CONFIG_MAX_NOF_TASKS\r\n", io->stdErr);
   }
   for (i = 0; i < nofTasks; i++) {
   #if configUSE_TRACE_FACILITY
@@ -537,13 +535,13 @@ static uint8_t PrintTaskList(const McuShell_StdIOType *io) {
   McuShell_SendStr((unsigned char*)"FreeRTOS version must be at least 10.0.0\r\n", io->stdOut);
 #else
   nofTasks = uxTaskGetNumberOfTasks();
-  if (nofTasks>SHELL_MAX_NOF_TASKS) {
+  if (nofTasks>McuShell_CONFIG_MAX_NOF_TASKS) {
     McuUtility_strcpy(buf, sizeof(buf), (const unsigned char*)"WARNING: more tasks than Shell maximum number of tasks.\r\n");
     McuShell_SendStr(buf, io->stdErr);
-    nofTasks = SHELL_MAX_NOF_TASKS;
+    nofTasks = McuShell_CONFIG_MAX_NOF_TASKS;
   }
   /* get task handles of all tasks. */
-  nofTasks = xGetTaskHandles(&taskHandles[0], SHELL_MAX_NOF_TASKS);
+  nofTasks = xGetTaskHandles(&taskHandles[0], McuShell_CONFIG_MAX_NOF_TASKS);
   for(i=0;i<nofTasks;i++) {
     if (taskHandles[i]!=NULL) {
     #if configUSE_TRACE_FACILITY

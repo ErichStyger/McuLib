@@ -138,4 +138,8 @@
     /*!< With this char as first character in the cmd, printing is silent. Use a space to disable it */
 #endif
 
+#ifndef McuShell_CONFIG_MAX_NOF_TASKS
+  #define McuShell_CONFIG_MAX_NOF_TASKS                   (32)  /*!< number of tasks, e.g. used for task list table */
+#endif
+
 #endif /* __McuShell_CONFIG_H */
