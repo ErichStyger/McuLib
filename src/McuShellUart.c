@@ -418,7 +418,7 @@ void McuShellUart_MuxUartPins(int uart) {
        #define SOPT5_UART1TXSRC_UART_TX 0x00u /*!<@brief UART 1 transmit data source select: UART1_TX pin */
        SIM->SOPT5 = ((SIM->SOPT5 &
                       /* Mask bits to zero which are setting */
-                      (~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART1TXSRC_MASK)))
+                      (~(SIM_SOPT5_UART1TXSRC_MASK | SIM_SOPT5_UART1TXSRC_MASK)))
                      /* UART 1 transmit data source select: UART1_TX pin. */
                      | SIM_SOPT5_UART1TXSRC(SOPT5_UART1TXSRC_UART_TX));
       break;
