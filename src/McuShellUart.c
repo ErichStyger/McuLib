@@ -183,6 +183,132 @@ void McuShellUart_CONFIG_UART_IRQ_HANDLER(void) {
 }
 #endif
 
+void McuShellUart_DeMuxUartPins(int uart) {
+    switch(uart) {
+#if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
+    case McuShellUart_CONFIG_UART_K22FN512_LPUART0_C3_C4: /* PTC3, PTC4 */
+       /* PORTC3 (pin 46) is configured to default muxing */
+      PORT_SetPinMux(PORTC, 3U, kPORT_MuxAlt0);
+      /* PORTC4 (pin 49) is configured to default muxing */
+      PORT_SetPinMux(PORTC, 4U, kPORT_MuxAlt0);
+      break;
+
+    case McuShellUart_CONFIG_UART_K22FN512_UART0_A1_A2: /* PTA1, PTA2 */
+      /* PORTA1 (pin 35) is configured to default muxing */
+      PORT_SetPinMux(PORTA, 1, kPORT_MuxAlt0);
+      /* PORTA2 (pin 36) is configured to default muxing */
+      PORT_SetPinMux(PORTA, 2, kPORT_MuxAlt0);
+      break;
+
+    case McuShellUart_CONFIG_UART_K22FN512_UART0_B16_B17: /* PTB16, PTB17 */
+      /* PORTB16 (pin 39) is configured to default muxing */
+      PORT_SetPinMux(PORTB, 16, kPORT_MuxAlt0);
+      /* PORTB17 (pin 40) is configured to default muxing */
+      PORT_SetPinMux(PORTB, 17, kPORT_MuxAlt0);
+      break;
+
+    case McuShellUart_CONFIG_UART_K22FN512_UART1_E1_E0:
+
+      /* PORTE0 (pin 1) is configured to default muxing */
+      PORT_SetPinMux(PORTE, 0U, kPORT_MuxAlt0);
+      /* PORTE1 (pin 2) is configured to default muxing */
+      PORT_SetPinMux(PORTE, 1U, kPORT_MuxAlt0);
+      break;
+
+    case McuShellUart_CONFIG_UART_K22FN512_UART2_D2_D3:
+      /* PORTD2 (pin 59) is configured to default muxing */
+      PORT_SetPinMux(PORTD, 2U, kPORT_MuxAlt0);
+      /* PORTD3 (pin 60) is configured to default muxing */
+      PORT_SetPinMux(PORTD, 3U, kPORT_MuxAlt0);
+      break;
+#elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
+    case McuShellUart_CONFIG_UART_K22FX512_UART0_A1_A2:
+      /* PORTA1 (pin 27) is configured as UART0_RX */
+      PORT_SetPinMux(PORTA, 1U, kPORT_MuxAlt2);
+      /* PORTA2 (pin 28) is configured as UART0_TX */
+      PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt2);
+      break;
+
+    case McuShellUart_CONFIG_UART_K22FX512_UART1_E1_E0:
+      /* PORTE0 (pin 1) is configured as UART1_TX */
+      PORT_SetPinMux(PORTE, 0U, kPORT_MuxAlt3);
+       /* PORTE1 (pin 2) is configured as UART1_RX */
+      PORT_SetPinMux(PORTE, 1U, kPORT_MuxAlt3);
+      break;
+#elif McuShellUart_CONFIG_UART==McuShellUart_CONFIG_UART_K64FN1M_UART0_B16_B17
+    case McuShellUart_CONFIG_UART_K64FN1M_UART0_B16_B17:
+      /* UART0 Rx and Tx */
+      /* PORTB16 (pin 62) is configured as UART0_RX */
+      PORT_SetPinMux(PORTB, 16U, kPORT_MuxAlt3);
+      /* PORTB17 (pin 63) is configured as UART0_TX */
+      PORT_SetPinMux(PORTB, 1U, kPORT_MuxAlt3);
+       break;
+#elif McuLib_CONFIG_CPU_IS_RPxxxx
+    // case McuShellUart_CONFIG_UART_RP2040_UART1_GPIO4_GPIO5:
+    //   gpio_set_function(McuShellUart_CONFIG_UART_TX_PIN, GPIO_FUNC_UART);
+    //   gpio_set_function(McuShellUart_CONFIG_UART_RX_PIN, GPIO_FUNC_UART);
+    //   break;
+#elif McuLib_CONFIG_CPU_IS_MCXN
+    case McuShellUart_CONFIG_UART_MCXN947_FC4_P1_8_P1_9:
+        // /* Enables the clock for PORT1: Enables clock */
+        // CLOCK_EnableClock(kCLOCK_Port1);
+
+        // /* EFT detect interrupts configuration on PORT1_ */
+        // PORT_DisableEFTDetectInterrupts(PORT1, 0x0300u);
+
+        // const port_pin_config_t port1_8_pinA1_config = {/* Internal pull-up/down resistor is disabled */
+        //                                                 .pullSelect = kPORT_PullDisable,
+        //                                                 /* Low internal pull resistor value is selected. */
+        //                                                 .pullValueSelect = kPORT_LowPullResistor,
+        //                                                 /* Fast slew rate is configured */
+        //                                                 .slewRate = kPORT_FastSlewRate,
+        //                                                 /* Passive input filter is disabled */
+        //                                                 .passiveFilterEnable = kPORT_PassiveFilterDisable,
+        //                                                 /* Open drain output is disabled */
+        //                                                 .openDrainEnable = kPORT_OpenDrainDisable,
+        //                                                 /* Low drive strength is configured */
+        //                                                 .driveStrength = kPORT_LowDriveStrength,
+        //                                                 /* Pin is configured as FC4_P0 */
+        //                                                 .mux = kPORT_MuxAlt2,
+        //                                                 /* Digital input enabled */
+        //                                                 .inputBuffer = kPORT_InputBufferEnable,
+        //                                                 /* Digital input is not inverted */
+        //                                                 .invertInput = kPORT_InputNormal,
+        //                                                 /* Pin Control Register fields [15:0] are not locked */
+        //                                                 .lockRegister = kPORT_UnlockRegister};
+        // /* PORT1_8 (pin A1) is configured as FC4_P0 */
+        // PORT_SetPinConfig(PORT1, 8U, &port1_8_pinA1_config);
+
+        // const port_pin_config_t port1_9_pinB1_config = {/* Internal pull-up/down resistor is disabled */
+        //                                                 .pullSelect = kPORT_PullDisable,
+        //                                                 /* Low internal pull resistor value is selected. */
+        //                                                 .pullValueSelect = kPORT_LowPullResistor,
+        //                                                 /* Fast slew rate is configured */
+        //                                                 .slewRate = kPORT_FastSlewRate,
+        //                                                 /* Passive input filter is disabled */
+        //                                                 .passiveFilterEnable = kPORT_PassiveFilterDisable,
+        //                                                 /* Open drain output is disabled */
+        //                                                 .openDrainEnable = kPORT_OpenDrainDisable,
+        //                                                 /* Low drive strength is configured */
+        //                                                 .driveStrength = kPORT_LowDriveStrength,
+        //                                                 /* Pin is configured as FC4_P1 */
+        //                                                 .mux = kPORT_MuxAlt2,
+        //                                                 /* Digital input enabled */
+        //                                                 .inputBuffer = kPORT_InputBufferEnable,
+        //                                                 /* Digital input is not inverted */
+        //                                                 .invertInput = kPORT_InputNormal,
+        //                                                 /* Pin Control Register fields [15:0] are not locked */
+        //                                                 .lockRegister = kPORT_UnlockRegister};
+        // /* PORT1_9 (pin B1) is configured as FC4_P1 */
+        // PORT_SetPinConfig(PORT1, 9U, &port1_9_pinB1_config);
+        // break;
+#endif /* McuLib_CONFIG_CPU_VARIANT_NXP_K22FN */
+    default:
+      McuLog_fatal("Unknown UART configuration!");
+      for(;;) { /* error */ }
+  } /* switch */
+}
+
 void McuShellUart_MuxUartPins(int uart) {
   switch(uart) {
 #if McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FN
@@ -431,6 +557,7 @@ void McuShellUart_MuxUartPins(int uart) {
         break;
 #endif /* McuLib_CONFIG_CPU_VARIANT_NXP_K22FN */
     default:
+      McuLog_fatal("Unknown UART configuration!");
       for(;;) { /* error */ }
   } /* switch */
 }

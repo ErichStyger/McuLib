@@ -49,6 +49,12 @@ int McuShellUart_WriteString(const char *str);
 int McuShellUart_PollChar(void);
 
 /*!
+ * \brief perform de-muxing of the UART pins
+ * \param uart One of the preconfigured and supported UART types, e.g. McuShellUart_CONFIG_UART_K22FN512_LPUART0_C3_C4
+ */
+void McuShellUart_DeMuxUartPins(int uart);
+
+/*!
  * \brief perform muxing of the UART pins
  * \param uart One of the preconfigured and supported UART types, e.g. McuShellUart_CONFIG_UART_K22FN512_LPUART0_C3_C4
  */
