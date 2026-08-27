@@ -339,9 +339,21 @@ void McuShellUart_MuxUartPins(int uart) {
 
     /* PORTA1 (pin 35) is configured as UART0_RX */
       PORT_SetPinMux(PORTA, 1, kPORT_MuxAlt2);
+      PORTA->PCR[1] = ((PORTA->PCR[1] &
+                        /* Mask bits to zero which are setting */
+                        (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+                       /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                        * corresponding PE field is set. */
+                       | (uint32_t)(kPORT_PullUp));
 
       /* PORTA2 (pin 36) is configured as UART0_TX */
       PORT_SetPinMux(PORTA, 2, kPORT_MuxAlt2);
+      PORTA->PCR[2] = ((PORTA->PCR[2] &
+                        /* Mask bits to zero which are setting */
+                        (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+                       /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                        * corresponding PE field is set. */
+                       | (uint32_t)(kPORT_PullUp));
 
       #define SOPT5_UART0TXSRC_UART_TX 0x00u /*!<@brief UART 0 transmit data source select: UART0_TX pin */
       SIM->SOPT5 = ((SIM->SOPT5 &
@@ -415,8 +427,21 @@ void McuShellUart_MuxUartPins(int uart) {
       CLOCK_EnableClock(kCLOCK_PortD);
       /* PORTD2 (pin 59) is configured as UART2_RX */
       PORT_SetPinMux(PORTD, 2U, kPORT_MuxAlt3);
+      PORTD->PCR[2] = ((PORTD->PCR[2] &
+                         /* Mask bits to zero which are setting */
+                         (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+                        /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                         * corresponding PE field is set. */
+                        | (uint32_t)(kPORT_PullUp));
+
       /* PORTD3 (pin 60) is configured as UART2_TX */
       PORT_SetPinMux(PORTD, 3U, kPORT_MuxAlt3);
+      PORTD->PCR[3] = ((PORTD->PCR[3] &
+                         /* Mask bits to zero which are setting */
+                         (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+                        /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                         * corresponding PE field is set. */
+                        | (uint32_t)(kPORT_PullUp));
       break;
 #elif McuLib_CONFIG_CPU_VARIANT==McuLib_CONFIG_CPU_VARIANT_NXP_K22FX
 
