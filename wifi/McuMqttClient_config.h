@@ -48,6 +48,10 @@
   #define MCU_MQTT_CLIENT_CONFIG_EXTRA_LOGS   (0) /*!< 1: enable extra log output */
 #endif
 
+#ifndef MCU_MQTT_CLIENT_CONFIG_IS_ENABLED
+  #define MCU_MQTT_CLIENT_CONFIG_IS_ENABLED      (0) /*!< 1: if client is enabled by default */
+#endif
+
 #ifndef MCU_MQTT_CLIENT_CONFIG_USE_MININI
   #define MCU_MQTT_CLIENT_CONFIG_USE_MININI      (1) /*!< 1: use MinINI for storing settings */
 #endif
@@ -82,6 +86,10 @@
 
 #ifndef MCU_MQTT_CLIENT_MININI_KEY_MQTT_RECONNECT
   #define MCU_MQTT_CLIENT_MININI_KEY_MQTT_RECONNECT           "reconnect" /*!< Bool key: reconnect enabled */
+#endif
+
+#ifndef MCU_MQTT_CLIENT_MININI_KEY_MQTT_IS_ENABLED
+  #define MCU_MQTT_CLIENT_MININI_KEY_MQTT_IS_ENABLED          "enabled" /*!< Bool key: if enabled */
 #endif
 
 #endif /* MCU_MQTT_CLIENT_CONFIG_H_ */

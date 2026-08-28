@@ -216,6 +216,12 @@ uint8_t McuMqttClient_PublishTemperature(const char *topic, float temperature, b
  */
 void McuMqttClient_IncomingTemperature(const uint8_t *data, uint16_t len, const char *logMsg, void (setter)(float));
 
+/*! \brief Resume the MQTT client task */
+void  McuMqttClient_Resume(void);
+
+/*! \brief stop the MQTT client task */
+void  McuMqttClient_Suspend(void);
+
 /*!
  * \brief Module de-initialization
  */

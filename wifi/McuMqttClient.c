@@ -39,6 +39,7 @@ typedef struct mqtt_t {
   unsigned char client_pass[96];    /* client user password */
   int in_pub_ID;             /* incoming published ID, set in the incoming_publish_cb and used in the incoming_data_cb */
   /* configuration settings */
+  bool isEnabled; /* if true, it is enabled */
   bool doLogging; /* if it shall write log messages */
   bool doPublishing; /* if publish the topics */
   bool reconnect; /* if after a disconnect it shall try to reconnect */
@@ -243,6 +244,7 @@ static void reloadSettings(void) {
   McuMinINI_ini_gets(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_CLIENT, MCU_MQTT_CLIENT_CONFIG_CLIENT, (char*)mqtt.client_id, sizeof(mqtt.client_id), MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_USER, MCU_MQTT_CLIENT_CONFIG_USER, (char*)mqtt.client_user, sizeof(mqtt.client_user), MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
   McuMinINI_ini_gets(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_PASS, MCU_MQTT_CLIENT_CONFIG_PASS, (char*)mqtt.client_pass, sizeof(mqtt.client_pass), MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
+  mqtt.isEnabled = McuMinINI_ini_getbool(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_IS_ENABLED, MCU_MQTT_CLIENT_CONFIG_IS_ENABLED, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
   mqtt.doPublishing = McuMinINI_ini_getbool(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_PUBLISH, MCU_MQTT_CLIENT_CONFIG_PUBLISH, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
   mqtt.reconnect = McuMinINI_ini_getbool(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_RECONNECT, MCU_MQTT_CLIENT_CONFIG_RECONNECT, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #else
@@ -250,8 +252,20 @@ static void reloadSettings(void) {
   McuUtility_strcpy(mqtt.client_id, sizeof(mqtt.client_id), (unsigned char*)MCU_MQTT_CLIENT_CONFIG_CLIENT);
   McuUtility_strcpy(mqtt.client_user, sizeof(mqtt.client_user), (unsigned char*)MCU_MQTT_CLIENT_CONFIG_USER);
   McuUtility_strcpy(mqtt.client_pass, sizeof(mqtt.client_pass), (unsigned char*)MCU_MQTT_CLIENT_CONFIG_PASS);
+  mqtt.isEnabled = MCU_MQTT_CLIENT_CONFIG_IS_ENABLED;
   mqtt.doPublishing = MCU_MQTT_CLIENT_CONFIG_PUBLISH;
   mqtt.reconnect = MCU_MQTT_CLIENT_CONFIG_RECONNECT;
+#endif
+}
+
+static bool MqttClient_GetIsEnabled(void) {
+  return mqtt.isEnabled;
+}
+
+static void McuMqttClient_SetIsEnabled(bool on) {
+  mqtt.isEnabled = on;
+#if MCU_MQTT_CLIENT_CONFIG_USE_MININI
+  McuMinINI_ini_putl(MCU_MQTT_CLIENT_MININI_SECTION_MQTT, MCU_MQTT_CLIENT_MININI_KEY_MQTT_IS_ENABLED, on, MCU_MQTT_CLIENT_CONFIG_MININI_FILE_NAME);
 #endif
 }
 
@@ -382,6 +396,10 @@ static void McuMqttClient_connection_cb(mqtt_client_t *client, void *arg, mqtt_c
 
 uint8_t McuMqttClient_Connect(void) {
 #if LWIP_TCP
+  if (!MqttClient_GetIsEnabled()) {
+    McuLog_trace("MQTT client is disabled");
+    return ERR_FAILED;
+  }
   if (mqtt.mqtt_client!=NULL) {
     McuLog_trace("MQTT client has been created");
     return ERR_OK; /* already connected */
@@ -541,6 +559,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
   char buf[36];
 
   McuShell_SendStatusStr((unsigned char*)"mqttclient", (unsigned char*)"mqttclient status\r\n", io->stdOut);
+  McuShell_SendStatusStr((unsigned char*)"  enabled", MqttClient_GetIsEnabled()?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  minINI", MCU_MQTT_CLIENT_CONFIG_USE_MININI?(unsigned char*)"yes\r\n":(unsigned char*)"no\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  log", mqtt.doLogging?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
   McuShell_SendStatusStr((unsigned char*)"  publish", mqtt.doPublishing?(unsigned char*)"on\r\n":(unsigned char*)"off\r\n", io->stdOut);
@@ -561,6 +580,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
 static uint8_t PrintHelp(const McuShell_StdIOType *io) {
   McuShell_SendHelpStr((unsigned char*)"mqttclient", (unsigned char*)"Group of mqttclient commands\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Print help or status information\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  enable|disable", (unsigned char*)"Enable or disable MQTT client\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  log on|off", (unsigned char*)"Turn logging on or off\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  publish on|off", (unsigned char*)"Publishing on or off\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  connect|disconnect", (unsigned char*)"Connect or disconnect from server\r\n", io->stdOut);
@@ -582,6 +602,12 @@ uint8_t McuMqttClient_ParseCommand(const unsigned char *cmd, bool *handled, cons
   } else if ((McuUtility_strcmp((char*)cmd, McuShell_CMD_STATUS)==0) || (McuUtility_strcmp((char*)cmd, "mqttclient status")==0)) {
     *handled = true;
     return PrintStatus(io);
+  } else if (McuUtility_strcmp((char*)cmd, "mqttclient enable")==0) {
+    *handled = true;
+    McuMqttClient_SetIsEnabled(true);
+  } else if (McuUtility_strcmp((char*)cmd, "mqttclient disable")==0) {
+    *handled = true;
+    McuMqttClient_SetIsEnabled(false);
   } else if (McuUtility_strcmp((char*)cmd, "mqttclient log on")==0) {
     *handled = true;
     mqtt.doLogging = true;
@@ -640,14 +666,28 @@ uint8_t McuMqttClient_ParseCommand(const unsigned char *cmd, bool *handled, cons
 
 static TaskHandle_t taskHandle = NULL;
 
+void McuMqttClient_Resume(void) {
+  if (taskHandle!=NULL) {
+    vTaskResume(taskHandle);
+  }
+}
+
+void McuMqttClient_Suspend(void) {
+  if (taskHandle!=NULL) {
+    vTaskSuspend(taskHandle);
+  }
+}
+
 void mqttClientTask(void *pv) {
   /* tasks which periodically checks if we are disconnected and then reconnects */
   reloadSettings(); /* load settings */
   for(;;) {
     vTaskDelay(pdMS_TO_TICKS(5000));
-    if (!mqtt.isConnected && MqttClient_GetReconnect()) {
-      McuLog_info("reconnecting MQTT client");
-      McuMqttClient_Connect();
+    if (MqttClient_GetIsEnabled()) {
+      if (!mqtt.isConnected && MqttClient_GetReconnect()) {
+        McuLog_info("reconnecting MQTT client");
+        McuMqttClient_Connect();
+      }
     }
   }
 }
@@ -663,6 +703,7 @@ void McuMqttClient_Init(void) {
   mqtt.doLogging = true;
   mqtt.doPublishing = MCU_MQTT_CLIENT_CONFIG_PUBLISH;
   mqtt.reconnect = MCU_MQTT_CLIENT_CONFIG_RECONNECT;
+  mqtt.isEnabled = MCU_MQTT_CLIENT_CONFIG_IS_ENABLED;
   if (taskHandle==NULL) {
     /* create task for reconnect to broker */
     if (xTaskCreate(mqttClientTask, "mqttclient", 4*1024/sizeof(StackType_t), NULL, tskIDLE_PRIORITY, &taskHandle)!=pdPASS) {
