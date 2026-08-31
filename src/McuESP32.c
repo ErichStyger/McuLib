@@ -434,7 +434,11 @@ static void sendData(const void *buffer, uint32_t size) {
   #endif
   uint32_t nof = McuShellCdcDevice_Send(buffer, size);
   if (nof!=size) {
-    McuLog_fatal("wanted to send %d, but did %d", size, nof);
+    McuLog_fatal("wanted to send %d bytes, but did send %d bytes", size, nof);
+    nof = McuShellCdcDevice_Send(buffer+nof, size-nof);
+    if (nof!=(size-nof)) {
+      McuLog_fatal("wanted to send remaining %d bytes, but did send %d bytes", size-nof, nof);
+    }
   }
   if (   McuESP32_CopyUartToShell
 #if McuESP32_CONFIG_USE_USB_CDC
