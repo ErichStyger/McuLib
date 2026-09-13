@@ -133,6 +133,8 @@
 **  @addtogroup McuPercepio_module McuPercepio module documentation
 **  @{
 */         
+#include "McuLibconfig.h"
+#if McuLib_CONFIG_SDK_USE_FREERTOS
 
 /* MODULE McuPercepio. */
 #include "McuPercepio.h"
@@ -634,6 +636,9 @@ void McuPercepio_OnTraceWrap(void)
 }
 
 /* END McuPercepio. */
+
+#endif /* McuLib_CONFIG_SDK_USE_FREERTOS */
+
 
 /*!
 ** @}

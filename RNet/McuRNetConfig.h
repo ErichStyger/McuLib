@@ -12,6 +12,11 @@
 #define __McuRNet_CONFIG_H
 
 #include "McuRNetConfig.h"
+
+#ifndef McuRNET_CONFIG_IS_ENABLED
+  #define McuRNET_CONFIG_IS_ENABLED       (0 && McuLib_CONFIG_SDK_USE_FREERTOS)
+#endif
+
 #if McuRNET_CONFIG_IS_ENABLED
 
 #ifndef McuRNet_CONFIG_APPLICATION_HEADER_FILE
@@ -21,10 +26,6 @@
 
 #include "McuLib.h"
 #include "McuRNet.h"  /* component main header file */
-
-#ifndef McuRNET_CONFIG_IS_ENABLED
-  #define McuRNET_CONFIG_IS_ENABLED       (1 && McuLib_CONFIG_SDK_USE_FREERTOS)
-#endif
 
 /* remote standard I/O destination address */
 #ifndef RSTDIO_CONFIG_SETTING_RSTDIO_DEFAULT_DESTINATION_ADDRESS

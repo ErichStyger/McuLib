@@ -208,7 +208,7 @@
 /* *****************   Middleware Configuration *******************/
 /* Configuration macro if FreeRTOS is used */
 #ifndef McuLib_CONFIG_SDK_USE_FREERTOS
-  #define McuLib_CONFIG_SDK_USE_FREERTOS          (1)
+  #define McuLib_CONFIG_SDK_USE_FREERTOS          (0)
     /*!< 1: Use FreeRTOS; 0: no FreeRTOS used */
 #endif
 

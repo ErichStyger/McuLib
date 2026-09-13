@@ -77,7 +77,7 @@
   #include "stm32f3xx_hal.h" /* header file for STM32F303K8 */
 #elif McuLib_CONFIG_CPU_IS_NORDIC_NRF
   #include "nrf.h" /* header file Nordic devices */
-#else
+#elif McuLib_CONFIG_SDK_VERSION_USED==McuLib_CONFIG_SDK_MCUXPRESSO_2_0
   #include "fsl_device_registers.h"
 #endif /* #if McuLib_CONFIG_PEX_SDK_USED */
 #endif /* configCPU_FAMILY_IS_ARM */

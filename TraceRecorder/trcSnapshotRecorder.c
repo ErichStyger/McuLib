@@ -42,6 +42,9 @@
  * www.percepio.com
  ******************************************************************************/
 
+#include "McuLibconfig.h"
+#if McuLib_CONFIG_SDK_USE_FREERTOS
+
 #include "trcRecorder.h"
 
 #if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_SNAPSHOT)
@@ -3102,4 +3105,6 @@ void prvTracePortGetTimeStamp(uint32_t *pTimestamp)
 #endif /*(TRC_USE_TRACEALYZER_RECORDER == 1)*/
 
 #endif /*(TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_SNAPSHOT)*/
+
+#endif /* McuLib_CONFIG_SDK_USE_FREERTOS */
 

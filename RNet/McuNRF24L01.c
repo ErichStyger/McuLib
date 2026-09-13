@@ -91,8 +91,9 @@
 
 /* MODULE McuNRF24L01. */
 
-#include "McuNRF24L01.h"
+#include "McuNRF24L01config.h"
 #if McuNRF24L01_CONFIG_IS_ENABLED
+#include "McuNRF24L01.h"
 #include "McuWait.h"
 #include "McuSPI.h"
 #include "McuGPIO.h"
