@@ -43,7 +43,7 @@ static uint8_t PrintStatus(const McuShell_StdIOType *io) {
 
 static uint8_t PrintHelp(const McuShell_StdIOType *io) {
   McuShell_SendHelpStr((unsigned char*)"udpc", (unsigned char*)"Group of UDP client commands\r\n", io->stdOut);
-  McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Shows motor help or status\r\n", io->stdOut);
+  McuShell_SendHelpStr((unsigned char*)"  help|status", (unsigned char*)"Shows help or status\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  host <string>", (unsigned char*)"Set default host destination IP address or host name\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  port <number>", (unsigned char*)"Set default host destination port number\r\n", io->stdOut);
   McuShell_SendHelpStr((unsigned char*)"  tx <msg>", (unsigned char*)"Send message to default host and port\r\n", io->stdOut);
