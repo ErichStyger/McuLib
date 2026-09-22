@@ -28,4 +28,12 @@
   #define MCU_UDP_CLIENT_CONFIG_DEFAULT_SERVER_PORT     1234 /*!< Default UDP host port number */
 #endif
 
+#ifndef MCU_UDP_CLIENT_CONFIG_NOF_DNS_RETRY
+  #define MCU_UDP_CLIENT_CONFIG_NOF_DNS_RETRY           (0) /*!< Default number of retires in case DNS lookup faiils */
+#endif
+
+#ifndef MCU_UDP_CLIENT_CONFIG_DNS_RESOLVE_TIMEOUT_MS
+  #define MCU_UDP_CLIENT_CONFIG_DNS_RESOLVE_TIMEOUT_MS  (1000) /*!< Default DNS resolve timeout in milli-seconds */
+#endif
+
 #endif /* MCU_UDP_CLIENT_CONFIG_H_ */
