@@ -24,16 +24,16 @@ uint8_t McuUdpClient_Send(const char *host, uint16_t port, const char *msg, char
    /* resolve host name to IP address: */
   int nofRetry;
   McuDnsResolver_info_t addr; 
-  for (nofRetry=MCU_UDP_CLIENT_CONFIG_NOF_DNS_RETRY; nofRetry>=0; nofRetry--) {
-    if (McuDnsResolver_ResolveName((char*)host, &addr, MCU_UDP_CLIENT_CONFIG_DNS_RESOLVE_TIMEOUT_MS)!=0) { /* use DNS to resolve name to IP address */
-      McuLog_error("failed to resolve udp server name '%s'", host);
-      vTaskDelay(pdMS_TO_TICKS(MCU_UDP_CLIENT_CONFIG_DNS_RESOLVE_TIMEOUT_MS));
+  for (nofRetry=5; nofRetry>=0; nofRetry--) {
+    if (McuDnsResolver_ResolveName((char*)host, &addr, 5*1000)!=0) { /* use DNS to resolve name to IP address */
+      McuLog_error("failed to resolve udp server name '%s', retry ...", host);
+      vTaskDelay(pdMS_TO_TICKS(5000));
     } else {
       break; /* success! leaving loop */
     }
   }
   if (nofRetry<0) {
-    McuLog_error("failed to udp server name '%s', giving up", host);
+    McuLog_fatal("failed to udp server name '%s', giving up", host);
     return ERR_FAILED;
   }
 
