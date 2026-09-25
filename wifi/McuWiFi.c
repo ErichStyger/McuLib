@@ -6,7 +6,6 @@
 
 #include "McuWiFi_config.h"
 #if MCU_WIFI_CONFIG_ENABLED
-
 #include <string.h>
 #if McuLib_CONFIG_CPU_IS_RPxxxx
   #include "pico/cyw43_arch.h"
@@ -168,13 +167,20 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 
   if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
     McuLog_info("WIFI_EVENT_STA_START: start event");
-    xEventGroupSetBits(s_wifi_event_group, WIFI_CAN_RECONNECT_BIT); /* credentials/etc are configured, so we can reconnect if connection fails */
-    esp_wifi_connect();
+    esp_err_t res = esp_wifi_connect();
+    if (res==ESP_OK) {
+      xEventGroupSetBits(s_wifi_event_group, WIFI_CAN_RECONNECT_BIT); /* credentials/etc are configured, so we can reconnect if connection fails */
+    } else {
+      McuLog_error("failed wifi connnect: %d", res);
+    }
   } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
     if (GetWifiReconnect()) {
       McuLog_info("WIFI_EVENT_STA_DISCONNECTED: disconnected, retry %d", s_retry_num);
       if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY) {
-        esp_wifi_connect();
+        esp_err_t res = esp_wifi_connect();
+        if (res!=ESP_OK) {
+          McuLog_error("failed wifi connect: %d", res);
+        }
         s_retry_num++;
         McuLog_info("retry to connect to the AP");
       } else {
@@ -518,7 +524,10 @@ static int ConnectWiFi(void) {
   if (McuWiFi_canReconnect()) { /* WiFi with credential is already configured: can reconnect */
     McuLog_info("reconnecting with existing credentials");
     #if McuLib_CONFIG_CPU_IS_ESP32
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    esp_err_t res = esp_wifi_connect();
+    if (res!=ESP_OK) {
+      McuLog_error("failed wifi connect: %d", res);
+    }
     #endif
     if (wifi.suspendResumeNetworkServices!=NULL) {
       wifi.suspendResumeNetworkServices(false); /* resume */
@@ -697,6 +706,7 @@ static uint8_t SetPeapUser(const char *user) {
 }
 #endif
 
+#if MCU_WIFI_CONFIG_USE_PEAP_SECURITY && MCU_WIFI_CONFIG_USE_PSK_SECURITY
 static uint8_t SetAuthPeap(void) {
 #if MCU_WIFI_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, "peap", MCU_WIFI_CONFIG_MININI_FILE_NAME);
@@ -704,7 +714,9 @@ static uint8_t SetAuthPeap(void) {
   wifi.auth.type = McuWiFi_EAP_PEAP;
   return ERR_OK;
 }
+#endif
 
+#if MCU_WIFI_CONFIG_USE_PEAP_SECURITY && MCU_WIFI_CONFIG_USE_PSK_SECURITY
 static uint8_t SetAuthPsk(void) {
 #if MCU_WIFI_CONFIG_USE_MININI
   McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, "psk", MCU_WIFI_CONFIG_MININI_FILE_NAME);
@@ -712,6 +724,7 @@ static uint8_t SetAuthPsk(void) {
   wifi.auth.type = McuWiFi_EAP_TTLS;
   return ERR_OK;
 }
+#endif
 
 static uint8_t SetHostname(const char *hostname) {
   return SetStringSetting(hostname, wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME);
