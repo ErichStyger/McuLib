@@ -36,7 +36,7 @@
 #define EAP_TTLS 2 /*!< PSK: Pre-Shared Key, TLS method with SSID and password, WPA2-PSK */
 
 #ifndef CONFIG_WIFI_EAP_METHOD
-  #define CONFIG_WIFI_EAP_METHOD    EAP_TTLS /*!< Default EAP method */
+  #define CONFIG_WIFI_EAP_METHOD    EAP_TTLS /*!< Default EAP method is using PSK */
 #endif
 
 #ifndef MCU_WIFI_CONFIG_USE_PSK_SECURITY
@@ -121,6 +121,14 @@
 
 #ifndef MCU_WIFI_CONFIG_USE_WATCHDOG
   #define MCU_WIFI_CONFIG_USE_WATCHDOG                        (0) /*!< 1: enable watchdog integration */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_CONNECTION_TIMOUT_MS
+  #define MCU_WIFI_CONFIG_CONNECTION_TIMOUT_MS                (30000) /*!< WiFi connection timeout in milliseconds */
+#endif
+
+#ifndef MCU_WIFI_CONFIG_MAXIMUM_RETRY
+  #define MCU_WIFI_CONFIG_MAXIMUM_RETRY                       (2) /*!< number of retries to connect to the network */
 #endif
 
 #endif /* MCU_WIFI_CONFIG_H_ */

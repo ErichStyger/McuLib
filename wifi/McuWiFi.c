@@ -58,10 +58,6 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CAN_RECONNECT_BIT           (1<<3) /* if set, we can do a reconnect. It means that we have everything already setup (wifi init, credentials) */
 
 #if McuLib_CONFIG_CPU_IS_ESP32
-  #ifndef CONFIG_ESP_MAXIMUM_RETRY
-    #define CONFIG_ESP_MAXIMUM_RETRY (2) /*  number of retries to connect to the network */
-  #endif
-
   static esp_netif_t *APP_WiFi_NetIf;
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
 
@@ -172,11 +168,12 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
       xEventGroupSetBits(s_wifi_event_group, WIFI_CAN_RECONNECT_BIT); /* credentials/etc are configured, so we can reconnect if connection fails */
     } else {
       McuLog_error("failed wifi connnect: %d", res);
+      xEventGroupSetBits(s_wifi_event_group, WIFI_EVENT_HANDLER_FAIL_BIT);
     }
   } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
     if (GetWifiReconnect()) {
       McuLog_info("WIFI_EVENT_STA_DISCONNECTED: disconnected, retry %d", s_retry_num);
-      if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY) {
+      if (s_retry_num < MCU_WIFI_CONFIG_MAXIMUM_RETRY) {
         esp_err_t res = esp_wifi_connect();
         if (res!=ESP_OK) {
           McuLog_error("failed wifi connect: %d", res);
@@ -203,6 +200,25 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
   }
 }
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
+
+static uint8_t checkAndFixAuthType(McuWiFi_EAP_e *type) {
+#if MCU_WIFI_CONFIG_USE_PSK_SECURITY && !MCU_WIFI_CONFIG_USE_PEAP_SECURITY
+  /* only PSK is enabled */
+  if (*type==McuWiFi_EAP_PEAP) {
+    McuLog_info("Only PSK is enabled, PEAP not supported: continue to use PSK.")
+    *type = McuWiFi_EAP_TTLS;
+    return ERR_FAILED:
+  }
+#elif !MCU_WIFI_CONFIG_USE_PSK_SECURITY && MCU_WIFI_CONFIG_USE_PEAP_SECURITY 
+  /* only PEAP is enabled */
+  if (*type==McuWiFi_EAP_TTLS) {
+    McuLog_info("Only PEAP is enabled, PSK not supported: continue to use PEAP.")
+    *type = McuWiFi_EAP_PEAP;
+    return ERR_FAILED;
+  }
+#endif
+  return ERR_OK;
+}
 
 static uint8_t GetMAC(uint8_t mac[6], uint8_t *macStr, size_t macStrSize) {
 #if McuLib_CONFIG_CPU_IS_RPxxxx
@@ -335,19 +351,27 @@ static int connect_esp_wifi_with_credentials(void) {
   }
 
   /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-   * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+   * number of re-tries (WIFI_EVENT_HANDLER_FAIL_BIT). The bits are set by event_handler() (see above) */
   EventBits_t bits;
+  int s_retry_num = 0; /* reset retry counter */
   do {
+    McuLog_info("Waiting for WiFi connection with timeout %d ms ...", MCU_WIFI_CONFIG_CONNECTION_TIMOUT_MS);
     bits = xEventGroupWaitBits(s_wifi_event_group,
             WIFI_EVENT_HANDLER_CONNECTED_BIT | WIFI_EVENT_HANDLER_FAIL_BIT, /* bits to wait for */
             pdTRUE, /* if to clear we wait for on exit */
             pdFALSE, /* wait for all bits */
-            pdMS_TO_TICKS(20000)); /* wait time */
+            pdMS_TO_TICKS(MCU_WIFI_CONFIG_CONNECTION_TIMOUT_MS)); /* wait time */
     if (bits&WIFI_EVENT_HANDLER_CONNECTED_BIT) {
       break; /* leave loop */
     }
     if (bits&WIFI_EVENT_HANDLER_FAIL_BIT) {
       McuLog_info("FAILED connecting");
+      ESP_ERROR_CHECK(esp_wifi_stop());
+      break; /* leave loop */
+    }
+    s_retry_num++; /* increment retry counter */
+    if (s_retry_num >= MCU_WIFI_CONFIG_MAXIMUM_RETRY) {
+      McuLog_info("Reached maximum retry limit of %d", MCU_WIFI_CONFIG_MAXIMUM_RETRY);
       ESP_ERROR_CHECK(esp_wifi_stop());
       break; /* leave loop */
     }
@@ -407,6 +431,7 @@ static void LoadWifiSettings(void) {
     } else {
       McuLog_error("unexptected key %s: %s", MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, buf);
     }
+    (void)checkAndFixAuthType(&wifi.auth.type);  /* check if we can support the authentification type */
 #else
   McuUtility_strcpy((unsigned char*)wifi.auth.hostname, sizeof(wifi.auth.hostname), (unsigned char*)CONFIG_WIFI_DEFAULT_HOSTNAME);
   #if MCU_WIFI_CONFIG_USE_PEAP_SECURITY
@@ -454,10 +479,7 @@ static void InitWiFiHardware(void) {
 
 static bool ConnectWiFiWithCredentials(void) {
   bool isConnected = false;
-  #if MCU_WIFI_CONFIG_USE_WATCHDOG
-    #define CONFIG_NOF_WIFI_CONNECTION  (10)
-    int failedCount = 0;
-  #endif
+  int failedCount = 0;
 
   if (SetNetworkHostname()!=ERR_OK) {
     McuLog_error("failed setting hostname");
@@ -481,7 +503,8 @@ static bool ConnectWiFiWithCredentials(void) {
     McuWatchdog_SuspendCheck(McuWatchdog_REPORT_ID_TASK_WIFI);
   #endif
   #if McuLib_CONFIG_CPU_IS_RPxxxx
-    int res = cyw43_arch_wifi_connect_timeout_ms(wifi.auth.psk.ssid, wifi.auth.psk.pass, CYW43_AUTH_WPA2_AES_PSK, 30000); /* can take some time to connect */
+    McuLog_info("Waiting for WiFi connection with timeout %d ms ...", MCU_WIFI_CONFIG_CONNECTION_TIMOUT_MS);
+    int res = cyw43_arch_wifi_connect_timeout_ms(wifi.auth.psk.ssid, wifi.auth.psk.pass, CYW43_AUTH_WPA2_AES_PSK, MCU_WIFI_CONFIG_CONNECTION_TIMOUT_MS); /* can take some time to connect */
   #elif McuLib_CONFIG_CPU_IS_ESP32
     int res = connect_esp_wifi_with_credentials();
   #endif
@@ -491,17 +514,20 @@ static bool ConnectWiFiWithCredentials(void) {
   #endif
     if (res!=0) {
       McuLog_error("connection failed! code %d", res);
+      failedCount++;
       #if MCU_WIFI_CONFIG_USE_WATCHDOG
-        failedCount++;
-        if (failedCount<CONFIG_NOF_WIFI_CONNECTION) {
+        if (failedCount<MCU_WIFI_CONFIG_MAXIMUM_RETRY) {
           McuWatchdog_DelayAndReport(McuWatchdog_REPORT_ID_TASK_WIFI, 10, 100);
         } else {
           for(;;) {
-            McuLog_fatal("reached max %d connection tries, waiting for watchdog to restart", CONFIG_NOF_WIFI_CONNECTION);
+            McuLog_fatal("reached max %d connection tries, waiting for watchdog to restart", MCU_WIFI_CONFIG_MAXIMUM_RETRY);
             vTaskDelay(pdMS_TO_TICKS(1000));
           }
         }
       #else
+        if (failedCount>MCU_WIFI_CONFIG_MAXIMUM_RETRY) {
+          return false; /* not connected */
+        }
         vTaskDelay(pdMS_TO_TICKS(1000)); /* limit message output */
       #endif
     } else {
@@ -706,25 +732,21 @@ static uint8_t SetPeapUser(const char *user) {
 }
 #endif
 
-#if MCU_WIFI_CONFIG_USE_PEAP_SECURITY && MCU_WIFI_CONFIG_USE_PSK_SECURITY
-static uint8_t SetAuthPeap(void) {
+static uint8_t SetAuthType(McuWiFi_EAP_e type) {
 #if MCU_WIFI_CONFIG_USE_MININI
-  McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, "peap", MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  /* store settings in file, will be ignored if security setttings do not match */
+  if (type==McuWiFi_EAP_TTLS) {
+    McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, "psk", MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  } else if (type==McuWiFi_EAP_PEAP) {
+    McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, "peap", MCU_WIFI_CONFIG_MININI_FILE_NAME);
+  } else {
+    McuLog_error("wrong authentifcation type %d", type);
+    return ERR_FAILED;
+  }
 #endif
-  wifi.auth.type = McuWiFi_EAP_PEAP;
-  return ERR_OK;
+  wifi.auth.type = type;
+  return checkAndFixAuthType(&wifi.auth.type);  /* check if we can support the authentification type */
 }
-#endif
-
-#if MCU_WIFI_CONFIG_USE_PEAP_SECURITY && MCU_WIFI_CONFIG_USE_PSK_SECURITY
-static uint8_t SetAuthPsk(void) {
-#if MCU_WIFI_CONFIG_USE_MININI
-  McuMinINI_ini_puts(MCU_WIFI_CONFIG_MININI_SECTION_WIFI, MCU_WIFI_CONFIG_MININI_KEY_WIFI_AUTH_EAP, "psk", MCU_WIFI_CONFIG_MININI_FILE_NAME);
-#endif
-  wifi.auth.type = McuWiFi_EAP_TTLS;
-  return ERR_OK;
-}
-#endif
 
 static uint8_t SetHostname(const char *hostname) {
   return SetStringSetting(hostname, wifi.auth.hostname, sizeof(wifi.auth.hostname), MCU_WIFI_CONFIG_MININI_KEY_WIFI_HOSTNAME);
@@ -877,9 +899,7 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
     McuShell_SendHelpStr((unsigned char*)"  set peap user \"<id>\"", (const unsigned char*)"Set the PEAP user ID\r\n", io->stdOut);
     McuShell_SendHelpStr((unsigned char*)"  set peap pwd \"<pwd>\"", (const unsigned char*)"Set the PEAP password\r\n", io->stdOut);
   #endif
-  #if MCU_WIFI_CONFIG_USE_PSK_SECURITY && MCU_WIFI_CONFIG_USE_PEAP_SECURITY
     McuShell_SendHelpStr((unsigned char*)"  set auth peap|psk", (const unsigned char*)"Set the authentification to PSK or PEAP\r\n", io->stdOut);
-  #endif
     McuShell_SendHelpStr((unsigned char*)"  set hostname \"<name>\"", (const unsigned char*)"Set the hostname\r\n", io->stdOut);
     *handled = TRUE;
     return ERR_OK;
@@ -925,14 +945,12 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
     p = (char*)cmd + sizeof("wifi set peap user ")-1;
     return SetPeapUser(p);
 #endif
-#if MCU_WIFI_CONFIG_USE_PEAP_SECURITY && MCU_WIFI_CONFIG_USE_PSK_SECURITY
   } else if (McuUtility_strcmp((char*)cmd, "wifi set auth psk")==0) {
     *handled = true;
-    return SetAuthPsk();
+    return SetAuthType(McuWiFi_EAP_PEAP);
   } else if (McuUtility_strcmp((char*)cmd, "wifi set auth peap")==0) {
     *handled = true;
-    return SetAuthPeap();
-#endif
+    return SetAuthType(MCU_WIFI_CONFIG_USE_PEAP_SECURITY);
   } else if (McuUtility_strncmp((char*)cmd, "wifi set hostname ", sizeof("wifi set hostname ")-1)==0) {
     *handled = true;
     p = (char*)cmd + sizeof("wifi set hostname ")-1;
