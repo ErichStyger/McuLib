@@ -205,14 +205,14 @@ static uint8_t checkAndFixAuthType(McuWiFi_EAP_e *type) {
 #if MCU_WIFI_CONFIG_USE_PSK_SECURITY && !MCU_WIFI_CONFIG_USE_PEAP_SECURITY
   /* only PSK is enabled */
   if (*type==McuWiFi_EAP_PEAP) {
-    McuLog_info("Only PSK is enabled, PEAP not supported: continue to use PSK.")
+    McuLog_info("Only PSK is enabled, PEAP not supported: continue to use PSK.");
     *type = McuWiFi_EAP_TTLS;
-    return ERR_FAILED:
+    return ERR_FAILED;
   }
 #elif !MCU_WIFI_CONFIG_USE_PSK_SECURITY && MCU_WIFI_CONFIG_USE_PEAP_SECURITY 
   /* only PEAP is enabled */
   if (*type==McuWiFi_EAP_TTLS) {
-    McuLog_info("Only PEAP is enabled, PSK not supported: continue to use PEAP.")
+    McuLog_info("Only PEAP is enabled, PSK not supported: continue to use PEAP.");
     *type = McuWiFi_EAP_PEAP;
     return ERR_FAILED;
   }
