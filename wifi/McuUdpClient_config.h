@@ -28,4 +28,16 @@
   #define MCU_UDP_CLIENT_CONFIG_DEFAULT_SERVER_PORT     1234 /*!< Default UDP host port number */
 #endif
 
+#ifndef MCU_UDP_CLIENT_CONFIG_NOF_RETRY
+  #define MCU_UDP_CLIENT_CONFIG_NOF_RETRY               (1) /*!< Default number of retry attempts */
+#endif
+
+#ifndef MCU_UDP_CLIENT_CONFIG_DNS_WAIT_TIME_MS
+  #define MCU_UDP_CLIENT_CONFIG_DNS_WAIT_TIME_MS       2000 /*!< Wait time for DNS resolution in milliseconds */
+#endif
+
+#ifndef MCU_UDP_CLIENT_CONFIG_RETRY_WAIT_TIME_MS
+  #define MCU_UDP_CLIENT_CONFIG_RETRY_WAIT_TIME_MS     1000 /*!< Wait time between retry attempts in milliseconds */
+#endif
+
 #endif /* MCU_UDP_CLIENT_CONFIG_H_ */
