@@ -84,7 +84,7 @@ uint8_t McuUdpClient_Send(const char *host, uint16_t port, const char *msg, char
       res = ERR_FAILED;
       break;
     }
-    McuLog_info("Message sent, Waiting for response");
+    McuLog_info("Message sent, waiting for response");
     struct sockaddr_in source_addr; /* Large enough for both IPv4 or IPv6 */
     socklen_t socklen = sizeof(source_addr);
     int len = recvfrom(sock, rxBuffer, rxBufferSize-1, 0, (struct sockaddr *)&source_addr, &socklen);
