@@ -129,7 +129,7 @@ static bool GetWifiReconnect(void) {
 }
 
 #if McuLib_CONFIG_CPU_IS_ESP32
-static int APP_WiFi_GetIpInfo(esp_netif_ip_info_t *pIp_info) {
+static int EspGetIpInfo(esp_netif_ip_info_t *pIp_info) {
   esp_netif_t *netif;
 
   netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
@@ -141,21 +141,16 @@ static int APP_WiFi_GetIpInfo(esp_netif_ip_info_t *pIp_info) {
   return 0; /* OK */
 }
 
-static void GetIpInfoString(unsigned char *buf, size_t bufSize, esp_netif_ip_info_t *pIp_info) {
-  McuXFormat_xsnprintf((char*)buf, bufSize, "IP:"IPSTR " MASK:"IPSTR " GW:"IPSTR, IP2STR(&pIp_info->ip), IP2STR(&pIp_info->netmask), IP2STR(&pIp_info->gw));
+void GetIpString(unsigned char *buf, size_t bufSize, esp_netif_ip_info_t *pIp_info) {
+  McuXFormat_xsnprintf((char*)buf, bufSize, IPSTR, IP2STR(&pIp_info->ip));
 }
 
-void APP_WiFi_PrintIP(void) {
-  esp_netif_ip_info_t ip_info;
+void GetMaskString(unsigned char *buf, size_t bufSize, esp_netif_ip_info_t *pIp_info) {
+  McuXFormat_xsnprintf((char*)buf, bufSize, IPSTR, IP2STR(&pIp_info->netmask));
+}
 
-  if (APP_WiFi_GetIpInfo(&ip_info)!=0) {
-    McuLog_error("failed getting netif()");
-  } else {
-    unsigned char buf[64];
-
-    GetIpInfoString(buf, sizeof(buf), &ip_info);
-    McuLog_info("%s", buf);
-  }
+void GetGatewayString(unsigned char *buf, size_t bufSize, esp_netif_ip_info_t *pIp_info) {
+  McuXFormat_xsnprintf((char*)buf, bufSize, IPSTR, IP2STR(&pIp_info->gw));
 }
 
 static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -200,6 +195,22 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
   }
 }
 #endif /* McuLib_CONFIG_CPU_IS_ESP32 */
+
+int McuWiFi_GetIP(char *buf, size_t bufSize) {
+#if McuLib_CONFIG_CPU_IS_RPxxxx
+  McuUtility_strcpy(buf, bufSize, ip4addr_ntoa(netif_ip4_addr(netif_list)));
+#elif McuLib_CONFIG_CPU_IS_ESP32
+  esp_netif_ip_info_t ip_info;
+
+  if (EspGetIpInfo(&ip_info)==0) {
+    GetIpString((unsigned char*)buf, bufSize, &ip_info);
+  } else {
+    McuUtility_strcpy((unsigned char*)buf, bufSize, (unsigned char*)"error");
+    return -1; /* failed */
+  }
+#endif
+  return 0; /* indicate success */
+}
 
 static uint8_t checkAndFixAuthType(McuWiFi_EAP_e *type) {
 #if MCU_WIFI_CONFIG_USE_PSK_SECURITY && !MCU_WIFI_CONFIG_USE_PEAP_SECURITY
@@ -852,23 +863,13 @@ static uint8_t PrintStatus(McuShell_ConstStdIOType *io) {
     McuUtility_strcpy(macStr, sizeof(macStr), (unsigned char*)"ERROR\r\n");
   }
   McuShell_SendStatusStr((uint8_t*)"  MAC", macStr, io->stdOut);
-#if McuLib_CONFIG_CPU_IS_RPxxxx
-  McuUtility_strcpy(buf, sizeof(buf), ip4addr_ntoa(netif_ip4_addr(netif_list)));
-  McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
-  McuShell_SendStatusStr((uint8_t*)"  IP", buf, io->stdOut);
-#elif McuLib_CONFIG_CPU_IS_ESP32
-  {
-    esp_netif_ip_info_t ip_info;
 
-    if (APP_WiFi_GetIpInfo(&ip_info)==0) {
-      GetIpInfoString(buf, sizeof(buf), &ip_info);
-      McuUtility_strcat(buf, sizeof(buf), (unsigned char*)"\r\n");
-    } else {
-      McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)"failed getting IP info!\r\n");
-    }
-    McuShell_SendStatusStr((uint8_t*)"  IP", buf, io->stdOut);
+  char ipBuf[24];
+  if (McuWiFi_GetIP(ipBuf, sizeof(ipBuf))!=0) {
+    McuUtility_strcpy((unsigned char*)ipBuf, sizeof(ipBuf), (unsigned char*)"error");
   }
-#endif
+  McuUtility_strcat((unsigned char*)ipBuf, sizeof(ipBuf), (unsigned char*)"\r\n");
+  McuShell_SendStatusStr((uint8_t*)"  IP", (unsigned char*)ipBuf, io->stdOut);
 
   if (McuWiFi_isConnected()) {
     McuUtility_strcpy(buf, sizeof(buf), (unsigned char*)GetActiveHostName()); /* get the network name */

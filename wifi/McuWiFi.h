@@ -17,6 +17,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stddef.h>
 #include "McuWiFi_config.h"
 
 #if MCU_WIFI_CONFIG_USE_SHELL
@@ -78,6 +79,15 @@ bool McuWiFi_isConnected(void);
  * \return true if WiFi can reconnect with already configured credentials
  */
 bool McuWiFi_canReconnect(void);
+
+
+/*!
+ * \brief Get the current IP address as a string
+ * \param buf Buffer to store the IP address string
+ * \param bufSize Size of the buffer
+ * \return 0 if successful, non-zero otherwise
+ */
+int McuWiFi_GetIP(char *buf, size_t bufSize);
 
 /*!
  * \brief return the host name
