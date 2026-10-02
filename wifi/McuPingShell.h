@@ -30,11 +30,6 @@ extern "C" {
   */
 uint8_t McuPing_ParseCommand(const unsigned char* cmd, bool *handled, const McuShell_StdIOType *io);
 
-/*!
- * \brief Module initialization
- */
-void McuPing_Init(void);
-
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
