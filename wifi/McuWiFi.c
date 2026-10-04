@@ -948,10 +948,10 @@ uint8_t McuWiFi_ParseCommand(const unsigned char *cmd, bool *handled, const McuS
 #endif
   } else if (McuUtility_strcmp((char*)cmd, "wifi set auth psk")==0) {
     *handled = true;
-    return SetAuthType(McuWiFi_EAP_PEAP);
+    return SetAuthType(McuWiFi_EAP_TTLS);
   } else if (McuUtility_strcmp((char*)cmd, "wifi set auth peap")==0) {
     *handled = true;
-    return SetAuthType(MCU_WIFI_CONFIG_USE_PEAP_SECURITY);
+    return SetAuthType(McuWiFi_EAP_PEAP);
   } else if (McuUtility_strncmp((char*)cmd, "wifi set hostname ", sizeof("wifi set hostname ")-1)==0) {
     *handled = true;
     p = (char*)cmd + sizeof("wifi set hostname ")-1;
