@@ -29,7 +29,7 @@
 #endif
 
 #ifndef MCU_UDP_SERVER_CONFIG_RESPONSE_BUF_SIZE
-  #define MCU_UDP_SERVER_CONFIG_RESPONSE_BUF_SIZE         (128)  /*!< Default buffer size for UDP response, allocated on the stack */
+  #define MCU_UDP_SERVER_CONFIG_RESPONSE_BUF_SIZE         (128)  /*!< Default buffer size for UDP response, allocated on the stack! */
 #endif
 
 #ifndef MCU_UDP_SERVER_CONFIG_TASK_STACK_SIZE
