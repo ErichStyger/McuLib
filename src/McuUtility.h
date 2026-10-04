@@ -153,6 +153,16 @@ typedef enum {
   McuUtility_SEP_NUM_TYPE_UINT8_HEX_NO_PREFIX /* uint8_t hex number type, no 0x prefix */
 } McuUtility_SeparatedNumberType;
 
+/*!
+  \brief Safe version of strncpy(). Always terminates the string.
+     Precondition: src, dst != NULL
+  \param[in,out] dst Start of string buffer, where to append the string
+  \param[in] dstSize The size of the buffer, including the zero byte
+  \param[in] src The source string to copy
+  \param[in] n Number of characters to copy (not including the zero byte)
+*/
+void McuUtility_strncpy(char *dst, size_t dstSize, const char *src, size_t n);
+
 void McuUtility_strcpy(uint8_t *dst, size_t dstSize, const unsigned char *src);
 /*
 ** ===================================================================

@@ -161,7 +161,7 @@ static void ShiftRightAndFill(uint8_t *dst, uint8_t fill, uint8_t nofFill);
      - does not zero out the remaining part in dst.
      Note: dstSize is the size of dst INCLUDING zero byte.
      Precondition: src, dst != NULL
-  \param[in,out] dst Start of string buffer, where to append the number string
+  \param[in,out] dst Start of string buffer, where to append the src string
   \param[in] dstSize The size of the buffer, including the zero byte
   \param[in] src The source string to copy
 */
@@ -171,6 +171,27 @@ void McuUtility_strcpy(uint8_t *dst, size_t dstSize, const unsigned char *src)
   while (dstSize > 0 && *src != '\0') {
     *dst++ = *src++;
     dstSize--;
+  }
+  *dst = '\0';
+}
+
+/*!
+  \brief Safe version of strncpy(). Always terminates the string.
+     Precondition: src, dst != NULL
+  \param[in,out] dst Start of string buffer, where to append the string
+  \param[in] dstSize The size of the buffer, including the zero byte
+  \param[in] src The source string to copy
+  \param[in] n Number of characters to copy (not including the zero byte)
+*/
+void McuUtility_strncpy(char *dst, size_t dstSize, const char *src, size_t n) {
+  if (dstSize == 0) {
+    return;
+  }
+  dstSize--; /* reserve space for zero byte */
+  while (dstSize > 0 && n > 0 && *src != '\0') {
+    *dst++ = *src++;
+    dstSize--;
+    n--;
   }
   *dst = '\0';
 }
