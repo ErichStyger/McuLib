@@ -521,6 +521,15 @@ static void InitQueues(void) {
 }
 
 void McuESP32_ChangeUartBaudCallback(uint32_t baud) {
+  if (McuESP32_CopyUartToShell) {
+    /* If we copy the ESP32 UART traffic to the shell, do *not* change the baud, as the shell still wants (and needs) the UART traffic.
+     * Otherwise, following can happen
+    *  a) ESP is communicating with 115200 baud with the MCU with McuESP32_CopyUartToShell enabled
+    *  b) USB CDC cable gets connected: host might change baud to 9600 ==> this only changes the baud on the connection, not on the ESP!
+    *  At this state, we won't be able to communicate between MCU and ESP32, unless an idf.py session would be started on the USB, setting baud back to 115200
+    */
+    return;
+  }
   if (baud!=McuESP32_currBaud) {
     #if McuESP32_CONFIG_VERBOSE_CONTROL_SIGNALS
       McuLog_trace("changing baud from %d to %d", McuESP32_currBaud, baud);
