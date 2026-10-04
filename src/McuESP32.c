@@ -426,7 +426,7 @@ uint8_t McuESP32_ParseCommand(const unsigned char *cmd, bool *handled, const Mcu
   return ERR_OK;
 }
 
-static void sendData(const void *buffer, uint32_t size) {
+static void sendDataToUsb(const void *buffer, uint32_t size) {
   uint32_t McuShellCdcDevice_Send(void const *buf, uint32_t nofBytes); /* \TODO using private interface, change to callback */
 
   #if McuESP32_CONFIG_VERBOSE_TRAFFIC
@@ -440,6 +440,9 @@ static void sendData(const void *buffer, uint32_t size) {
       McuLog_fatal("wanted to send remaining %d bytes, but did send %d bytes", size-nof, nof);
     }
   }
+}
+
+static void sendDataToShell(const void *buffer, uint32_t size) {
   if (   McuESP32_CopyUartToShell
 #if McuESP32_CONFIG_USE_USB_CDC
       && !McuESP32_IsProgramming
@@ -465,13 +468,16 @@ static void UartRxTask(void *pv) { /* task handling characters sent by the ESP32
     #if McuESP32_CONFIG_USE_USB_CDC
         if (McuESP32_UsbCdcIo!=NULL && McuESP32_UsbIsConnected!=NULL && McuESP32_UsbIsConnected()) { /* send directly to programmer attached on the USB or to the IDF monitor */
           do {
-            sendData(buffer, size);
+            sendDataToUsb(buffer, size); /* forward data to USB CDC */
+            sendDataToShell(buffer, size); /* forward to shell */
             size = xStreamBufferReceive(rxStreamBuffer, buffer, sizeof(buffer), pdMS_TO_TICKS(5)); /* use shorter timeout */
           } while(size>0);
           if (McuESP32_UsbFlush!=NULL) {
             McuESP32_UsbFlush();
           }
-        } /* forward to USB CDC */
+        } else {
+          sendDataToShell(buffer, size); /* forward to shell */
+        }
     #endif
       }
     } else {
