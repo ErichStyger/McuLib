@@ -1386,9 +1386,8 @@ char* McuFatFS_errFResultMsg(int errNo)
     case FR_LOCKED:              return (char*)"The operation is rejected according to the file sharing policy";
     case FR_NOT_ENOUGH_CORE:     return (char*)"LFN working buffer could not be allocated";
     case FR_TOO_MANY_OPEN_FILES: return (char*)"Number of open files > _FS_SHARE";
-    /*default:                     return (char*)"unknown";*/
+    default:                     return (char*)"unknown";
   } /* switch */
-  return (char*)"*error*";
 }
 
 /*
