@@ -1386,8 +1386,9 @@ char* McuFatFS_errFResultMsg(int errNo)
     case FR_LOCKED:              return (char*)"The operation is rejected according to the file sharing policy";
     case FR_NOT_ENOUGH_CORE:     return (char*)"LFN working buffer could not be allocated";
     case FR_TOO_MANY_OPEN_FILES: return (char*)"Number of open files > _FS_SHARE";
-    default:                     return (char*)"unknown";
+    default:                     break;
   } /* switch */
+  return (char*)"unknown";
 }
 
 /*
@@ -1411,7 +1412,7 @@ char* McuFatFS_errDResultMsg(int errNo)
     case RES_WRPRT:  return (char*)"Write Protected";
     case RES_NOTRDY: return (char*)"Not Ready";
     case RES_PARERR: return (char*)"Invalid Parameter";
-    /*default:         return (char*)"unknown";*/
+    default:         break;
   } /* switch */
   return (char*)"*error*";
 }
